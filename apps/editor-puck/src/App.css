@@ -1,0 +1,47 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #263238;
+}
+
+.app__tab {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #cfd8dc;
+  cursor: pointer;
+}
+.app__tab[aria-current="true"] {
+  background: #eceff1;
+  color: #263238;
+}
+
+.app__editor {
+  flex: 1;
+  min-height: 0;
+}
+
+.value-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font: inherit;
+}
