@@ -396,3 +396,85 @@ kbd {
   border-radius: 3px;
   font-size: 11px;
 }
+
+.tree-group {
+  margin-bottom: 4px;
+}
+
+.count {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--subtle);
+  border: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.event {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.actions {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.action {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.action-form {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: flex-start;
+}
+
+.action-form > select {
+  width: auto;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+}
+
+.kv {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.kv .key {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.log {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  list-style: none;
+  background: var(--subtle);
+  border-radius: 4px;
+  white-space: pre-wrap;
+}
+
+.log .ok {
+  color: #1a7f37;
+}
