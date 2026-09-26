@@ -3,13 +3,15 @@ import { useState } from "react";
 import { ActionsView } from "./actions/ActionsView";
 import { BindingView } from "./binding/BindingView";
 import { DataModelView } from "./data-model/DataModelView";
+import { Preview } from "./preview/Preview";
 import { EXAMPLE_FILE_NAME, loadExampleProject } from "./example";
 import { downloadText, fileNameFor, projectFromText, projectToText } from "./project-file";
 import { SampleDataView } from "./sample-data/SampleDataView";
 
-type Tab = "dataModel" | "sampleData" | "binding" | "actions";
+type Tab = "preview" | "dataModel" | "sampleData" | "binding" | "actions";
 
 const TABS: Record<Tab, string> = {
+  preview: "プレビュー",
   dataModel: "データモデル",
   sampleData: "サンプルデータ",
   binding: "式",
@@ -19,7 +21,7 @@ const TABS: Record<Tab, string> = {
 /** 再読み込みしても同じタブを開けるよう、タブは URL の hash に持つ。 */
 function initialTab(): Tab {
   const hash = location.hash.slice(1);
-  return hash in TABS ? (hash as Tab) : "dataModel";
+  return hash in TABS ? (hash as Tab) : "preview";
 }
 
 export function App() {
@@ -90,6 +92,7 @@ export function App() {
         </ul>
       )}
       <main className="app-body">
+        {tab === "preview" && <Preview project={project} />}
         {tab === "dataModel" && (
           <DataModelView
             source={project.dataModel.source}
