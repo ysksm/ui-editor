@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { INSTANCE, ROOT_ID, type InstanceFields, type NodeFields } from "../project/convert";
 import { useProject } from "../parts/view";
 import { nodeLabel } from "./Layers";
+import { StylePanel } from "./StylePanel";
 
 /** 組み込みパーツごとの主な props（それ以外は「詳細（JSON）」で編集する）。 */
 const BUILTIN_PROPS: Record<string, PropField[]> = {
@@ -168,6 +169,9 @@ export function PropsPanel() {
         </label>
       ))}
 
+      <div className="panel-subtitle">style</div>
+      <StylePanel nodeId={selectedId} />
+
       <details className="json-details">
         <summary>詳細（JSON）: props / repeat / visible / events</summary>
         <JsonField
@@ -197,7 +201,8 @@ export function PropsPanel() {
 
 function toText(value: JsonValue | undefined, kind: "text" | "json"): string {
   if (value === undefined) return "";
-  if (kind === "text" && typeof value === "string") return value;
+  // 文字列はそのまま（`{{ 式 }}` を引用符なしで編集できるように）
+  if (typeof value === "string") return value;
   return JSON.stringify(value, null, kind === "json" && typeof value === "object" ? 2 : 0);
 }
 

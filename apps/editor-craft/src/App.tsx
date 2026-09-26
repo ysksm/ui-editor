@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Layers } from "./editor/Layers";
 import { Palette } from "./editor/Palette";
 import { PropsPanel } from "./editor/PropsPanel";
+import { ResizeHandles } from "./editor/ResizeHandles";
 import { craftToP0, p0ToCraft } from "./project/convert";
 import {
   DOC_KIND_LABEL,
@@ -24,6 +25,7 @@ export function App({ initialProject }: { initialProject: Project }) {
   });
   // onNodesChange は Editor の作成時に固定されるので、最新の値は ref 経由で読む
   const docKeyRef = useRef(docKey);
+  const [canvasArea, setCanvasArea] = useState<HTMLElement | null>(null);
   docKeyRef.current = docKey;
 
   const [initialData] = useState(() => p0ToCraft(findDoc(initialProject, docKey)!.root));
@@ -58,10 +60,11 @@ export function App({ initialProject }: { initialProject: Project }) {
               <Layers />
             </section>
           </aside>
-          <main className="canvas-area">
+          <main className="canvas-area" ref={setCanvasArea}>
             <CanvasFrame project={project} docKey={docKey}>
               <Frame data={initialData} />
             </CanvasFrame>
+            <ResizeHandles container={canvasArea} />
           </main>
           <aside className="sidebar sidebar--right">
             <h2 className="panel-title">プロパティ</h2>

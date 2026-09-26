@@ -64,6 +64,7 @@ function makeBuiltin(type: BuiltinNodeType): UserComponent<NodeFields & { childr
           style={toCss(fields.style, scope)}
           scope={scope}
           className={cx(className, container && "craft-container", empty && "is-empty")}
+          nodeId={fields.nodeId}
           ref={ref}
         >
           {container ? (
@@ -88,7 +89,12 @@ function hasChildren(children: ReactNode): boolean {
 export const ComponentInstance: UserComponent<InstanceFields> = (fields) => {
   const { scope, className, ref, badges } = useCraftChrome(fields);
   return (
-    <div ref={ref} className={cx(className, "craft-instance")} style={toCss(fields.style, scope)}>
+    <div
+      ref={ref}
+      data-node-id={fields.nodeId}
+      className={cx(className, "craft-instance")}
+      style={toCss(fields.style, scope)}
+    >
       <InstanceView component={fields.component} props={fields.props} scope={scope} />
       <Badges items={[fields.component, ...badges]} />
     </div>
