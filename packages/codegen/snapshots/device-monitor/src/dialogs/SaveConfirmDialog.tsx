@@ -26,7 +26,7 @@ export function SaveConfirmDialog({ open, onClose, params }: SaveConfirmDialogPr
       <div className={styles.body}>
         <Text>設定を保存しますか？</Text>
         <div className={styles.buttons}>
-          <Button variant="secondary" onClick={() => onClose()}>
+          <Button variant="secondary" onClick={onClose}>
             キャンセル
           </Button>
           <Button

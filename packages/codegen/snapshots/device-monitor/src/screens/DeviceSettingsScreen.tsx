@@ -36,8 +36,7 @@ export function DeviceSettingsScreen() {
     <div className={styles.page}>
       <div className={styles.header}>
         <Text variant="title">
-          {data.devices.find((d) => d.id === params.deviceId)?.name ?? params.deviceId}
-          {" の設定"}
+          {data.devices.find((d) => d.id === params.deviceId)?.name ?? params.deviceId} の設定
         </Text>
         <StatusBadge
           status={data.devices.find((d) => d.id === params.deviceId)?.status ?? "offline"}

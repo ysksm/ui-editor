@@ -4,6 +4,7 @@ import { writeAppTemplate } from "./app-template.js";
 import { writeApp, writeDialogHost, writePaths, writeRoutes } from "./emit/app.js";
 import { modelSource, modelTypeNames } from "./emit/model.js";
 import { writeComponent, writeDialog, writeScreen, type ProjectContext } from "./emit/modules.js";
+import { writeRtkStore } from "./emit/store-rtk.js";
 import { writeStore } from "./emit/store.js";
 import { writeUi } from "./emit/ui.js";
 import { FileSet, type GeneratedFile } from "./files.js";
@@ -71,4 +72,18 @@ function componentEvents(project: Project): Map<string, string[]> {
     walk(owner.root);
   }
   return new Map([...out].map(([k, v]) => [k, [...v].sort()]));
+}
+
+/**
+ * ストア部分だけを Redux Toolkit で書いたもの（Zustand 版との比較用、#12）。
+ * 返すのは src/store/appStore.ts だけで、アプリには組み込まない。
+ */
+export async function generateRtkStore(project: Project): Promise<GeneratedFile[]> {
+  const files = new FileSet();
+  writeRtkStore(files, project, modelTypeNames(project));
+  return Promise.all(
+    files
+      .toArray()
+      .map(async (f) => ({ path: f.path, content: await formatFile(f.path, f.content) })),
+  );
 }

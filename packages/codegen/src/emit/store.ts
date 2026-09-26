@@ -45,35 +45,14 @@ export const sampleData: Data = ${JSON.stringify(project.sampleData, null, 2)};
 `,
   );
 
-  const state = Object.entries(project.state ?? {});
-  const dialogs = project.dialogs ?? [];
-  const dialogImports = dialogs
-    .filter((d) => Object.keys(d.params ?? {}).length > 0)
-    .map((d) => dialogName(d.id))
-    .sort()
-    .map((n) => `import type { ${n}Params } from "../dialogs/${n}";\n`)
-    .join("");
-  const openDialogType = dialogs
-    .map((d) =>
-      Object.keys(d.params ?? {}).length > 0
-        ? `  | { id: ${JSON.stringify(d.id)}; params: ${dialogName(d.id)}Params }\n`
-        : `  | { id: ${JSON.stringify(d.id)} }\n`,
-    )
-    .join("");
-  const hasDialogs = dialogs.length > 0;
-  const stateTypes = [
-    ...new Set(state.flatMap(([, def]) => referencedModelTypes(def.type, modelTypes))),
-  ].sort();
+  const { dialogImports, stateTypes, appStateType, openDialogType, initialState, hasDialogs } =
+    storeTypes(project, modelTypes);
   files.add(
     "src/store/appStore.ts",
     `import { create } from "zustand";
 ${dialogImports}${stateTypes.length > 0 ? `import type { ${stateTypes.join(", ")} } from "../model";\n` : ""}import { sampleData, type Data } from "./sampleData";
 
-/** アプリ全体の状態（\`{{ state.xxx }}\`）。 */
-export interface AppState {
-${state.map(([k, def]) => `  ${k}: ${def.type};\n`).join("")}}
-
-${hasDialogs ? `/** 開いているダイアログと、その params。 */\nexport type OpenDialog =\n${openDialogType};\n\n` : ""}const initialState: AppState = ${JSON.stringify(Object.fromEntries(state.map(([k, def]) => [k, def.initial])), null, 2)};
+${appStateType}${openDialogType}const initialState: AppState = ${initialState};
 
 export interface AppStore {
   data: Data;
@@ -137,4 +116,41 @@ function matches(record: object, match: object): boolean {
 }
 `,
   );
+}
+
+/** Zustand 版と RTK 版で共通の型の宣言（state・ダイアログ）。 */
+export function storeTypes(project: Project, modelTypes: readonly string[]) {
+  const state = Object.entries(project.state ?? {});
+  const dialogs = project.dialogs ?? [];
+  const dialogImports = dialogs
+    .filter((d) => Object.keys(d.params ?? {}).length > 0)
+    .map((d) => dialogName(d.id))
+    .sort()
+    .map((n) => `import type { ${n}Params } from "../dialogs/${n}";\n`)
+    .join("");
+  const openDialogMembers = dialogs
+    .map((d) =>
+      Object.keys(d.params ?? {}).length > 0
+        ? `  | { id: ${JSON.stringify(d.id)}; params: ${dialogName(d.id)}Params }\n`
+        : `  | { id: ${JSON.stringify(d.id)} }\n`,
+    )
+    .join("");
+  const hasDialogs = dialogs.length > 0;
+  const stateTypes = [
+    ...new Set(state.flatMap(([, def]) => referencedModelTypes(def.type, modelTypes))),
+  ].sort();
+  const appStateType = `/** アプリ全体の状態（\`{{ state.xxx }}\`）。 */
+export interface AppState {
+${state.map(([k, def]) => `  ${k}: ${def.type};\n`).join("")}}
+
+`;
+  const openDialogType = hasDialogs
+    ? `/** 開いているダイアログと、その params。 */\nexport type OpenDialog =\n${openDialogMembers};\n\n`
+    : "";
+  const initialState = JSON.stringify(
+    Object.fromEntries(state.map(([k, def]) => [k, def.initial])),
+    null,
+    2,
+  );
+  return { dialogImports, stateTypes, appStateType, openDialogType, initialState, hasDialogs };
 }
