@@ -200,7 +200,8 @@ function textChildren(value: JsonValue | undefined, scope: Scope, where: string)
   const jsx = parts
     .map((p) => {
       if ("expr" in p) return `{${p.expr}}`;
-      return /[{}<>]/.test(p.text) || p.text !== p.text.trim()
+      // 前後の空白は JSX でもそのまま残る（改行を含む場合と空白だけの場合は残らないので文字列にする）
+      return /[{}<>\n]/.test(p.text) || p.text.trim() === ""
         ? `{${JSON.stringify(p.text)}}`
         : p.text;
     })

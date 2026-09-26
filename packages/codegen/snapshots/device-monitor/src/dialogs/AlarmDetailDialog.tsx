@@ -26,7 +26,7 @@ export function AlarmDetailDialog({ open, onClose, params }: AlarmDetailDialogPr
         </Text>
         <Text variant="title">{data.alarms.find((a) => a.id === params.alarmId)?.message}</Text>
         <Text>
-          {"機器: "}
+          機器:{" "}
           {
             data.devices.find(
               (d) => d.id === data.alarms.find((a) => a.id === params.alarmId)?.deviceId,
@@ -34,14 +34,14 @@ export function AlarmDetailDialog({ open, onClose, params }: AlarmDetailDialogPr
           }
         </Text>
         <Text>
-          {"発生日時: "}
+          発生日時:{" "}
           {data.alarms
             .find((a) => a.id === params.alarmId)
             ?.occurredAt.slice(0, 19)
             .replace("T", " ")}
         </Text>
         <div className={styles.buttons}>
-          <Button variant="secondary" onClick={() => onClose()}>
+          <Button variant="secondary" onClick={onClose}>
             閉じる
           </Button>
           {!data.alarms.find((a) => a.id === params.alarmId)?.acknowledged && (

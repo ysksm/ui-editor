@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { EXAMPLES } from "./examples.js";
-import { generate } from "./generate.js";
+import { generate, generateRtkStore } from "./generate.js";
 import { readProjectFile } from "./project-file.js";
 
 const snapshotsDir = fileURLToPath(new URL("../snapshots/", import.meta.url));
@@ -46,5 +46,19 @@ describe.each(EXAMPLES)("$name", ({ name, file }) => {
       (p) => !files.some((f) => f.path === p),
     );
     expect(stale, `snapshots/${name}/ から消してください`).toEqual([]);
+  });
+});
+
+describe("RTK 版のストア（比較用）", () => {
+  const example = EXAMPLES.find((e) => e.name === "device-monitor")!;
+
+  it("スナップショットと一致する", async () => {
+    const files = await generateRtkStore(readProjectFile(example.file));
+    expect(files.map((f) => f.path)).toEqual(["src/store/appStore.ts"]);
+    for (const f of files) {
+      await expect(f.content).toMatchFileSnapshot(
+        join(snapshotsDir, "rtk-store", example.name, f.path),
+      );
+    }
   });
 });

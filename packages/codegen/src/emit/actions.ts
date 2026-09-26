@@ -55,6 +55,10 @@ export function actionStatements(
 
 /** 文の並び → イベントハンドラ（アロー関数）。 */
 export function arrowFunction(statements: string[], params: string): string {
+  // `() => onClose()` は `onClose` と書ける
+  if (statements.length === 1 && params === "" && /^\w+\(\);$/.test(statements[0]!)) {
+    return statements[0]!.slice(0, -3);
+  }
   if (statements.length === 1) return `(${params}) => ${statements[0]!.replace(/;$/, "")}`;
   return `(${params}) => {\n${statements.join("\n")}\n}`;
 }
