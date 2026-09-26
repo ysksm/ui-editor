@@ -10,6 +10,7 @@ export type ScreenNodeData = {
   entry: boolean;
   components: ReadonlyMap<string, Component>;
   triggerNodeIds: ReadonlySet<string>;
+  connectableNodeIds: ReadonlySet<string>;
   /** 画面自体のイベント（mount）から出る遷移があるか */
   hasScreenTrigger: boolean;
 };
@@ -25,7 +26,7 @@ function ScreenNodeView({ data }: NodeProps<ScreenFlowNode>) {
           type="target"
           position={Position.Left}
           className="screen-target"
-          isConnectable={false}
+          isConnectableStart={false}
         />
         <span className="screen-node-kind">{info.kind === "screen" ? "画面" : "ダイアログ"}</span>
         <span className="screen-node-name">{info.name}</span>
@@ -45,6 +46,7 @@ function ScreenNodeView({ data }: NodeProps<ScreenFlowNode>) {
         root={info.root}
         components={data.components}
         triggerNodeIds={data.triggerNodeIds}
+        connectableNodeIds={data.connectableNodeIds}
       />
     </div>
   );
