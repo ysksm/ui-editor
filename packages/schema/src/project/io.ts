@@ -1,4 +1,4 @@
-import { parse as parseYaml, stringify as stringifyYaml, YAMLParseError } from "yaml";
+import { isMap, LineCounter, parseDocument, stringify as stringifyYaml, visit } from "yaml";
 import { validateProject, type ValidationResult } from "./validate.js";
 import type { Project } from "./schema.js";
 
@@ -24,19 +24,18 @@ export function parseProjectText(text: string, format: ProjectFormat): unknown {
       throw new ProjectParseError(`JSON の構文エラー: ${(e as Error).message}`);
     }
   }
-  const unquoted = findUnquotedBinding(text);
+  const lineCounter = new LineCounter();
+  const doc = parseDocument(text, { lineCounter });
+  const error = doc.errors[0];
+  if (error) throw new ProjectParseError(`YAML の構文エラー: ${error.message}`);
+  const unquoted = findUnquotedBinding(doc);
   if (unquoted !== undefined) {
     throw new ProjectParseError(
-      `YAML ${unquoted} 行目: \`{{\` で始まる値はクォートしてください（例: "{{ device.name }}"）。` +
+      `YAML ${lineCounter.linePos(unquoted).line} 行目: \`{{\` で始まる値はクォートしてください（例: "{{ device.name }}"）。` +
         "クォートしないと YAML のマッピングとして解釈されます",
     );
   }
-  try {
-    return parseYaml(text) as unknown;
-  } catch (e) {
-    if (e instanceof YAMLParseError) throw new ProjectParseError(`YAML の構文エラー: ${e.message}`);
-    throw e;
-  }
+  return doc.toJS() as unknown;
 }
 
 /** 読み込みと検証をまとめて行う。 */
@@ -116,13 +115,20 @@ export function canonicalize(value: unknown): unknown {
   return value;
 }
 
-/** クォートされていない `{{` で始まる YAML の値を探し、その行番号（1 始まり）を返す。 */
-function findUnquotedBinding(text: string): number | undefined {
-  const lines = text.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i] ?? "";
-    if (/^\s*#/.test(line)) continue;
-    if (/(^|:\s|-\s)\s*\{\{/.test(line)) return i + 1;
-  }
-  return undefined;
+/**
+ * クォートされていない `{{ x }}` は「キーがフローマッピングのフローマッピング」になる。
+ * そのようなノードを探し、開始位置（文字オフセット）を返す。
+ */
+function findUnquotedBinding(doc: ReturnType<typeof parseDocument>): number | undefined {
+  let offset: number | undefined;
+  visit(doc, {
+    Map(_, node) {
+      if (node.flow && node.items.some((pair) => isMap(pair.key) && pair.key.flow)) {
+        offset = node.range?.[0] ?? 0;
+        return visit.BREAK;
+      }
+      return undefined;
+    },
+  });
+  return offset;
 }

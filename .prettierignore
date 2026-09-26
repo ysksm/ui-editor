@@ -2,3 +2,4 @@ dist
 coverage
 pnpm-lock.yaml
 packages/schema/project.schema.json
+packages/schema/examples/*.project.*

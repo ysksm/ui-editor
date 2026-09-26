@@ -1,0 +1,1449 @@
+$schema: ../project.schema.json
+schemaVersion: "0"
+name: 機器の設定＆モニタリング
+description: 全プロトタイプ共通の題材アプリ（#1）
+entry: dashboard
+dataModel:
+  source: |
+    type DeviceStatus = "online" | "offline" | "warning";
+
+    interface Device {
+      id: string;
+      name: string;
+      model: string;
+      status: DeviceStatus;
+      ipAddress: string;
+      firmware: string;
+    }
+
+    interface DeviceSettings {
+      deviceId: string;
+      network: { dhcp: boolean; ip: string; subnet: string; gateway: string };
+      thresholds: { temperatureMax: number; cpuMax: number };
+      pollingIntervalSec: number;
+    }
+
+    interface Metric {
+      deviceId: string;
+      timestamp: string;
+      temperature: number;
+      cpu: number;
+      trafficMbps: number;
+    }
+
+    interface Alarm {
+      id: string;
+      deviceId: string;
+      level: "info" | "warn" | "error";
+      message: string;
+      occurredAt: string;
+      acknowledged: boolean;
+    }
+state:
+  draftSettings:
+    type: DeviceSettings | null
+    initial: null
+screens:
+  - id: dashboard
+    name: ダッシュボード
+    path: /
+    root:
+      id: page
+      type: Box
+      style:
+        display: flex
+        flexDirection: column
+        gap: 24
+        padding: 24
+      children:
+        - id: header
+          type: Box
+          style:
+            alignItems: center
+            display: flex
+            justifyContent: space-between
+          children:
+            - id: title
+              type: Text
+              props:
+                text: ダッシュボード
+                variant: title
+            - id: toDevices
+              type: Button
+              props:
+                label: 機器一覧へ
+                variant: secondary
+              events:
+                click:
+                  - type: navigate
+                    to: devices
+        - id: statusSection
+          type: Box
+          style:
+            display: flex
+            flexDirection: column
+            gap: 8
+          children:
+            - id: statusTitle
+              type: Text
+              props:
+                text: 機器ステータス
+                variant: caption
+            - id: statusList
+              type: Box
+              style:
+                display: flex
+                flexWrap: wrap
+                gap: 12
+              children:
+                - id: deviceCard
+                  type: Box
+                  style:
+                    border: "1px solid #ddd"
+                    borderRadius: 8
+                    cursor: pointer
+                    display: flex
+                    flexDirection: column
+                    gap: 4
+                    padding: 12
+                    width: 200
+                  repeat:
+                    each: "{{ data.devices }}"
+                    as: device
+                    key: "{{ device.id }}"
+                  events:
+                    click:
+                      - type: navigate
+                        to: deviceSettings
+                        params:
+                          deviceId: "{{ device.id }}"
+                  children:
+                    - id: deviceName
+                      type: Text
+                      props:
+                        text: "{{ device.name }}"
+                    - id: deviceStatus
+                      type: StatusBadge
+                      props:
+                        status: "{{ device.status }}"
+        - id: metricSection
+          type: Box
+          style:
+            display: flex
+            gap: 12
+          children:
+            - id: temperatureCard
+              type: MetricCard
+              props:
+                value: "{{ Math.max(...data.devices.map(d => data.metrics.filter(m => m.deviceId === d.id).at(-1)?.temperature ?? 0)) }}"
+                label: 最高温度
+                unit: ℃
+            - id: cpuCard
+              type: MetricCard
+              props:
+                value: "{{ Math.max(...data.devices.map(d => data.metrics.filter(m => m.deviceId === d.id).at(-1)?.cpu ?? 0)) }}"
+                label: 最大 CPU 使用率
+                unit: "%"
+            - id: trafficCard
+              type: MetricCard
+              props:
+                value: "{{ Math.round(data.devices.reduce((sum, d) => sum + (data.metrics.filter(m => m.deviceId === d.id).at(-1)?.trafficMbps ?? 0), 0)) }}"
+                label: 通信量（合計）
+                unit: Mbps
+        - id: alarmSection
+          type: Box
+          style:
+            display: flex
+            flexDirection: column
+            gap: 8
+          children:
+            - id: alarmTitle
+              type: Text
+              props:
+                text: 最新アラーム
+                variant: caption
+            - id: alarmRow
+              type: AlarmRow
+              props:
+                alarm: "{{ alarm }}"
+                deviceName: "{{ data.devices.find(d => d.id === alarm.deviceId)?.name ?? alarm.deviceId }}"
+              repeat:
+                each: "{{ data.alarms.toSorted((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 5) }}"
+                as: alarm
+                key: "{{ alarm.id }}"
+              events:
+                click:
+                  - type: openDialog
+                    dialog: alarmDetail
+                    params:
+                      alarmId: "{{ alarm.id }}"
+  - id: devices
+    name: 機器一覧
+    path: /devices
+    root:
+      id: page
+      type: Box
+      style:
+        display: flex
+        flexDirection: column
+        gap: 16
+        padding: 24
+      children:
+        - id: header
+          type: Box
+          style:
+            alignItems: center
+            display: flex
+            justifyContent: space-between
+          children:
+            - id: title
+              type: Text
+              props:
+                text: 機器一覧
+                variant: title
+            - id: toDashboard
+              type: Button
+              props:
+                label: ダッシュボードへ
+                variant: secondary
+              events:
+                click:
+                  - type: navigate
+                    to: dashboard
+        - id: deviceTable
+          type: Table
+          props:
+            columns:
+              - value: "{{ row.name }}"
+                header: 名前
+              - value: "{{ row.model }}"
+                header: 型番
+              - value: "{{ ({ online: 'オンライン', offline: 'オフライン', warning: '警告' })[row.status] }}"
+                header: ステータス
+              - value: "{{ row.ipAddress }}"
+                header: IP アドレス
+              - value: "{{ row.firmware }}"
+                header: ファームウェア
+            rows: "{{ data.devices }}"
+          events:
+            rowClick:
+              - type: navigate
+                to: deviceSettings
+                params:
+                  deviceId: "{{ event.row.id }}"
+  - id: deviceSettings
+    name: 機器設定
+    path: /devices/:deviceId
+    params:
+      deviceId:
+        type: string
+    events:
+      mount:
+        - type: setState
+          path: draftSettings
+          value: "{{ structuredClone(data.deviceSettings.find(s => s.deviceId === params.deviceId) ?? null) }}"
+    root:
+      id: page
+      type: Box
+      style:
+        display: flex
+        flexDirection: column
+        gap: 16
+        maxWidth: 560
+        padding: 24
+      children:
+        - id: header
+          type: Box
+          style:
+            alignItems: center
+            display: flex
+            gap: 12
+          children:
+            - id: title
+              type: Text
+              props:
+                text: "{{ data.devices.find(d => d.id === params.deviceId)?.name ?? params.deviceId }} の設定"
+                variant: title
+            - id: status
+              type: StatusBadge
+              props:
+                status: "{{ data.devices.find(d => d.id === params.deviceId)?.status ?? 'offline' }}"
+        - id: notFound
+          type: Text
+          props:
+            text: 機器が見つかりません
+          visible: "{{ state.draftSettings === null }}"
+        - id: form
+          type: Box
+          style:
+            display: flex
+            flexDirection: column
+            gap: 16
+          visible: "{{ state.draftSettings !== null }}"
+          children:
+            - id: networkSection
+              type: Box
+              style:
+                display: flex
+                flexDirection: column
+                gap: 8
+              children:
+                - id: networkTitle
+                  type: Text
+                  props:
+                    text: ネットワーク
+                    variant: caption
+                - id: dhcp
+                  type: Checkbox
+                  props:
+                    checked: "{{ state.draftSettings.network.dhcp }}"
+                    label: DHCP を使う
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.dhcp
+                        value: "{{ event.value }}"
+                - id: ip
+                  type: TextInput
+                  props:
+                    value: "{{ state.draftSettings.network.ip }}"
+                    disabled: "{{ state.draftSettings.network.dhcp }}"
+                    label: IP アドレス
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.ip
+                        value: "{{ event.value }}"
+                - id: subnet
+                  type: TextInput
+                  props:
+                    value: "{{ state.draftSettings.network.subnet }}"
+                    disabled: "{{ state.draftSettings.network.dhcp }}"
+                    label: サブネットマスク
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.subnet
+                        value: "{{ event.value }}"
+                - id: gateway
+                  type: TextInput
+                  props:
+                    value: "{{ state.draftSettings.network.gateway }}"
+                    disabled: "{{ state.draftSettings.network.dhcp }}"
+                    label: デフォルトゲートウェイ
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.gateway
+                        value: "{{ event.value }}"
+            - id: thresholdSection
+              type: Box
+              style:
+                display: flex
+                flexDirection: column
+                gap: 8
+              children:
+                - id: thresholdTitle
+                  type: Text
+                  props:
+                    text: 閾値
+                    variant: caption
+                - id: temperatureMax
+                  type: NumberInput
+                  props:
+                    value: "{{ state.draftSettings.thresholds.temperatureMax }}"
+                    label: 温度の上限（℃）
+                    max: 120
+                    min: 0
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.thresholds.temperatureMax
+                        value: "{{ event.value }}"
+                - id: cpuMax
+                  type: NumberInput
+                  props:
+                    value: "{{ state.draftSettings.thresholds.cpuMax }}"
+                    label: CPU 使用率の上限（%）
+                    max: 100
+                    min: 0
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.thresholds.cpuMax
+                        value: "{{ event.value }}"
+            - id: pollingSection
+              type: Box
+              style:
+                display: flex
+                flexDirection: column
+                gap: 8
+              children:
+                - id: pollingTitle
+                  type: Text
+                  props:
+                    text: ポーリング
+                    variant: caption
+                - id: pollingInterval
+                  type: NumberInput
+                  props:
+                    value: "{{ state.draftSettings.pollingIntervalSec }}"
+                    label: ポーリング間隔（秒）
+                    min: 10
+                    step: 10
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.pollingIntervalSec
+                        value: "{{ event.value }}"
+            - id: buttons
+              type: Box
+              style:
+                display: flex
+                gap: 8
+                justifyContent: flex-end
+              children:
+                - id: cancel
+                  type: Button
+                  props:
+                    label: キャンセル
+                    variant: secondary
+                  events:
+                    click:
+                      - type: navigate
+                        to: devices
+                - id: save
+                  type: Button
+                  props:
+                    label: 保存
+                    variant: primary
+                  events:
+                    click:
+                      - type: openDialog
+                        dialog: saveConfirm
+                        params:
+                          deviceId: "{{ params.deviceId }}"
+components:
+  - id: StatusBadge
+    name: ステータスバッジ
+    props:
+      status:
+        type: DeviceStatus
+    root:
+      id: badge
+      type: Text
+      props:
+        text: "{{ ({ online: 'オンライン', offline: 'オフライン', warning: '警告' })[props.status] }}"
+      style:
+        backgroundColor: "{{ ({ online: '#2e7d32', offline: '#757575', warning: '#ed6c02' })[props.status] }}"
+        borderRadius: 999
+        color: "#fff"
+        fontSize: 12
+        padding: 4px 8px
+  - id: MetricCard
+    name: メトリクスカード
+    props:
+      value:
+        type: number
+      label:
+        type: string
+      unit:
+        type: string
+        default: ""
+    root:
+      id: card
+      type: Box
+      style:
+        border: "1px solid #ddd"
+        borderRadius: 8
+        display: flex
+        flexDirection: column
+        gap: 4
+        padding: 16
+        width: 200
+      children:
+        - id: label
+          type: Text
+          props:
+            text: "{{ props.label }}"
+            variant: caption
+        - id: value
+          type: Text
+          props:
+            text: "{{ props.value }} {{ props.unit }}"
+            variant: title
+  - id: AlarmRow
+    name: アラーム行
+    props:
+      alarm:
+        type: Alarm
+      deviceName:
+        type: string
+    root:
+      id: row
+      type: Box
+      style:
+        alignItems: center
+        border: "1px solid #eee"
+        borderRadius: 4
+        cursor: pointer
+        display: flex
+        gap: 12
+        padding: 8
+      children:
+        - id: level
+          type: Text
+          props:
+            text: "{{ props.alarm.level.toUpperCase() }}"
+          style:
+            color: "{{ ({ info: '#0288d1', warn: '#ed6c02', error: '#d32f2f' })[props.alarm.level] }}"
+            fontWeight: bold
+            width: 56
+        - id: message
+          type: Text
+          props:
+            text: "{{ props.alarm.message }}"
+          style:
+            flexGrow: 1
+        - id: device
+          type: Text
+          props:
+            text: "{{ props.deviceName }}"
+            variant: caption
+        - id: occurredAt
+          type: Text
+          props:
+            text: "{{ props.alarm.occurredAt.slice(0, 16).replace('T', ' ') }}"
+            variant: caption
+        - id: acknowledged
+          type: Text
+          props:
+            text: 確認済み
+            variant: caption
+          visible: "{{ props.alarm.acknowledged }}"
+dialogs:
+  - id: saveConfirm
+    name: 保存確認
+    params:
+      deviceId:
+        type: string
+    root:
+      id: body
+      type: Box
+      style:
+        display: flex
+        flexDirection: column
+        gap: 16
+        padding: 24
+      children:
+        - id: message
+          type: Text
+          props:
+            text: 設定を保存しますか？
+        - id: buttons
+          type: Box
+          style:
+            display: flex
+            gap: 8
+            justifyContent: flex-end
+          children:
+            - id: cancel
+              type: Button
+              props:
+                label: キャンセル
+                variant: secondary
+              events:
+                click:
+                  - type: closeDialog
+            - id: ok
+              type: Button
+              props:
+                label: OK
+                variant: primary
+              events:
+                click:
+                  - type: updateData
+                    collection: deviceSettings
+                    match:
+                      deviceId: "{{ params.deviceId }}"
+                    set:
+                      network: "{{ state.draftSettings.network }}"
+                      pollingIntervalSec: "{{ state.draftSettings.pollingIntervalSec }}"
+                      thresholds: "{{ state.draftSettings.thresholds }}"
+                  - type: updateData
+                    collection: devices
+                    match:
+                      id: "{{ params.deviceId }}"
+                    set:
+                      ipAddress: "{{ state.draftSettings.network.ip }}"
+                  - type: closeDialog
+                  - type: navigate
+                    to: devices
+  - id: alarmDetail
+    name: アラーム詳細
+    params:
+      alarmId:
+        type: string
+    root:
+      id: body
+      type: Box
+      style:
+        display: flex
+        flexDirection: column
+        gap: 12
+        minWidth: 400
+        padding: 24
+      children:
+        - id: level
+          type: Text
+          props:
+            text: "{{ data.alarms.find(a => a.id === params.alarmId)?.level.toUpperCase() }}"
+            variant: caption
+        - id: message
+          type: Text
+          props:
+            text: "{{ data.alarms.find(a => a.id === params.alarmId)?.message }}"
+            variant: title
+        - id: device
+          type: Text
+          props:
+            text: "機器: {{ data.devices.find(d => d.id === data.alarms.find(a => a.id === params.alarmId)?.deviceId)?.name }}"
+        - id: occurredAt
+          type: Text
+          props:
+            text: "発生日時: {{ data.alarms.find(a => a.id === params.alarmId)?.occurredAt.slice(0, 19).replace('T', ' ') }}"
+        - id: buttons
+          type: Box
+          style:
+            display: flex
+            gap: 8
+            justifyContent: flex-end
+          children:
+            - id: close
+              type: Button
+              props:
+                label: 閉じる
+                variant: secondary
+              events:
+                click:
+                  - type: closeDialog
+            - id: acknowledge
+              type: Button
+              props:
+                label: 確認済みにする
+                variant: primary
+              visible: "{{ !data.alarms.find(a => a.id === params.alarmId)?.acknowledged }}"
+              events:
+                click:
+                  - type: updateData
+                    collection: alarms
+                    match:
+                      id: "{{ params.alarmId }}"
+                    set:
+                      acknowledged: true
+                  - type: closeDialog
+sampleData:
+  alarms:
+    - id: alm-001
+      acknowledged: false
+      deviceId: dev-004
+      level: error
+      message: 機器との通信が途絶しました
+      occurredAt: 2026-09-27T08:42:10.000Z
+    - id: alm-002
+      acknowledged: false
+      deviceId: dev-003
+      level: warn
+      message: 温度が閾値に近づいています（63.8℃ / 65℃）
+      occurredAt: 2026-09-27T08:55:03.000Z
+    - id: alm-003
+      acknowledged: false
+      deviceId: dev-003
+      level: warn
+      message: CPU 使用率が 80% を超えました
+      occurredAt: 2026-09-27T08:31:47.000Z
+    - id: alm-004
+      acknowledged: true
+      deviceId: dev-001
+      level: info
+      message: 設定が保存されました
+      occurredAt: 2026-09-27T07:10:00.000Z
+    - id: alm-005
+      acknowledged: true
+      deviceId: dev-002
+      level: info
+      message: ファームウェア 4.2.1 に更新されました
+      occurredAt: 2026-09-26T22:05:12.000Z
+    - id: alm-006
+      acknowledged: false
+      deviceId: dev-004
+      level: warn
+      message: 応答時間が遅延しています（1200ms）
+      occurredAt: 2026-09-27T08:39:55.000Z
+    - id: alm-007
+      acknowledged: true
+      deviceId: dev-005
+      level: info
+      message: ポーリング間隔が 300 秒に変更されました
+      occurredAt: 2026-09-26T18:20:00.000Z
+    - id: alm-008
+      acknowledged: true
+      deviceId: dev-001
+      level: error
+      message: ポート 24 のリンクがダウンしました
+      occurredAt: 2026-09-27T06:12:33.000Z
+    - id: alm-009
+      acknowledged: false
+      deviceId: dev-002
+      level: warn
+      message: 通信量が急増しています（950Mbps）
+      occurredAt: 2026-09-27T05:48:20.000Z
+    - id: alm-010
+      acknowledged: true
+      deviceId: dev-005
+      level: error
+      message: センサー値の読み取りに失敗しました
+      occurredAt: 2026-09-26T15:02:41.000Z
+  deviceSettings:
+    - deviceId: dev-001
+      network:
+        dhcp: false
+        gateway: 192.168.10.254
+        ip: 192.168.10.1
+        subnet: 255.255.255.0
+      pollingIntervalSec: 30
+      thresholds:
+        cpuMax: 85
+        temperatureMax: 70
+    - deviceId: dev-002
+      network:
+        dhcp: false
+        gateway: 192.168.10.254
+        ip: 192.168.10.2
+        subnet: 255.255.255.0
+      pollingIntervalSec: 30
+      thresholds:
+        cpuMax: 85
+        temperatureMax: 70
+    - deviceId: dev-003
+      network:
+        dhcp: false
+        gateway: 192.168.20.254
+        ip: 192.168.20.1
+        subnet: 255.255.255.0
+      pollingIntervalSec: 60
+      thresholds:
+        cpuMax: 80
+        temperatureMax: 65
+    - deviceId: dev-004
+      network:
+        dhcp: true
+        gateway: 192.168.30.254
+        ip: 192.168.30.12
+        subnet: 255.255.255.0
+      pollingIntervalSec: 120
+      thresholds:
+        cpuMax: 90
+        temperatureMax: 60
+    - deviceId: dev-005
+      network:
+        dhcp: true
+        gateway: 192.168.40.254
+        ip: 192.168.40.5
+        subnet: 255.255.255.0
+      pollingIntervalSec: 300
+      thresholds:
+        cpuMax: 95
+        temperatureMax: 35
+  devices:
+    - id: dev-001
+      name: コアスイッチ A
+      firmware: 4.2.1
+      ipAddress: 192.168.10.1
+      model: CS-9000
+      status: online
+    - id: dev-002
+      name: コアスイッチ B
+      firmware: 4.2.1
+      ipAddress: 192.168.10.2
+      model: CS-9000
+      status: online
+    - id: dev-003
+      name: エッジルーター 1F
+      firmware: 2.8.0
+      ipAddress: 192.168.20.1
+      model: ER-450
+      status: warning
+    - id: dev-004
+      name: 無線 AP 2F
+      firmware: 1.9.5
+      ipAddress: 192.168.30.12
+      model: AP-300
+      status: offline
+    - id: dev-005
+      name: 環境センサー サーバー室
+      firmware: 0.9.3
+      ipAddress: 192.168.40.5
+      model: ENV-10
+      status: online
+  metrics:
+    - cpu: 43
+      deviceId: dev-001
+      temperature: 48
+      timestamp: 2026-09-27T08:31:00.000Z
+      trafficMbps: 820
+    - cpu: 42
+      deviceId: dev-001
+      temperature: 48.7
+      timestamp: 2026-09-27T08:32:00.000Z
+      trafficMbps: 860.2
+    - cpu: 39.3
+      deviceId: dev-001
+      temperature: 49.3
+      timestamp: 2026-09-27T08:33:00.000Z
+      trafficMbps: 896.1
+    - cpu: 35.6
+      deviceId: dev-001
+      temperature: 49.8
+      timestamp: 2026-09-27T08:34:00.000Z
+      trafficMbps: 923.5
+    - cpu: 31.7
+      deviceId: dev-001
+      temperature: 50.1
+      timestamp: 2026-09-27T08:35:00.000Z
+      trafficMbps: 939.5
+    - cpu: 28.6
+      deviceId: dev-001
+      temperature: 50.2
+      timestamp: 2026-09-27T08:36:00.000Z
+      trafficMbps: 942.4
+    - cpu: 27.1
+      deviceId: dev-001
+      temperature: 50.1
+      timestamp: 2026-09-27T08:37:00.000Z
+      trafficMbps: 931.8
+    - cpu: 27.5
+      deviceId: dev-001
+      temperature: 49.8
+      timestamp: 2026-09-27T08:38:00.000Z
+      trafficMbps: 908.9
+    - cpu: 29.8
+      deviceId: dev-001
+      temperature: 49.3
+      timestamp: 2026-09-27T08:39:00.000Z
+      trafficMbps: 876.2
+    - cpu: 33.3
+      deviceId: dev-001
+      temperature: 48.7
+      timestamp: 2026-09-27T08:40:00.000Z
+      trafficMbps: 837.4
+    - cpu: 37.3
+      deviceId: dev-001
+      temperature: 48.1
+      timestamp: 2026-09-27T08:41:00.000Z
+      trafficMbps: 796.6
+    - cpu: 40.7
+      deviceId: dev-001
+      temperature: 47.5
+      timestamp: 2026-09-27T08:42:00.000Z
+      trafficMbps: 758.3
+    - cpu: 42.7
+      deviceId: dev-001
+      temperature: 47.1
+      timestamp: 2026-09-27T08:43:00.000Z
+      trafficMbps: 726.9
+    - cpu: 42.8
+      deviceId: dev-001
+      temperature: 46.8
+      timestamp: 2026-09-27T08:44:00.000Z
+      trafficMbps: 705.7
+    - cpu: 41
+      deviceId: dev-001
+      temperature: 46.7
+      timestamp: 2026-09-27T08:45:00.000Z
+      trafficMbps: 697.1
+    - cpu: 37.8
+      deviceId: dev-001
+      temperature: 46.8
+      timestamp: 2026-09-27T08:46:00.000Z
+      trafficMbps: 702.1
+    - cpu: 33.8
+      deviceId: dev-001
+      temperature: 47.2
+      timestamp: 2026-09-27T08:47:00.000Z
+      trafficMbps: 720
+    - cpu: 30.2
+      deviceId: dev-001
+      temperature: 47.7
+      timestamp: 2026-09-27T08:48:00.000Z
+      trafficMbps: 748.9
+    - cpu: 27.7
+      deviceId: dev-001
+      temperature: 48.3
+      timestamp: 2026-09-27T08:49:00.000Z
+      trafficMbps: 785.6
+    - cpu: 27
+      deviceId: dev-001
+      temperature: 49.1
+      timestamp: 2026-09-27T08:50:00.000Z
+      trafficMbps: 826.2
+    - cpu: 28.3
+      deviceId: dev-001
+      temperature: 49.7
+      timestamp: 2026-09-27T08:51:00.000Z
+      trafficMbps: 866
+    - cpu: 31.2
+      deviceId: dev-001
+      temperature: 50.4
+      timestamp: 2026-09-27T08:52:00.000Z
+      trafficMbps: 900.8
+    - cpu: 35
+      deviceId: dev-001
+      temperature: 50.8
+      timestamp: 2026-09-27T08:53:00.000Z
+      trafficMbps: 926.7
+    - cpu: 38.9
+      deviceId: dev-001
+      temperature: 51.1
+      timestamp: 2026-09-27T08:54:00.000Z
+      trafficMbps: 940.8
+    - cpu: 41.8
+      deviceId: dev-001
+      temperature: 51.2
+      timestamp: 2026-09-27T08:55:00.000Z
+      trafficMbps: 941.7
+    - cpu: 43
+      deviceId: dev-001
+      temperature: 51
+      timestamp: 2026-09-27T08:56:00.000Z
+      trafficMbps: 929.1
+    - cpu: 42.3
+      deviceId: dev-001
+      temperature: 50.7
+      timestamp: 2026-09-27T08:57:00.000Z
+      trafficMbps: 904.6
+    - cpu: 39.8
+      deviceId: dev-001
+      temperature: 50.2
+      timestamp: 2026-09-27T08:58:00.000Z
+      trafficMbps: 870.7
+    - cpu: 36.1
+      deviceId: dev-001
+      temperature: 49.6
+      timestamp: 2026-09-27T08:59:00.000Z
+      trafficMbps: 831.2
+    - cpu: 32.2
+      deviceId: dev-001
+      temperature: 49
+      timestamp: 2026-09-27T09:00:00.000Z
+      trafficMbps: 790.5
+    - cpu: 36
+      deviceId: dev-002
+      temperature: 46
+      timestamp: 2026-09-27T08:31:00.000Z
+      trafficMbps: 640
+    - cpu: 35
+      deviceId: dev-002
+      temperature: 46.7
+      timestamp: 2026-09-27T08:32:00.000Z
+      trafficMbps: 671.4
+    - cpu: 32.3
+      deviceId: dev-002
+      temperature: 47.3
+      timestamp: 2026-09-27T08:33:00.000Z
+      trafficMbps: 699.4
+    - cpu: 28.6
+      deviceId: dev-002
+      temperature: 47.8
+      timestamp: 2026-09-27T08:34:00.000Z
+      trafficMbps: 720.8
+    - cpu: 24.7
+      deviceId: dev-002
+      temperature: 48.1
+      timestamp: 2026-09-27T08:35:00.000Z
+      trafficMbps: 733.3
+    - cpu: 21.6
+      deviceId: dev-002
+      temperature: 48.2
+      timestamp: 2026-09-27T08:36:00.000Z
+      trafficMbps: 735.6
+    - cpu: 20.1
+      deviceId: dev-002
+      temperature: 48.1
+      timestamp: 2026-09-27T08:37:00.000Z
+      trafficMbps: 727.3
+    - cpu: 20.5
+      deviceId: dev-002
+      temperature: 47.8
+      timestamp: 2026-09-27T08:38:00.000Z
+      trafficMbps: 709.4
+    - cpu: 22.8
+      deviceId: dev-002
+      temperature: 47.3
+      timestamp: 2026-09-27T08:39:00.000Z
+      trafficMbps: 683.9
+    - cpu: 26.3
+      deviceId: dev-002
+      temperature: 46.7
+      timestamp: 2026-09-27T08:40:00.000Z
+      trafficMbps: 653.5
+    - cpu: 30.3
+      deviceId: dev-002
+      temperature: 46.1
+      timestamp: 2026-09-27T08:41:00.000Z
+      trafficMbps: 621.7
+    - cpu: 33.7
+      deviceId: dev-002
+      temperature: 45.5
+      timestamp: 2026-09-27T08:42:00.000Z
+      trafficMbps: 591.9
+    - cpu: 35.7
+      deviceId: dev-002
+      temperature: 45.1
+      timestamp: 2026-09-27T08:43:00.000Z
+      trafficMbps: 567.3
+    - cpu: 35.8
+      deviceId: dev-002
+      temperature: 44.8
+      timestamp: 2026-09-27T08:44:00.000Z
+      trafficMbps: 550.8
+    - cpu: 34
+      deviceId: dev-002
+      temperature: 44.7
+      timestamp: 2026-09-27T08:45:00.000Z
+      trafficMbps: 544.1
+    - cpu: 30.8
+      deviceId: dev-002
+      temperature: 44.8
+      timestamp: 2026-09-27T08:46:00.000Z
+      trafficMbps: 547.9
+    - cpu: 26.8
+      deviceId: dev-002
+      temperature: 45.2
+      timestamp: 2026-09-27T08:47:00.000Z
+      trafficMbps: 561.9
+    - cpu: 23.2
+      deviceId: dev-002
+      temperature: 45.7
+      timestamp: 2026-09-27T08:48:00.000Z
+      trafficMbps: 584.5
+    - cpu: 20.7
+      deviceId: dev-002
+      temperature: 46.3
+      timestamp: 2026-09-27T08:49:00.000Z
+      trafficMbps: 613.2
+    - cpu: 20
+      deviceId: dev-002
+      temperature: 47.1
+      timestamp: 2026-09-27T08:50:00.000Z
+      trafficMbps: 644.8
+    - cpu: 21.3
+      deviceId: dev-002
+      temperature: 47.7
+      timestamp: 2026-09-27T08:51:00.000Z
+      trafficMbps: 675.9
+    - cpu: 24.2
+      deviceId: dev-002
+      temperature: 48.4
+      timestamp: 2026-09-27T08:52:00.000Z
+      trafficMbps: 703.1
+    - cpu: 28
+      deviceId: dev-002
+      temperature: 48.8
+      timestamp: 2026-09-27T08:53:00.000Z
+      trafficMbps: 723.3
+    - cpu: 31.9
+      deviceId: dev-002
+      temperature: 49.1
+      timestamp: 2026-09-27T08:54:00.000Z
+      trafficMbps: 734.3
+    - cpu: 34.8
+      deviceId: dev-002
+      temperature: 49.2
+      timestamp: 2026-09-27T08:55:00.000Z
+      trafficMbps: 735
+    - cpu: 36
+      deviceId: dev-002
+      temperature: 49
+      timestamp: 2026-09-27T08:56:00.000Z
+      trafficMbps: 725.2
+    - cpu: 35.3
+      deviceId: dev-002
+      temperature: 48.7
+      timestamp: 2026-09-27T08:57:00.000Z
+      trafficMbps: 706
+    - cpu: 32.8
+      deviceId: dev-002
+      temperature: 48.2
+      timestamp: 2026-09-27T08:58:00.000Z
+      trafficMbps: 679.6
+    - cpu: 29.1
+      deviceId: dev-002
+      temperature: 47.6
+      timestamp: 2026-09-27T08:59:00.000Z
+      trafficMbps: 648.8
+    - cpu: 25.2
+      deviceId: dev-002
+      temperature: 47
+      timestamp: 2026-09-27T09:00:00.000Z
+      trafficMbps: 617
+    - cpu: 80
+      deviceId: dev-003
+      temperature: 63
+      timestamp: 2026-09-27T08:31:00.000Z
+      trafficMbps: 210
+    - cpu: 79
+      deviceId: dev-003
+      temperature: 63.7
+      timestamp: 2026-09-27T08:32:00.000Z
+      trafficMbps: 220.3
+    - cpu: 76.3
+      deviceId: dev-003
+      temperature: 64.3
+      timestamp: 2026-09-27T08:33:00.000Z
+      trafficMbps: 229.5
+    - cpu: 72.6
+      deviceId: dev-003
+      temperature: 64.8
+      timestamp: 2026-09-27T08:34:00.000Z
+      trafficMbps: 236.5
+    - cpu: 68.7
+      deviceId: dev-003
+      temperature: 65.1
+      timestamp: 2026-09-27T08:35:00.000Z
+      trafficMbps: 240.6
+    - cpu: 65.6
+      deviceId: dev-003
+      temperature: 65.2
+      timestamp: 2026-09-27T08:36:00.000Z
+      trafficMbps: 241.4
+    - cpu: 64.1
+      deviceId: dev-003
+      temperature: 65.1
+      timestamp: 2026-09-27T08:37:00.000Z
+      trafficMbps: 238.6
+    - cpu: 64.5
+      deviceId: dev-003
+      temperature: 64.8
+      timestamp: 2026-09-27T08:38:00.000Z
+      trafficMbps: 232.8
+    - cpu: 66.8
+      deviceId: dev-003
+      temperature: 64.3
+      timestamp: 2026-09-27T08:39:00.000Z
+      trafficMbps: 224.4
+    - cpu: 70.3
+      deviceId: dev-003
+      temperature: 63.7
+      timestamp: 2026-09-27T08:40:00.000Z
+      trafficMbps: 214.4
+    - cpu: 74.3
+      deviceId: dev-003
+      temperature: 63.1
+      timestamp: 2026-09-27T08:41:00.000Z
+      trafficMbps: 204
+    - cpu: 77.7
+      deviceId: dev-003
+      temperature: 62.5
+      timestamp: 2026-09-27T08:42:00.000Z
+      trafficMbps: 194.2
+    - cpu: 79.7
+      deviceId: dev-003
+      temperature: 62.1
+      timestamp: 2026-09-27T08:43:00.000Z
+      trafficMbps: 186.2
+    - cpu: 79.8
+      deviceId: dev-003
+      temperature: 61.8
+      timestamp: 2026-09-27T08:44:00.000Z
+      trafficMbps: 180.7
+    - cpu: 78
+      deviceId: dev-003
+      temperature: 61.7
+      timestamp: 2026-09-27T08:45:00.000Z
+      trafficMbps: 178.5
+    - cpu: 74.8
+      deviceId: dev-003
+      temperature: 61.8
+      timestamp: 2026-09-27T08:46:00.000Z
+      trafficMbps: 179.8
+    - cpu: 70.8
+      deviceId: dev-003
+      temperature: 62.2
+      timestamp: 2026-09-27T08:47:00.000Z
+      trafficMbps: 184.4
+    - cpu: 67.2
+      deviceId: dev-003
+      temperature: 62.7
+      timestamp: 2026-09-27T08:48:00.000Z
+      trafficMbps: 191.8
+    - cpu: 64.7
+      deviceId: dev-003
+      temperature: 63.3
+      timestamp: 2026-09-27T08:49:00.000Z
+      trafficMbps: 201.2
+    - cpu: 64
+      deviceId: dev-003
+      temperature: 64.1
+      timestamp: 2026-09-27T08:50:00.000Z
+      trafficMbps: 211.6
+    - cpu: 65.3
+      deviceId: dev-003
+      temperature: 64.7
+      timestamp: 2026-09-27T08:51:00.000Z
+      trafficMbps: 221.8
+    - cpu: 68.2
+      deviceId: dev-003
+      temperature: 65.4
+      timestamp: 2026-09-27T08:52:00.000Z
+      trafficMbps: 230.7
+    - cpu: 72
+      deviceId: dev-003
+      temperature: 65.8
+      timestamp: 2026-09-27T08:53:00.000Z
+      trafficMbps: 237.3
+    - cpu: 75.9
+      deviceId: dev-003
+      temperature: 66.1
+      timestamp: 2026-09-27T08:54:00.000Z
+      trafficMbps: 240.9
+    - cpu: 78.8
+      deviceId: dev-003
+      temperature: 66.2
+      timestamp: 2026-09-27T08:55:00.000Z
+      trafficMbps: 241.2
+    - cpu: 80
+      deviceId: dev-003
+      temperature: 66
+      timestamp: 2026-09-27T08:56:00.000Z
+      trafficMbps: 237.9
+    - cpu: 79.3
+      deviceId: dev-003
+      temperature: 65.7
+      timestamp: 2026-09-27T08:57:00.000Z
+      trafficMbps: 231.7
+    - cpu: 76.8
+      deviceId: dev-003
+      temperature: 65.2
+      timestamp: 2026-09-27T08:58:00.000Z
+      trafficMbps: 223
+    - cpu: 73.1
+      deviceId: dev-003
+      temperature: 64.6
+      timestamp: 2026-09-27T08:59:00.000Z
+      trafficMbps: 212.9
+    - cpu: 69.2
+      deviceId: dev-003
+      temperature: 64
+      timestamp: 2026-09-27T09:00:00.000Z
+      trafficMbps: 202.5
+    - cpu: 20
+      deviceId: dev-004
+      temperature: 41
+      timestamp: 2026-09-27T08:31:00.000Z
+      trafficMbps: 35
+    - cpu: 19
+      deviceId: dev-004
+      temperature: 41.7
+      timestamp: 2026-09-27T08:32:00.000Z
+      trafficMbps: 36.7
+    - cpu: 16.3
+      deviceId: dev-004
+      temperature: 42.3
+      timestamp: 2026-09-27T08:33:00.000Z
+      trafficMbps: 38.2
+    - cpu: 12.6
+      deviceId: dev-004
+      temperature: 42.8
+      timestamp: 2026-09-27T08:34:00.000Z
+      trafficMbps: 39.4
+    - cpu: 8.7
+      deviceId: dev-004
+      temperature: 43.1
+      timestamp: 2026-09-27T08:35:00.000Z
+      trafficMbps: 40.1
+    - cpu: 5.6
+      deviceId: dev-004
+      temperature: 43.2
+      timestamp: 2026-09-27T08:36:00.000Z
+      trafficMbps: 40.2
+    - cpu: 4.1
+      deviceId: dev-004
+      temperature: 43.1
+      timestamp: 2026-09-27T08:37:00.000Z
+      trafficMbps: 39.8
+    - cpu: 4.5
+      deviceId: dev-004
+      temperature: 42.8
+      timestamp: 2026-09-27T08:38:00.000Z
+      trafficMbps: 38.8
+    - cpu: 6.8
+      deviceId: dev-004
+      temperature: 42.3
+      timestamp: 2026-09-27T08:39:00.000Z
+      trafficMbps: 37.4
+    - cpu: 10.3
+      deviceId: dev-004
+      temperature: 41.7
+      timestamp: 2026-09-27T08:40:00.000Z
+      trafficMbps: 35.7
+    - cpu: 14.3
+      deviceId: dev-004
+      temperature: 41.1
+      timestamp: 2026-09-27T08:41:00.000Z
+      trafficMbps: 34
+    - cpu: 17.7
+      deviceId: dev-004
+      temperature: 40.5
+      timestamp: 2026-09-27T08:42:00.000Z
+      trafficMbps: 32.4
+    - cpu: 13
+      deviceId: dev-005
+      temperature: 24
+      timestamp: 2026-09-27T08:31:00.000Z
+      trafficMbps: 0.4
+    - cpu: 12
+      deviceId: dev-005
+      temperature: 24.7
+      timestamp: 2026-09-27T08:32:00.000Z
+      trafficMbps: 0.4
+    - cpu: 9.3
+      deviceId: dev-005
+      temperature: 25.3
+      timestamp: 2026-09-27T08:33:00.000Z
+      trafficMbps: 0.4
+    - cpu: 5.6
+      deviceId: dev-005
+      temperature: 25.8
+      timestamp: 2026-09-27T08:34:00.000Z
+      trafficMbps: 0.5
+    - cpu: 1.7
+      deviceId: dev-005
+      temperature: 26.1
+      timestamp: 2026-09-27T08:35:00.000Z
+      trafficMbps: 0.5
+    - cpu: 0
+      deviceId: dev-005
+      temperature: 26.2
+      timestamp: 2026-09-27T08:36:00.000Z
+      trafficMbps: 0.5
+    - cpu: 0
+      deviceId: dev-005
+      temperature: 26.1
+      timestamp: 2026-09-27T08:37:00.000Z
+      trafficMbps: 0.5
+    - cpu: 0
+      deviceId: dev-005
+      temperature: 25.8
+      timestamp: 2026-09-27T08:38:00.000Z
+      trafficMbps: 0.4
+    - cpu: 0
+      deviceId: dev-005
+      temperature: 25.3
+      timestamp: 2026-09-27T08:39:00.000Z
+      trafficMbps: 0.4
+    - cpu: 3.3
+      deviceId: dev-005
+      temperature: 24.7
+      timestamp: 2026-09-27T08:40:00.000Z
+      trafficMbps: 0.4
+    - cpu: 7.3
+      deviceId: dev-005
+      temperature: 24.1
+      timestamp: 2026-09-27T08:41:00.000Z
+      trafficMbps: 0.4
+    - cpu: 10.7
+      deviceId: dev-005
+      temperature: 23.5
+      timestamp: 2026-09-27T08:42:00.000Z
+      trafficMbps: 0.4
+    - cpu: 12.7
+      deviceId: dev-005
+      temperature: 23.1
+      timestamp: 2026-09-27T08:43:00.000Z
+      trafficMbps: 0.4
+    - cpu: 12.8
+      deviceId: dev-005
+      temperature: 22.8
+      timestamp: 2026-09-27T08:44:00.000Z
+      trafficMbps: 0.3
+    - cpu: 11
+      deviceId: dev-005
+      temperature: 22.7
+      timestamp: 2026-09-27T08:45:00.000Z
+      trafficMbps: 0.3
+    - cpu: 7.8
+      deviceId: dev-005
+      temperature: 22.8
+      timestamp: 2026-09-27T08:46:00.000Z
+      trafficMbps: 0.3
+    - cpu: 3.8
+      deviceId: dev-005
+      temperature: 23.2
+      timestamp: 2026-09-27T08:47:00.000Z
+      trafficMbps: 0.4
+    - cpu: 0.2
+      deviceId: dev-005
+      temperature: 23.7
+      timestamp: 2026-09-27T08:48:00.000Z
+      trafficMbps: 0.4
+    - cpu: 0
+      deviceId: dev-005
+      temperature: 24.3
+      timestamp: 2026-09-27T08:49:00.000Z
+      trafficMbps: 0.4
+    - cpu: 0
+      deviceId: dev-005
+      temperature: 25.1
+      timestamp: 2026-09-27T08:50:00.000Z
+      trafficMbps: 0.4
+    - cpu: 0
+      deviceId: dev-005
+      temperature: 25.7
+      timestamp: 2026-09-27T08:51:00.000Z
+      trafficMbps: 0.4
+    - cpu: 1.2
+      deviceId: dev-005
+      temperature: 26.4
+      timestamp: 2026-09-27T08:52:00.000Z
+      trafficMbps: 0.4
+    - cpu: 5
+      deviceId: dev-005
+      temperature: 26.8
+      timestamp: 2026-09-27T08:53:00.000Z
+      trafficMbps: 0.5
+    - cpu: 8.9
+      deviceId: dev-005
+      temperature: 27.1
+      timestamp: 2026-09-27T08:54:00.000Z
+      trafficMbps: 0.5
+    - cpu: 11.8
+      deviceId: dev-005
+      temperature: 27.2
+      timestamp: 2026-09-27T08:55:00.000Z
+      trafficMbps: 0.5
+    - cpu: 13
+      deviceId: dev-005
+      temperature: 27
+      timestamp: 2026-09-27T08:56:00.000Z
+      trafficMbps: 0.5
+    - cpu: 12.3
+      deviceId: dev-005
+      temperature: 26.7
+      timestamp: 2026-09-27T08:57:00.000Z
+      trafficMbps: 0.4
+    - cpu: 9.8
+      deviceId: dev-005
+      temperature: 26.2
+      timestamp: 2026-09-27T08:58:00.000Z
+      trafficMbps: 0.4
+    - cpu: 6.1
+      deviceId: dev-005
+      temperature: 25.6
+      timestamp: 2026-09-27T08:59:00.000Z
+      trafficMbps: 0.4
+    - cpu: 2.2
+      deviceId: dev-005
+      temperature: 25
+      timestamp: 2026-09-27T09:00:00.000Z
+      trafficMbps: 0.4
