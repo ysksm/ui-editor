@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { textToValue, valueToText } from "./value-text.ts";
+import { lengthToText, textToLength, textToValue, valueToText } from "./value-text.ts";
 
 describe("value-text", () => {
   it.each([
@@ -19,5 +19,23 @@ describe("value-text", () => {
   it("空欄は undefined", () => {
     expect(textToValue("")).toBeUndefined();
     expect(valueToText(undefined)).toBe("");
+  });
+});
+
+describe("length", () => {
+  it.each([
+    ["200", 200],
+    ["0", 0],
+    ["100%", "100%"],
+    ["4px 8px", "4px 8px"],
+    ["auto", "auto"],
+  ])("%s ⇔ %s", (text, value) => {
+    expect(textToLength(text)).toBe(value);
+    expect(lengthToText(value)).toBe(text);
+  });
+
+  it("空欄は undefined", () => {
+    expect(textToLength("  ")).toBeUndefined();
+    expect(lengthToText(undefined)).toBe("");
   });
 });

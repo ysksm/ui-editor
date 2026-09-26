@@ -25,3 +25,15 @@ export function textToValue(text: string): JsonValue | undefined {
   }
   return text;
 }
+
+/** P0 の Length（数値は px、文字列はそのまま CSS）をテキスト欄用に変換する。 */
+export function lengthToText(value: number | string | undefined): string {
+  return value === undefined ? "" : String(value);
+}
+
+/** `200` → 200（px）、`100%` や `4px 8px` → 文字列のまま、空欄 → undefined。 */
+export function textToLength(text: string): number | string | undefined {
+  const trimmed = text.trim();
+  if (trimmed === "") return undefined;
+  return /^-?\d+(\.\d+)?$/.test(trimmed) ? Number(trimmed) : trimmed;
+}
