@@ -36,6 +36,15 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2(@types/node@26.6.3)(vite@8.3.1(@types/node@26.6.3)(yaml@2.9.1))
 
+  packages/codegen:
+    dependencies:
+      '@ui-editor/schema':
+        specifier: workspace:*
+        version: link:../schema
+      prettier:
+        specifier: ^3.9.9
+        version: 3.9.9
+
   packages/schema:
     dependencies:
       yaml:

@@ -1,0 +1,17 @@
+# 空に近い題材（画面 1 つ）。コード生成の骨組みの確認用
+schemaVersion: "0"
+name: Hello
+dataModel:
+  source: ""
+screens:
+  - id: home
+    name: ホーム
+    path: /
+    root:
+      id: page
+      type: Box
+      children:
+        - id: greeting
+          type: Text
+          props: { text: こんにちは }
+sampleData: {}
