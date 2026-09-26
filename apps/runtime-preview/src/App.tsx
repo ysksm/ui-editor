@@ -1,15 +1,17 @@
 import type { Project, ProjectFormat } from "@ui-editor/schema";
 import { useState } from "react";
+import { BindingView } from "./binding/BindingView";
 import { DataModelView } from "./data-model/DataModelView";
 import { EXAMPLE_FILE_NAME, loadExampleProject } from "./example";
 import { downloadText, fileNameFor, projectFromText, projectToText } from "./project-file";
 import { SampleDataView } from "./sample-data/SampleDataView";
 
-type Tab = "dataModel" | "sampleData";
+type Tab = "dataModel" | "sampleData" | "binding";
 
 const TABS: Record<Tab, string> = {
   dataModel: "データモデル",
   sampleData: "サンプルデータ",
+  binding: "式",
 };
 
 /** 再読み込みしても同じタブを開けるよう、タブは URL の hash に持つ。 */
@@ -101,6 +103,7 @@ export function App() {
             onChange={(sampleData) => setProject((p) => ({ ...p, sampleData }))}
           />
         )}
+        {tab === "binding" && <BindingView project={project} />}
       </main>
     </div>
   );
