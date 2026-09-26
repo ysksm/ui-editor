@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { exampleProject } from "../example.test-util.js";
 import { checkSampleData, checkValue, defaultValue, modelForCollection } from "./check.js";
 import { parseDataModel } from "./parse.js";
+import type { TypeRef } from "./types.js";
 
 const decls = parseDataModel(exampleProject().dataModel.source).declarations;
-const ref = (name: string) => ({ kind: "ref", name }) as const;
+const ref = (name: string): TypeRef => ({ kind: "ref", name });
 
 describe("modelForCollection", () => {
   it("maps collection names to models by convention", () => {
@@ -61,10 +62,10 @@ describe("checkValue", () => {
       ),
     ).toEqual([{ path: ["network", "dhcp"], message: 'boolean が必要ですが "yes" です' }]);
 
-    const nullable = {
+    const nullable: TypeRef = {
       kind: "union",
       types: [ref("DeviceSettings"), { kind: "primitive", name: "null" }],
-    } as const;
+    };
     expect(checkValue(null, nullable, decls)).toEqual([]);
     expect(checkValue({ ...settings, pollingIntervalSec: "30" }, nullable, decls)).toEqual([
       { path: ["pollingIntervalSec"], message: 'number が必要ですが "30" です' },

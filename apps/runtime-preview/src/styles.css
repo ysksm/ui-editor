@@ -307,3 +307,92 @@ code,
 .invalid-row {
   background: #fff8c5;
 }
+
+.sidebar.wide {
+  width: 420px;
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+.list-item.column {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.list-item.column code {
+  word-break: break-all;
+}
+
+.error-text {
+  color: var(--danger);
+}
+
+.result {
+  margin: 12px 0;
+}
+
+.small-source {
+  height: 200px;
+  min-height: 0;
+}
+
+.template-input {
+  height: 80px;
+  min-height: 0;
+}
+
+.suggest-wrap {
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  top: 100%;
+  min-width: 360px;
+  margin: 2px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+}
+
+.suggestions li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.suggestions li.active {
+  background: #ddf4ff;
+}
+
+.suggestions .kind {
+  width: 18px;
+  font-size: 11px;
+  text-align: center;
+  border-radius: 3px;
+  color: #fff;
+  background: var(--muted);
+}
+
+.suggestions .kind.field {
+  background: var(--accent);
+}
+
+.suggestions .kind.method {
+  background: #8250df;
+}
+
+kbd {
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 11px;
+}
