@@ -9,6 +9,7 @@ import type { FileSet } from "./files.js";
 export const APP_DEPENDENCIES = {
   react: "^19.3.0",
   "react-dom": "^19.3.0",
+  "react-router": "^8.4.0",
   zustand: "^5.0.15",
 } as const;
 
@@ -58,6 +59,9 @@ export function writeAppTemplate(files: FileSet, project: Project, options: AppT
         moduleResolution: "bundler",
         jsx: "react-jsx",
         strict: true,
+        // プロジェクトファイルの式は null を考慮せずに書かれていることがある
+        // （例: 下書きが null でないときだけ開くダイアログで state.draftSettings.network）
+        strictNullChecks: false,
         noEmit: true,
         isolatedModules: true,
         verbatimModuleSyntax: true,

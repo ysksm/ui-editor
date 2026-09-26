@@ -16,6 +16,7 @@ export interface AlarmDetailDialogProps {
 
 export function AlarmDetailDialog({ open, onClose, params }: AlarmDetailDialogProps) {
   const data = useAppStore((store) => store.data);
+  const updateData = useAppStore((store) => store.updateData);
 
   return (
     <Dialog open={open} onClose={onClose} label="アラーム詳細">
@@ -40,9 +41,19 @@ export function AlarmDetailDialog({ open, onClose, params }: AlarmDetailDialogPr
             .replace("T", " ")}
         </Text>
         <div className={styles.buttons}>
-          <Button variant="secondary">閉じる</Button>
+          <Button variant="secondary" onClick={() => onClose()}>
+            閉じる
+          </Button>
           {!data.alarms.find((a) => a.id === params.alarmId)?.acknowledged && (
-            <Button variant="primary">確認済みにする</Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                updateData("alarms", { id: params.alarmId }, { acknowledged: true });
+                onClose();
+              }}
+            >
+              確認済みにする
+            </Button>
           )}
         </div>
       </div>

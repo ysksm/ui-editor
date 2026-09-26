@@ -1,8 +1,10 @@
 import { hasBinding, type Component, type JsonValue, type Node } from "@ui-editor/schema";
+import { actionStatements, arrowFunction, handlerName, type ActionContext } from "./actions.js";
 import { templateExpr, templateParts, type Scope } from "./binding.js";
 import { styleEntries } from "./css.js";
 import type { CssModule } from "./css-module.js";
 import type { Imports } from "./imports.js";
+import { valueExpr } from "./values.js";
 
 /** 組み込みの type → 生成アプリの src/ui/ の部品名。Box は div にする。 */
 const UI_COMPONENTS: Record<string, string> = {
@@ -25,6 +27,9 @@ export interface TreeContext {
   ui: Set<string>;
   /** エラーメッセージ用の持ち主の名前。例: `screens.dashboard` */
   owner: string;
+  actions: ActionContext;
+  /** コンポーネントのルート: インスタンスに付いたイベント（props で受け取る）を渡す先。 */
+  root?: { node: Node; forwardEvents: readonly string[] };
 }
 
 /**
@@ -80,11 +85,13 @@ function element(node: Node, ctx: TreeContext, scope: Scope, key?: string): stri
     );
     styleAttrs.push(`style={{ ${fields.join(", ")} }}`);
   }
+  const eventAttrs = events(node, ctx, scope, where);
   const attrs = (props: [string, JsonValue][], ...extra: string[]) => [
     ...(key ? [key] : []),
     ...props.map(([name, value]) => attr(name, value, scope, where(`props.${name}`))),
     ...extra,
     ...styleAttrs,
+    ...eventAttrs,
   ];
   const props = Object.entries(node.props ?? {});
   const except = (...names: string[]) => props.filter(([k]) => !names.includes(k));
@@ -134,6 +141,37 @@ function element(node: Node, ctx: TreeContext, scope: Scope, key?: string): stri
   }
 }
 
+/**
+ * イベント → `onXxx={ハンドラ}` の属性。
+ * コンポーネントのルートなら、インスタンスから受け取ったハンドラ（props.onXxx）も呼ぶ。
+ */
+function events(
+  node: Node,
+  ctx: TreeContext,
+  scope: Scope,
+  where: (field: string) => string,
+): string[] {
+  const forward = ctx.root?.node === node ? ctx.root.forwardEvents : [];
+  const names = [...new Set([...Object.keys(node.events ?? {}), ...forward])];
+  return names.map((name) => {
+    const handler = handlerName(name);
+    const eventScope = scope.child(["event"]);
+    const statements = actionStatements(
+      node.events?.[name] ?? [],
+      eventScope,
+      ctx.actions,
+      where(`events.${name}`),
+    );
+    if (forward.includes(name)) {
+      scope.resolve("props");
+      if (statements.length === 0) return `${handler}={props.${handler}}`;
+      statements.push(`props.${handler}?.();`);
+    }
+    const params = eventScope.used.has("event") ? "event" : "";
+    return `${handler}={${arrowFunction(statements, params)}}`;
+  });
+}
+
 function useUi(name: string, ctx: TreeContext): string {
   ctx.ui.add(name);
   ctx.imports.value(`${ctx.srcDir}/ui/${name}`, name);
@@ -153,21 +191,6 @@ function attr(name: string, value: JsonValue, scope: Scope, where: string): stri
     return `${name}="${value}"`;
   }
   return `${name}={${valueExpr(value, scope, where)}}`;
-}
-
-/** JSON の値を TS の式にする。文字列のバインディングは式に変換する。 */
-export function valueExpr(value: JsonValue, scope: Scope, where: string): string {
-  if (typeof value === "string") return templateExpr(value, scope, where);
-  if (Array.isArray(value)) {
-    return `[${value.map((v, i) => valueExpr(v, scope, `${where}[${i}]`)).join(", ")}]`;
-  }
-  if (value !== null && typeof value === "object") {
-    const fields = Object.entries(value).map(
-      ([k, v]) => `${propertyKey(k)}: ${valueExpr(v as JsonValue, scope, `${where}.${k}`)}`,
-    );
-    return `{ ${fields.join(", ")} }`;
-  }
-  return JSON.stringify(value);
 }
 
 /** Text の text / Button の label を JSX の子にする。`{{ }}` の部分は `{式}`。 */
@@ -199,10 +222,6 @@ function tableColumns(columns: JsonValue | undefined, scope: Scope, where: strin
     return `{ header: ${valueExpr(header ?? "", scope, `${where}[${i}].header`)}, value: (${param}) => ${valueCode} }`;
   });
   return `[${items.join(", ")}]`;
-}
-
-function propertyKey(key: string): string {
-  return /^[A-Za-z_$][\w$]*$/.test(key) ? key : JSON.stringify(key);
 }
 
 function isBinding(value: string | number): boolean {

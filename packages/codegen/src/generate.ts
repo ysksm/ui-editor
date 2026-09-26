@@ -1,12 +1,13 @@
 import type { Project } from "@ui-editor/schema";
+import type { Node } from "@ui-editor/schema";
 import { writeAppTemplate } from "./app-template.js";
+import { writeApp, writeDialogHost, writePaths, writeRoutes } from "./emit/app.js";
 import { modelSource, modelTypeNames } from "./emit/model.js";
 import { writeComponent, writeDialog, writeScreen, type ProjectContext } from "./emit/modules.js";
 import { writeStore } from "./emit/store.js";
 import { writeUi } from "./emit/ui.js";
 import { FileSet, type GeneratedFile } from "./files.js";
 import { formatFile } from "./format.js";
-import { screenName } from "./names.js";
 
 export interface GenerateOptions {
   /** 生成するアプリのパッケージ名。 */
@@ -27,10 +28,14 @@ export async function generate(
     components: new Map((project.components ?? []).map((c) => [c.id, c])),
     modelTypes: modelTypeNames(project),
     ui: new Set(),
+    componentEvents: componentEvents(project),
   };
 
   writeAppTemplate(files, project, options);
   writeApp(files, project);
+  writePaths(files, project);
+  writeRoutes(files, project);
+  writeDialogHost(files, project);
   const model = modelSource(project);
   if (model !== undefined) files.add("src/model.ts", model);
   writeStore(files, project, pc.modelTypes);
@@ -46,16 +51,24 @@ export async function generate(
   );
 }
 
-function writeApp(files: FileSet, project: Project) {
-  const entry = project.screens.find((s) => s.id === project.entry) ?? project.screens[0]!;
-  const name = screenName(entry.id);
-  files.add(
-    "src/App.tsx",
-    `import { ${name} } from "./screens/${name}";
-
-export function App() {
-  return <${name} />;
-}
-`,
-  );
+/** コンポーネント名 → インスタンスに付いているイベント名（アルファベット順）。 */
+function componentEvents(project: Project): Map<string, string[]> {
+  const names = new Set((project.components ?? []).map((c) => c.id));
+  const out = new Map<string, Set<string>>();
+  const walk = (node: Node) => {
+    if (names.has(node.type)) {
+      const set = out.get(node.type) ?? new Set<string>();
+      for (const e of Object.keys(node.events ?? {})) set.add(e);
+      out.set(node.type, set);
+    }
+    node.children?.forEach(walk);
+  };
+  for (const owner of [
+    ...project.screens,
+    ...(project.components ?? []),
+    ...(project.dialogs ?? []),
+  ]) {
+    walk(owner.root);
+  }
+  return new Map([...out].map(([k, v]) => [k, [...v].sort()]));
 }

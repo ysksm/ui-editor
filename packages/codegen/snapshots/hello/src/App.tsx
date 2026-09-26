@@ -1,5 +1,10 @@
-import { HomeScreen } from "./screens/HomeScreen";
+import { BrowserRouter } from "react-router";
+import { AppRoutes } from "./routes";
 
 export function App() {
-  return <HomeScreen />;
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
 }
