@@ -9,11 +9,12 @@ import type { CSSProperties, ReactNode } from "react";
 export interface WireframeProps {
   root: Node;
   components: ReadonlyMap<string, Component>;
-  /** 遷移の起点になっているノード id。ここにエッジのハンドルを付ける。 */
-  triggerNodeIds: ReadonlySet<string>;
-  /** 遷移を新しく引き出せるノード id（編集モード）。 */
+  /** 遷移の起点になっているノード id。ここにエッジのハンドルを付ける（遷移図の中だけ）。 */
+  triggerNodeIds?: ReadonlySet<string> | undefined;
+  /** 遷移を新しく引き出せるノード id（遷移図の中だけ）。 */
   connectableNodeIds?: ReadonlySet<string> | undefined;
-  /** 起点のパーツがクリックされたとき（P5-3 のプロトタイプモード用）。 */
+  /** クリックできるノード id（プロトタイプモード）。 */
+  hotspotNodeIds?: ReadonlySet<string> | undefined;
   onPartClick?: ((nodeId: string) => void) | undefined;
 }
 
@@ -25,8 +26,9 @@ export function Wireframe(props: WireframeProps) {
 const MAX_DEPTH = 4;
 
 function renderNode(node: Node, ctx: WireframeProps, depth: number): ReactNode {
-  const isTrigger = ctx.triggerNodeIds.has(node.id);
+  const isTrigger = ctx.triggerNodeIds?.has(node.id) ?? false;
   const isConnectable = ctx.connectableNodeIds?.has(node.id) ?? false;
+  const isHotspot = ctx.hotspotNodeIds?.has(node.id) ?? false;
   const hasHandle = isTrigger || isConnectable;
   const body = renderBody(node, ctx, depth);
   const badges = [
@@ -41,9 +43,9 @@ function renderNode(node: Node, ctx: WireframeProps, depth: number): ReactNode {
       </span>
     ) : null,
   ].filter(Boolean);
-  if (!hasHandle && badges.length === 0) return body;
+  if (!hasHandle && !isHotspot && badges.length === 0) return body;
 
-  const onClick = isTrigger && ctx.onPartClick ? () => ctx.onPartClick!(node.id) : undefined;
+  const onClick = isHotspot && ctx.onPartClick ? () => ctx.onPartClick!(node.id) : undefined;
   return (
     <div
       key={node.id}
@@ -125,7 +127,12 @@ function renderBody(node: Node, ctx: WireframeProps, depth: number): ReactNode {
           {component && depth < MAX_DEPTH
             ? renderNode(
                 component.root,
-                { ...ctx, triggerNodeIds: new Set(), connectableNodeIds: undefined },
+                {
+                  ...ctx,
+                  triggerNodeIds: undefined,
+                  connectableNodeIds: undefined,
+                  hotspotNodeIds: undefined,
+                },
                 depth + 1,
               )
             : null}
