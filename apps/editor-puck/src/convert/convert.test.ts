@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { migrate, type Data } from "@puckeditor/core";
 import { loadProject, serializeProject, type Node, type Project } from "@ui-editor/schema";
 import { describe, expect, it } from "vitest";
-import { config } from "../puck/config.tsx";
+import { createConfig } from "../puck/config.tsx";
 import { nodeToPuck, puckToNode, puckToTree, treeToPuck, type PuckItem } from "./convert.ts";
 
 const examplePath = fileURLToPath(
@@ -41,7 +41,7 @@ describe("P0 ⇔ Puck の変換", () => {
 
   it("Puck の migrate（読み込み時の正規化）を通しても一致する", () => {
     const project = loadExample();
-    const back = roundTrip(project, (data) => migrate(data, config));
+    const back = roundTrip(project, (data) => migrate(data, createConfig(project.components)));
     expect(serializeProject(back, "yaml")).toBe(exampleText);
   });
 
@@ -88,7 +88,31 @@ describe("P0 ⇔ Puck の変換", () => {
     expect(puckToNode(empty)).toEqual({ id: "t", type: "Text" });
   });
 
-  it("一番外のパーツが 1 つでなければエラー", () => {
+  it("id が root のノードは Puck の root と衝突しないよう別名にし、戻すときに元に戻す", () => {
+    const node: Node = { id: "root", type: "Box", children: [{ id: "a", type: "Text" }] };
+    const data = treeToPuck(node);
+    expect((data.root.props as Record<string, unknown>).nodeId).not.toBe("root");
+    expect(puckToTree(data)).toEqual({ ok: true, root: node });
+  });
+
+  it("root が Box のツリーは Puck の root に対応させ、子を root の slot に入れる", () => {
+    const node: Node = {
+      id: "page",
+      type: "Box",
+      style: { gap: 8 },
+      children: [{ id: "a", type: "Text" }],
+    };
+    const data = treeToPuck(node);
+    expect(data.content).toEqual([]);
+    expect(data.root.props).toMatchObject({
+      nodeId: "page",
+      style: { gap: 8 },
+      items: [{ type: "Text" }],
+    });
+    expect(puckToTree(data)).toEqual({ ok: true, root: node });
+  });
+
+  it("root が Box でないツリーで、一番外のパーツが 1 つでなければエラー", () => {
     expect(puckToTree({ root: { props: {} }, content: [] }).ok).toBe(false);
     const two = {
       root: { props: {} },
