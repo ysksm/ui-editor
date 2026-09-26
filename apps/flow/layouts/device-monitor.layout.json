@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "positions": {
+    "alarmDetail": {
+      "x": 492,
+      "y": 427
+    },
+    "dashboard": {
+      "x": 20,
+      "y": 201
+    },
+    "deviceSettings": {
+      "x": 904,
+      "y": 140
+    },
+    "devices": {
+      "x": 462,
+      "y": 20
+    },
+    "saveConfirm": {
+      "x": 1346,
+      "y": 24
+    }
+  }
+}

@@ -1,0 +1,357 @@
+:root {
+  --bg: #f6f7f9;
+  --fg: #1f2328;
+  --muted: #6b7280;
+  --line: #d0d7de;
+  --wf-line: #c4c9d0;
+  --screen: #2563eb;
+  --dialog: #9333ea;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Hiragino Sans",
+    "Noto Sans JP",
+    sans-serif;
+  color: var(--fg);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---- toolbar ---- */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  font-size: 14px;
+}
+
+.toolbar-project {
+  color: var(--muted);
+}
+
+.toolbar-button {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.toolbar-button:hover {
+  background: #f0f2f4;
+}
+
+.toolbar-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.toolbar-legend {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.legend-navigate {
+  color: var(--screen);
+}
+
+.legend-dialog {
+  color: var(--dialog);
+}
+
+.canvas {
+  flex: 1;
+  transition: opacity 0.15s;
+}
+
+.app-error {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  max-width: 50vw;
+  max-height: 40vh;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #f5c2c7;
+  border-radius: 8px;
+  background: #fff5f5;
+  color: #b42318;
+  font-size: 12px;
+  white-space: pre-wrap;
+  cursor: pointer;
+}
+
+/* ---- edges ---- */
+
+.edge-navigate .react-flow__edge-path {
+  stroke: var(--screen);
+  stroke-width: 1.5;
+}
+
+.edge-openDialog .react-flow__edge-path {
+  stroke: var(--dialog);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+.react-flow__edge-textbg {
+  fill: var(--bg);
+}
+
+.react-flow__edge-text {
+  font-size: 11px;
+  fill: var(--muted);
+}
+
+/* ---- screen node ---- */
+
+.screen-node {
+  width: 300px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  font-size: 10px;
+}
+
+.react-flow__node.selected .screen-node {
+  outline: 2px solid var(--screen);
+}
+
+.screen-node-header {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+}
+
+.screen-node-screen .screen-node-header {
+  background: #eff4ff;
+}
+
+.screen-node-dialog {
+  width: 240px;
+  border-color: #d8b4fe;
+}
+
+.screen-node-dialog .screen-node-header {
+  background: #f7efff;
+}
+
+.screen-node-kind {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.screen-node-name {
+  font-weight: 600;
+}
+
+.screen-node-entry {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--screen);
+  color: #fff;
+  font-size: 9px;
+}
+
+.screen-node-id {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.screen-target {
+  width: 8px;
+  height: 8px;
+  background: var(--muted);
+}
+
+/* ---- wireframe ---- */
+
+.wf {
+  padding: 8px;
+  pointer-events: none;
+}
+
+.wf-box {
+  gap: 4px;
+  min-width: 0;
+}
+
+.wf-box[style*="1px solid"] {
+  padding: 3px;
+  border-radius: 3px;
+}
+
+.wf-part {
+  position: relative;
+  min-width: 0;
+}
+
+.wf-trigger {
+  outline: 1.5px solid color-mix(in srgb, var(--screen) 60%, transparent);
+  outline-offset: 1px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--screen) 6%, transparent);
+}
+
+.wf-clickable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.wf-handle {
+  width: 8px;
+  height: 8px;
+  background: var(--screen);
+  border: 1.5px solid #fff;
+}
+
+.wf-badges {
+  position: absolute;
+  top: -6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+}
+
+.wf-badge {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 8px;
+  line-height: 12px;
+}
+
+.wf-text {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wf-text-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.wf-text-caption {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.wf-button {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.wf-button-primary {
+  background: var(--fg);
+  color: #fff;
+}
+
+.wf-button-secondary {
+  border: 1px solid var(--wf-line);
+}
+
+.wf-button-danger {
+  background: #b42318;
+  color: #fff;
+}
+
+.wf-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wf-input-label {
+  flex: 0 0 45%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wf-input-box {
+  flex: 1;
+  height: 10px;
+  border: 1px solid var(--wf-line);
+  border-radius: 2px;
+}
+
+.wf-table {
+  display: grid;
+  gap: 1px;
+  background: var(--wf-line);
+  border: 1px solid var(--wf-line);
+}
+
+.wf-th,
+.wf-td {
+  min-height: 10px;
+  padding: 1px 2px;
+  overflow: hidden;
+  background: #fff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 8px;
+}
+
+.wf-th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.wf-instance {
+  position: relative;
+  padding: 7px 3px 3px;
+  border: 1px dashed var(--wf-line);
+  border-radius: 3px;
+}
+
+.wf-instance-name {
+  position: absolute;
+  top: -1px;
+  left: 3px;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-size: 7px;
+}
+
+.wf-box > * {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.wf-instance {
+  overflow: hidden;
+}
