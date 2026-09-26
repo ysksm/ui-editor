@@ -66,6 +66,8 @@ const inputFields = {
 } satisfies Fields<Components["TextInput"]>;
 
 export const config: EditorConfig = {
+  // P0 のツリーは content の 1 つ目の item に入れるので、Puck の root には何も持たせない。
+  root: { fields: {} },
   categories: {
     layout: { title: "レイアウト", components: ["Box"] },
     basic: { title: "基本", components: ["Text", "Button", "Table"] },

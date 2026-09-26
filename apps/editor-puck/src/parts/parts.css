@@ -1,11 +1,16 @@
 /* キャンバスに描くパーツの見た目（P0 の組み込みノードと題材コンポーネント） */
 
-.p-box {
+/* Puck の slot（DropZone）は height / width: 100% を持つので、普通の div と同じ振る舞いに戻す。
+   P0 の style で width / height を指定した場合はインラインの style が優先される。 */
+.p-box.p-box {
   box-sizing: border-box;
+  width: auto;
+  height: auto;
   min-height: 24px;
 }
 
 .p-text {
+  overflow-wrap: anywhere;
   font-size: 14px;
   color: #212121;
 }
