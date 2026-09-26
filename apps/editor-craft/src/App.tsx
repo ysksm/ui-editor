@@ -1,24 +1,30 @@
-import { Editor, Frame, useEditor } from "@craftjs/core";
+import { Editor, Frame } from "@craftjs/core";
 import type { Project } from "@ui-editor/schema";
 import { useMemo, useRef, useState } from "react";
 import { Layers } from "./editor/Layers";
 import { Palette } from "./editor/Palette";
 import { PropsPanel } from "./editor/PropsPanel";
 import { ResizeHandles } from "./editor/ResizeHandles";
+import { Toolbar, type Message } from "./editor/Toolbar";
 import { craftToP0, p0ToCraft } from "./project/convert";
-import {
-  DOC_KIND_LABEL,
-  findDoc,
-  listDocs,
-  replaceDocRoot,
-  sameDoc,
-  type DocKey,
-} from "./project/documents";
+import { findDoc, replaceDocRoot, type DocKey } from "./project/documents";
+import { downloadText } from "./project/io";
 import { resolver } from "./parts/craft";
 import { baseScope, cx, defaultPropsOf, ProjectContext, ScopeContext } from "./parts/view";
 
-export function App({ initialProject }: { initialProject: Project }) {
+export function App({
+  initialProject,
+  initialFilename = "project.json",
+  onDownload = downloadText,
+}: {
+  initialProject: Project;
+  initialFilename?: string;
+  /** 保存したときの書き出し先（テストで差し替える）。 */
+  onDownload?: (filename: string, text: string) => void;
+}) {
   const [project, setProject] = useState(initialProject);
+  const [filename, setFilename] = useState(initialFilename);
+  const [message, setMessage] = useState<Message>();
   const [docKey, setDocKey] = useState<DocKey>({
     kind: "screen",
     id: initialProject.screens[0]!.id,
@@ -44,12 +50,20 @@ export function App({ initialProject }: { initialProject: Project }) {
         <div className="app">
           <Toolbar
             project={project}
+            filename={filename}
             docKey={docKey}
-            onOpen={(key) => {
+            onOpenDoc={(key) => {
               docKeyRef.current = key;
               setDocKey(key);
             }}
+            onLoadProject={(p, name) => {
+              setProject(p);
+              setFilename(name);
+            }}
+            onDownload={onDownload}
+            onMessage={setMessage}
           />
+          {message && <MessageBar message={message} onClose={() => setMessage(undefined)} />}
           <aside className="sidebar sidebar--left">
             <section>
               <h2 className="panel-title">パーツ</h2>
@@ -76,67 +90,6 @@ export function App({ initialProject }: { initialProject: Project }) {
   );
 }
 
-function Toolbar({
-  project,
-  docKey,
-  onOpen,
-}: {
-  project: Project;
-  docKey: DocKey;
-  onOpen: (key: DocKey) => void;
-}) {
-  const { actions, canUndo, canRedo } = useEditor((_, q) => ({
-    canUndo: q.history.canUndo(),
-    canRedo: q.history.canRedo(),
-  }));
-
-  const open = (key: DocKey) => {
-    if (sameDoc(key, docKey)) return;
-    const doc = findDoc(project, key);
-    if (!doc) return;
-    onOpen(key);
-    actions.history.ignore().deserialize(p0ToCraft(doc.root));
-    actions.history.clear();
-    actions.selectNode();
-  };
-
-  const docs = listDocs(project);
-  return (
-    <header className="toolbar">
-      <strong className="toolbar-title">{project.name}</strong>
-      <nav className="doc-tabs">
-        {(["screen", "component", "dialog"] as const).map((kind) => {
-          const ofKind = docs.filter((d) => d.key.kind === kind);
-          if (ofKind.length === 0) return null;
-          return (
-            <span key={kind} className="doc-group">
-              <span className="doc-group-label">{DOC_KIND_LABEL[kind]}</span>
-              {ofKind.map((d) => (
-                <button
-                  key={d.key.id}
-                  type="button"
-                  className={cx("doc-tab", sameDoc(d.key, docKey) && "is-active")}
-                  onClick={() => open(d.key)}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </span>
-          );
-        })}
-      </nav>
-      <span className="toolbar-actions">
-        <button type="button" disabled={!canUndo} onClick={() => actions.history.undo()}>
-          元に戻す
-        </button>
-        <button type="button" disabled={!canRedo} onClick={() => actions.history.redo()}>
-          やり直す
-        </button>
-      </span>
-    </header>
-  );
-}
-
 /** 開いているドキュメントの種類に合わせてキャンバスの枠を変える。 */
 function CanvasFrame({
   project,
@@ -157,5 +110,25 @@ function CanvasFrame({
     <ScopeContext.Provider value={scope}>
       <div className={cx("canvas-frame", `canvas-frame--${docKey.kind}`)}>{children}</div>
     </ScopeContext.Provider>
+  );
+}
+
+function MessageBar({ message, onClose }: { message: Message; onClose: () => void }) {
+  return (
+    <div className={cx("message-bar", `message-bar--${message.kind}`)} role="status">
+      <div className="message-bar__head">
+        <strong>{message.title}</strong>
+        <button type="button" onClick={onClose} aria-label="閉じる">
+          ×
+        </button>
+      </div>
+      {message.lines.length > 0 && (
+        <ul>
+          {message.lines.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
