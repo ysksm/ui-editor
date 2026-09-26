@@ -11,6 +11,8 @@ export interface WireframeProps {
   components: ReadonlyMap<string, Component>;
   /** 遷移の起点になっているノード id。ここにエッジのハンドルを付ける。 */
   triggerNodeIds: ReadonlySet<string>;
+  /** 遷移を新しく引き出せるノード id（編集モード）。 */
+  connectableNodeIds?: ReadonlySet<string> | undefined;
   /** 起点のパーツがクリックされたとき（P5-3 のプロトタイプモード用）。 */
   onPartClick?: ((nodeId: string) => void) | undefined;
 }
@@ -24,6 +26,8 @@ const MAX_DEPTH = 4;
 
 function renderNode(node: Node, ctx: WireframeProps, depth: number): ReactNode {
   const isTrigger = ctx.triggerNodeIds.has(node.id);
+  const isConnectable = ctx.connectableNodeIds?.has(node.id) ?? false;
+  const hasHandle = isTrigger || isConnectable;
   const body = renderBody(node, ctx, depth);
   const badges = [
     node.repeat ? (
@@ -37,15 +41,21 @@ function renderNode(node: Node, ctx: WireframeProps, depth: number): ReactNode {
       </span>
     ) : null,
   ].filter(Boolean);
-  if (!isTrigger && badges.length === 0) return body;
+  if (!hasHandle && badges.length === 0) return body;
 
   const onClick = isTrigger && ctx.onPartClick ? () => ctx.onPartClick!(node.id) : undefined;
   return (
     <div
       key={node.id}
-      className={`wf-part${isTrigger ? " wf-trigger" : ""}${onClick ? " wf-clickable" : ""}`}
+      className={`wf-part${isTrigger ? " wf-trigger" : ""}${isConnectable ? " wf-connectable" : ""}${onClick ? " wf-clickable" : ""}`}
       style={flexItemStyle(node.style)}
-      title={isTrigger ? `${node.id}（遷移の起点）` : undefined}
+      title={
+        isTrigger
+          ? `${node.id}（遷移の起点）`
+          : isConnectable
+            ? `${node.id}（右端の点から画面・ダイアログへ線を引くと遷移を追加）`
+            : undefined
+      }
       onClick={
         onClick &&
         ((e) => {
@@ -56,13 +66,14 @@ function renderNode(node: Node, ctx: WireframeProps, depth: number): ReactNode {
     >
       {body}
       {badges.length > 0 && <span className="wf-badges">{badges}</span>}
-      {isTrigger && (
+      {hasHandle && (
         <Handle
           type="source"
           id={`part:${node.id}`}
           position={Position.Right}
           className="wf-handle"
-          isConnectable={false}
+          isConnectable={isConnectable}
+          isConnectableEnd={false}
         />
       )}
     </div>
@@ -112,7 +123,11 @@ function renderBody(node: Node, ctx: WireframeProps, depth: number): ReactNode {
         <div key={node.id} className="wf-instance">
           <span className="wf-instance-name">{node.type}</span>
           {component && depth < MAX_DEPTH
-            ? renderNode(component.root, { ...ctx, triggerNodeIds: new Set() }, depth + 1)
+            ? renderNode(
+                component.root,
+                { ...ctx, triggerNodeIds: new Set(), connectableNodeIds: undefined },
+                depth + 1,
+              )
             : null}
         </div>
       );
