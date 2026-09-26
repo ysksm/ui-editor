@@ -1,3 +1,9 @@
+import { Text } from "../ui/Text";
+
 export function HomeScreen() {
-  return <h1>ホーム</h1>;
+  return (
+    <div>
+      <Text>こんにちは</Text>
+    </div>
+  );
 }

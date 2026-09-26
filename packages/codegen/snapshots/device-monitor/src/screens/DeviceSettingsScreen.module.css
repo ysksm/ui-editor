@@ -1,0 +1,43 @@
+.page {
+  max-width: 560px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.networkSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thresholdSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pollingSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
