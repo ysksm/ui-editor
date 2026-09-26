@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import type { AlarmDetailDialogParams } from "../dialogs/AlarmDetailDialog";
+import type { SaveConfirmDialogParams } from "../dialogs/SaveConfirmDialog";
 import type { DeviceSettings } from "../model";
 import { sampleData, type Data } from "./sampleData";
 
@@ -6,6 +8,11 @@ import { sampleData, type Data } from "./sampleData";
 export interface AppState {
   draftSettings: DeviceSettings | null;
 }
+
+/** 開いているダイアログと、その params。 */
+export type OpenDialog =
+  | { id: "saveConfirm"; params: SaveConfirmDialogParams }
+  | { id: "alarmDetail"; params: AlarmDetailDialogParams };
 
 const initialState: AppState = {
   draftSettings: null,
@@ -22,6 +29,10 @@ export interface AppStore {
     match: Partial<Data[K][number]>,
     fields: Partial<Data[K][number]>,
   ) => void;
+  /** 開いているダイアログ（同時に 1 つ）。 */
+  dialog: OpenDialog | null;
+  openDialog: (dialog: OpenDialog) => void;
+  closeDialog: () => void;
 }
 
 export const useAppStore = create<AppStore>()((set) => ({
@@ -41,6 +52,9 @@ export const useAppStore = create<AppStore>()((set) => ({
         ),
       },
     })),
+  dialog: null,
+  openDialog: (dialog) => set({ dialog }),
+  closeDialog: () => set({ dialog: null }),
 }));
 
 /** obj の path の位置を value にしたコピーを返す（途中のオブジェクトもコピーする）。 */

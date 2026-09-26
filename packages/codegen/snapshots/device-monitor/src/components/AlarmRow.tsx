@@ -5,11 +5,12 @@ import styles from "./AlarmRow.module.css";
 export interface AlarmRowProps {
   alarm: Alarm;
   deviceName: string;
+  onClick?: () => void;
 }
 
 export function AlarmRow(props: AlarmRowProps) {
   return (
-    <div className={styles.row}>
+    <div className={styles.row} onClick={props.onClick}>
       <Text
         className={styles.level}
         style={{ color: { info: "#0288d1", warn: "#ed6c02", error: "#d32f2f" }[props.alarm.level] }}

@@ -1,6 +1,6 @@
 import type { Project } from "@ui-editor/schema";
 import type { FileSet } from "../files.js";
-import { pascalCase } from "../names.js";
+import { dialogName, pascalCase } from "../names.js";
 import { referencedModelTypes } from "./model.js";
 
 /**
@@ -46,19 +46,34 @@ export const sampleData: Data = ${JSON.stringify(project.sampleData, null, 2)};
   );
 
   const state = Object.entries(project.state ?? {});
+  const dialogs = project.dialogs ?? [];
+  const dialogImports = dialogs
+    .filter((d) => Object.keys(d.params ?? {}).length > 0)
+    .map((d) => dialogName(d.id))
+    .sort()
+    .map((n) => `import type { ${n}Params } from "../dialogs/${n}";\n`)
+    .join("");
+  const openDialogType = dialogs
+    .map((d) =>
+      Object.keys(d.params ?? {}).length > 0
+        ? `  | { id: ${JSON.stringify(d.id)}; params: ${dialogName(d.id)}Params }\n`
+        : `  | { id: ${JSON.stringify(d.id)} }\n`,
+    )
+    .join("");
+  const hasDialogs = dialogs.length > 0;
   const stateTypes = [
     ...new Set(state.flatMap(([, def]) => referencedModelTypes(def.type, modelTypes))),
   ].sort();
   files.add(
     "src/store/appStore.ts",
     `import { create } from "zustand";
-${stateTypes.length > 0 ? `import type { ${stateTypes.join(", ")} } from "../model";\n` : ""}import { sampleData, type Data } from "./sampleData";
+${dialogImports}${stateTypes.length > 0 ? `import type { ${stateTypes.join(", ")} } from "../model";\n` : ""}import { sampleData, type Data } from "./sampleData";
 
 /** アプリ全体の状態（\`{{ state.xxx }}\`）。 */
 export interface AppState {
 ${state.map(([k, def]) => `  ${k}: ${def.type};\n`).join("")}}
 
-const initialState: AppState = ${JSON.stringify(Object.fromEntries(state.map(([k, def]) => [k, def.initial])), null, 2)};
+${hasDialogs ? `/** 開いているダイアログと、その params。 */\nexport type OpenDialog =\n${openDialogType};\n\n` : ""}const initialState: AppState = ${JSON.stringify(Object.fromEntries(state.map(([k, def]) => [k, def.initial])), null, 2)};
 
 export interface AppStore {
   data: Data;
@@ -71,7 +86,15 @@ export interface AppStore {
     match: Partial<Data[K][number]>,
     fields: Partial<Data[K][number]>,
   ) => void;
-}
+${
+  hasDialogs
+    ? `  /** 開いているダイアログ（同時に 1 つ）。 */
+  dialog: OpenDialog | null;
+  openDialog: (dialog: OpenDialog) => void;
+  closeDialog: () => void;
+`
+    : ""
+}}
 
 export const useAppStore = create<AppStore>()((set) => ({
   // 差し替えポイント: いまはサンプルデータを初期値にしている。
@@ -90,7 +113,14 @@ export const useAppStore = create<AppStore>()((set) => ({
         ),
       },
     })),
-}));
+${
+  hasDialogs
+    ? `  dialog: null,
+  openDialog: (dialog) => set({ dialog }),
+  closeDialog: () => set({ dialog: null }),
+`
+    : ""
+}}));
 
 /** obj の path の位置を value にしたコピーを返す（途中のオブジェクトもコピーする）。 */
 function setIn<T>(obj: T, path: string[], value: unknown): T {
