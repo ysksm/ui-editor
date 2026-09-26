@@ -557,3 +557,65 @@ textarea {
   font-size: 11px;
   color: #9ca3af;
 }
+
+/* ---- ドキュメント・コンポーネント・イベント ---- */
+
+.panel-title--spaced {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.new-doc,
+.component-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.new-doc select,
+.new-doc input,
+.component-actions input {
+  flex: 1 1 100px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.param-defs,
+.events-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.param-row,
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.param-row > input,
+.param-row > textarea,
+.event-row > select {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 3px 5px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.param-row code,
+.event-row code {
+  min-width: 56px;
+  font-size: 12px;
+}
+
+.event-row > span {
+  flex: 1;
+  font-size: 12px;
+}

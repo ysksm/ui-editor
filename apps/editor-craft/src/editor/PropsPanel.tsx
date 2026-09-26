@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { INSTANCE, ROOT_ID, type InstanceFields, type NodeFields } from "../project/convert";
 import { useProject } from "../parts/view";
 import { nodeLabel } from "./Layers";
+import { ComponentActions } from "./ComponentActions";
+import { EventsEditor } from "./EventsEditor";
 import { StylePanel } from "./StylePanel";
 
 /** 組み込みパーツごとの主な props（それ以外は「詳細（JSON）」で編集する）。 */
@@ -129,6 +131,8 @@ export function PropsPanel() {
         </span>
       </div>
 
+      <ComponentActions nodeId={selectedId} />
+
       <label className="field">
         <span>id</span>
         <TextField
@@ -168,6 +172,9 @@ export function PropsPanel() {
           )}
         </label>
       ))}
+
+      <div className="panel-subtitle">events</div>
+      <EventsEditor nodeId={selectedId} />
 
       <div className="panel-subtitle">style</div>
       <StylePanel nodeId={selectedId} />

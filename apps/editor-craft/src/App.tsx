@@ -1,11 +1,13 @@
 import { Editor, Frame } from "@craftjs/core";
 import type { Project } from "@ui-editor/schema";
 import { useMemo, useRef, useState } from "react";
+import { DocSettings, NewDocForm } from "./editor/DocPanel";
 import { Layers } from "./editor/Layers";
 import { Palette } from "./editor/Palette";
 import { PropsPanel } from "./editor/PropsPanel";
 import { ResizeHandles } from "./editor/ResizeHandles";
 import { Toolbar, type Message } from "./editor/Toolbar";
+import { WorkspaceProvider } from "./editor/workspace";
 import { craftToP0, p0ToCraft } from "./project/convert";
 import { findDoc, replaceDocRoot, type DocKey } from "./project/documents";
 import { downloadText } from "./project/io";
@@ -47,44 +49,54 @@ export function App({
           setProject((p) => replaceDocRoot(p, docKeyRef.current, root));
         }}
       >
-        <div className="app">
-          <Toolbar
-            project={project}
-            filename={filename}
-            docKey={docKey}
-            onOpenDoc={(key) => {
-              docKeyRef.current = key;
-              setDocKey(key);
-            }}
-            onLoadProject={(p, name) => {
-              setProject(p);
-              setFilename(name);
-            }}
-            onDownload={onDownload}
-            onMessage={setMessage}
-          />
-          {message && <MessageBar message={message} onClose={() => setMessage(undefined)} />}
-          <aside className="sidebar sidebar--left">
-            <section>
-              <h2 className="panel-title">パーツ</h2>
-              <Palette />
-            </section>
-            <section>
-              <h2 className="panel-title">レイヤー</h2>
-              <Layers />
-            </section>
-          </aside>
-          <main className="canvas-area" ref={setCanvasArea}>
-            <CanvasFrame project={project} docKey={docKey}>
-              <Frame data={initialData} />
-            </CanvasFrame>
-            <ResizeHandles container={canvasArea} />
-          </main>
-          <aside className="sidebar sidebar--right">
-            <h2 className="panel-title">プロパティ</h2>
-            <PropsPanel />
-          </aside>
-        </div>
+        <WorkspaceProvider
+          project={project}
+          docKey={docKey}
+          onDocKeyChange={(key) => {
+            docKeyRef.current = key;
+            setDocKey(key);
+          }}
+          updateProject={setProject}
+        >
+          <div className="app">
+            <Toolbar
+              filename={filename}
+              onLoadProject={(p, name) => {
+                setProject(p);
+                setFilename(name);
+              }}
+              onDownload={onDownload}
+              onMessage={setMessage}
+            />
+            {message && <MessageBar message={message} onClose={() => setMessage(undefined)} />}
+            <aside className="sidebar sidebar--left">
+              <section>
+                <h2 className="panel-title">新規作成</h2>
+                <NewDocForm />
+              </section>
+              <section>
+                <h2 className="panel-title">パーツ</h2>
+                <Palette />
+              </section>
+              <section>
+                <h2 className="panel-title">レイヤー</h2>
+                <Layers />
+              </section>
+            </aside>
+            <main className="canvas-area" ref={setCanvasArea}>
+              <CanvasFrame project={project} docKey={docKey}>
+                <Frame data={initialData} />
+              </CanvasFrame>
+              <ResizeHandles container={canvasArea} />
+            </main>
+            <aside className="sidebar sidebar--right">
+              <h2 className="panel-title">ドキュメント</h2>
+              <DocSettings />
+              <h2 className="panel-title panel-title--spaced">プロパティ</h2>
+              <PropsPanel />
+            </aside>
+          </div>
+        </WorkspaceProvider>
       </Editor>
     </ProjectContext.Provider>
   );
