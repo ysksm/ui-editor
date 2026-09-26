@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import exampleText from "../../../packages/schema/examples/device-monitor.project.json?raw";
 import { EdgePanel } from "./EdgePanel";
+import { PrototypePlayer } from "./prototype/PrototypePlayer";
 import {
   download,
   openProjectFile,
@@ -117,6 +118,8 @@ function FlowEditor({
   const [layoutDirty, setLayoutDirty] = useState(false);
   const [projectDirty, setProjectDirty] = useState(false);
   const [status, setStatus] = useState("");
+  /** プロトタイプモードの開始位置（undefined なら遷移図を表示） */
+  const [playFrom, setPlayFrom] = useState<string | null>();
 
   // 遷移の追加・削除でノードの中身（起点パーツ）が変わる。位置はそのまま
   useEffect(() => {
@@ -280,6 +283,15 @@ function FlowEditor({
         <button type="button" className="toolbar-button" onClick={() => void onSaveLayout()}>
           配置を保存{layoutDirty ? " *" : ""}
         </button>
+        <span className="toolbar-sep" />
+        <button
+          type="button"
+          className="toolbar-button toolbar-play"
+          onClick={() => setPlayFrom(nodes.find((n) => n.selected)?.id ?? null)}
+          title="選んだ画面（無ければ開始画面）から再生。ノードのダブルクリックでも始まる"
+        >
+          ▶ プロトタイプ
+        </button>
         <span
           className={`toolbar-validation${issues.length > 0 ? " has-issues" : ""}`}
           title={issues.map(formatIssue).join("\n")}
@@ -301,6 +313,8 @@ function FlowEditor({
           onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           onConnectEnd={onConnectEnd}
+          onNodeDoubleClick={(_, node) => setPlayFrom(node.id)}
+          zoomOnDoubleClick={false}
           deleteKeyCode={["Backspace", "Delete"]}
           minZoom={0.1}
           fitView
@@ -327,10 +341,27 @@ function FlowEditor({
             onClose={() => setSelectedEdgeId(undefined)}
           />
         )}
+        {playFrom !== undefined && (
+          <PrototypePlayer
+            project={project}
+            startId={playFrom ?? undefined}
+            onExit={(currentId) => {
+              setPlayFrom(undefined);
+              // いま見ていた画面・ダイアログを遷移図で選ぶ
+              setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === currentId })));
+              requestAnimationFrame(
+                () => void fitView({ nodes: [{ id: currentId }], padding: 1, duration: 300 }),
+              );
+            }}
+          />
+        )}
       </div>
-      <p className="hint">
-        パーツ右端の点から画面・ダイアログへドラッグで遷移を追加。線を選んで Delete で削除
-      </p>
+      {playFrom === undefined && (
+        <p className="hint">
+          パーツ右端の点から画面・ダイアログへドラッグで遷移を追加。線を選んで Delete
+          で削除。ノードをダブルクリックでそこから再生
+        </p>
+      )}
     </>
   );
 }

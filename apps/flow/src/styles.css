@@ -512,3 +512,130 @@ body,
   font: inherit;
   cursor: pointer;
 }
+
+/* ---- prototype mode (P5-3) ---- */
+
+.toolbar-play {
+  border-color: var(--screen);
+  color: var(--screen);
+}
+
+.proto {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: #3a3f47;
+}
+
+.proto-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #2b2f36;
+  color: #e6e8eb;
+  font-size: 13px;
+}
+
+.proto-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.proto-where {
+  margin-left: auto;
+}
+
+.proto-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.proto-stage {
+  position: relative;
+  flex: 1;
+  margin: 24px;
+  overflow: auto;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+}
+
+.proto-screen .wf,
+.proto-dialog .wf {
+  zoom: 1.5;
+  padding: 16px;
+  pointer-events: auto;
+}
+
+.proto-backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 35%);
+}
+
+.proto-dialog {
+  min-width: 360px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+}
+
+.proto .wf-clickable {
+  outline: none;
+  background: none;
+}
+
+.proto .show-hotspots .wf-clickable,
+.proto .flash .wf-clickable {
+  outline: 2px solid color-mix(in srgb, var(--screen) 70%, transparent);
+  background: color-mix(in srgb, var(--screen) 10%, transparent);
+}
+
+.proto .flash:not(.show-hotspots) .wf-clickable {
+  animation: proto-flash 0.6s ease-out forwards;
+}
+
+@keyframes proto-flash {
+  to {
+    outline-color: transparent;
+    background: transparent;
+  }
+}
+
+.proto .wf-clickable:hover {
+  outline: 2px solid var(--screen);
+}
+
+.proto-log {
+  width: 300px;
+  margin: 24px 24px 24px 0;
+  padding: 12px 12px 12px 32px;
+  overflow: auto;
+  border-radius: 8px;
+  background: #2b2f36;
+  color: #e6e8eb;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.proto-log li {
+  margin-bottom: 2px;
+}
+
+.proto-log li.skipped {
+  color: #9aa1ab;
+}
+
+.proto-missing {
+  padding: 24px;
+  color: #b42318;
+}
