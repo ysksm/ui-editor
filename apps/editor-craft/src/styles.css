@@ -26,7 +26,7 @@ textarea {
 .app {
   display: grid;
   grid-template-columns: 240px 1fr 300px;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
   height: 100vh;
 }
 
@@ -55,8 +55,55 @@ textarea {
   cursor: default;
 }
 
+.toolbar-file {
+  display: flex;
+  flex-direction: column;
+}
+
 .toolbar-title {
   white-space: nowrap;
+}
+
+.toolbar-filename {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.message-bar {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  max-height: 160px;
+  overflow: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.message-bar--info {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.message-bar--error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.message-bar__head {
+  display: flex;
+  justify-content: space-between;
+}
+
+.message-bar__head button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.message-bar ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
 }
 
 .toolbar-actions {
@@ -85,6 +132,12 @@ textarea {
 .toolbar .doc-tab.is-active {
   background: #2563eb;
   border-color: #2563eb;
+}
+
+.sidebar,
+.canvas-area {
+  grid-row: 3;
+  min-height: 0;
 }
 
 .sidebar {
