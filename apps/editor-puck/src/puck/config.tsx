@@ -12,6 +12,7 @@ import {
 } from "../parts/builtins.tsx";
 import { AlarmRowView, MetricCardView, StatusBadgeView } from "../parts/domain.tsx";
 import { valueField } from "./fields.tsx";
+import { styleField } from "./style-field.tsx";
 
 /**
  * Puck のコンポーネント定義。
@@ -78,7 +79,7 @@ export const config: EditorConfig = {
     Box: {
       label: "Container (Box)",
       inline: true,
-      fields: { children: { type: "slot" } },
+      fields: { style: styleField, children: { type: "slot" } },
       defaultProps: {
         style: { display: "flex", flexDirection: "column", gap: 8, padding: 8 },
         children: [],
@@ -90,6 +91,7 @@ export const config: EditorConfig = {
     Text: {
       inline: true,
       fields: {
+        style: styleField,
         text: { type: "text", label: "text" },
         variant: variantField(["body", "title", "caption"]),
       },
@@ -101,6 +103,7 @@ export const config: EditorConfig = {
     Button: {
       inline: true,
       fields: {
+        style: styleField,
         label: { type: "text", label: "label" },
         variant: variantField(["primary", "secondary", "danger"]),
         disabled: valueField("disabled"),
@@ -113,7 +116,11 @@ export const config: EditorConfig = {
     TextInput: {
       label: "Input (TextInput)",
       inline: true,
-      fields: { ...inputFields, placeholder: { type: "text", label: "placeholder" } },
+      fields: {
+        ...inputFields,
+        placeholder: { type: "text", label: "placeholder" },
+        style: styleField,
+      },
       defaultProps: { label: "ラベル" },
       render: ({ puck, style, ...props }) => (
         <TextInputView {...props} style={css(style)} elRef={puck.dragRef} />
@@ -126,6 +133,7 @@ export const config: EditorConfig = {
         min: valueField("min"),
         max: valueField("max"),
         step: valueField("step"),
+        style: styleField,
       },
       defaultProps: { label: "数値" },
       render: ({ puck, style, ...props }) => (
@@ -135,6 +143,7 @@ export const config: EditorConfig = {
     Checkbox: {
       inline: true,
       fields: {
+        style: styleField,
         label: { type: "text", label: "label" },
         checked: valueField("checked"),
         disabled: valueField("disabled"),
@@ -147,6 +156,7 @@ export const config: EditorConfig = {
     Table: {
       inline: true,
       fields: {
+        style: styleField,
         rows: valueField("rows"),
         columns: {
           type: "array",
