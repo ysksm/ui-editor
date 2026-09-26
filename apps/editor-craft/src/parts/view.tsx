@@ -73,6 +73,8 @@ export interface BuiltinViewProps {
   scope: Scope;
   children?: ReactNode;
   className?: string;
+  /** エディタ上の P0 のノード id（`data-node-id` 属性）。 */
+  nodeId?: string | undefined;
   ref?: Ref<HTMLElement> | undefined;
 }
 
@@ -84,10 +86,11 @@ export function BuiltinView({
   scope,
   children,
   className,
+  nodeId,
   ref,
 }: BuiltinViewProps) {
   const p = (key: string) => resolveValue(props[key], scope);
-  const common = { className, style, ref: ref as Ref<never> };
+  const common = { className, style, "data-node-id": nodeId, ref: ref as Ref<never> };
   switch (type) {
     case "Box":
       return <div {...common}>{children}</div>;
