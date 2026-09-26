@@ -1,0 +1,32 @@
+{
+  "name": "@ui-editor/codegen",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "codegen": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "gen": "node dist/cli.js",
+    "snapshots:update": "vitest run -u",
+    "build:examples": "pnpm run build && node scripts/build-examples.mjs"
+  },
+  "dependencies": {
+    "@ui-editor/schema": "workspace:*",
+    "prettier": "^3.9.9"
+  }
+}

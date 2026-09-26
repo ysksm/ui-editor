@@ -4,7 +4,16 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/coverage/**", "**/node_modules/**"] },
+  {
+    ignores: [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      // コード生成の出力
+      "packages/codegen/snapshots/**",
+      "packages/codegen/out/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

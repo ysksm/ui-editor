@@ -3,3 +3,5 @@ coverage
 pnpm-lock.yaml
 packages/schema/project.schema.json
 packages/schema/examples/*.project.*
+packages/codegen/snapshots
+packages/codegen/out
