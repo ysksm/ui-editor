@@ -1,0 +1,46 @@
+.page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statusSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statusList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.deviceCard {
+  width: 200px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.metricSection {
+  display: flex;
+  gap: 12px;
+}
+
+.alarmSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

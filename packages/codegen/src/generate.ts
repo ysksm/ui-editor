@@ -1,5 +1,8 @@
 import type { Project } from "@ui-editor/schema";
 import { writeAppTemplate } from "./app-template.js";
+import { modelSource, modelTypeNames } from "./emit/model.js";
+import { writeComponent, writeDialog, writeScreen, type ProjectContext } from "./emit/modules.js";
+import { writeUi } from "./emit/ui.js";
 import { FileSet, type GeneratedFile } from "./files.js";
 import { formatFile } from "./format.js";
 import { screenName } from "./names.js";
@@ -18,17 +21,22 @@ export async function generate(
   options: GenerateOptions,
 ): Promise<GeneratedFile[]> {
   const files = new FileSet();
+  const pc: ProjectContext = {
+    project,
+    components: new Map((project.components ?? []).map((c) => [c.id, c])),
+    modelTypes: modelTypeNames(project),
+    ui: new Set(),
+  };
+
   writeAppTemplate(files, project, options);
   writeApp(files, project);
-  for (const screen of project.screens) {
-    files.add(
-      `src/screens/${screenName(screen.id)}.tsx`,
-      `export function ${screenName(screen.id)}() {
-  return <h1>${jsxText(screen.name)}</h1>;
-}
-`,
-    );
-  }
+  const model = modelSource(project);
+  if (model !== undefined) files.add("src/model.ts", model);
+  for (const screen of project.screens) writeScreen(files, screen, pc);
+  for (const component of project.components ?? []) writeComponent(files, component, pc);
+  for (const dialog of project.dialogs ?? []) writeDialog(files, dialog, pc);
+  writeUi(files, pc.ui);
+
   return Promise.all(
     files
       .toArray()
@@ -48,9 +56,4 @@ export function App() {
 }
 `,
   );
-}
-
-/** JSX のテキストとして書けるようにエスケープする。 */
-function jsxText(text: string): string {
-  return /[{}<>]/.test(text) ? `{${JSON.stringify(text)}}` : text;
 }
