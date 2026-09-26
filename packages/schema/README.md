@@ -23,6 +23,10 @@ if (!result.success) console.error(result.issues.map(formatIssue).join("\n"));
 | `extractExpressions` / `wholeExpression` など           | `{{ }}` バインディングの補助                                          |
 | `Device` / `sampleData` など                            | 題材アプリのデータモデルとサンプルデータ（`src/domain/`）             |
 
+## 題材ファイル
+
+題材アプリ全体をこのスキーマで書いたものが [`examples/`](examples/README.md) にある（JSON と YAML の比較、スキーマで表現しにくかった点のメモも）。
+
 ## プロジェクトファイルの構造
 
 ```yaml
@@ -148,6 +152,8 @@ text: "{{ device.name }}" # OK
 text: {{ device.name }}   # NG
 text: 名前: {{ device.name }} # OK（先頭が {{ でなければクォート不要）
 ```
+
+ほかにも ` #` 以降はコメントになる（`border: 1px solid #ddd` → `1px solid`）、`%` で始まる値や `"0"` のような数字に見える文字列はクォートが必要。こちらは検出できない。
 
 ## JSON Schema
 

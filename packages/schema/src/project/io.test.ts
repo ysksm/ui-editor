@@ -87,3 +87,17 @@ describe("parseProjectText", () => {
     expect(() => formatFromPath("app.txt")).toThrow(ProjectParseError);
   });
 });
+
+describe("parseProjectText: unquoted bindings", () => {
+  it("finds them in flow mappings and sequences", () => {
+    expect(() => parseProjectText("a: 1\nb: { text: {{ x }} }\n", "yaml")).toThrow(/2 行目/);
+    expect(() => parseProjectText("a:\n  - {{ x }}\n", "yaml")).toThrow(/2 行目/);
+  });
+
+  it("ignores bindings inside quoted or plain strings", () => {
+    expect(parseProjectText('a: "label: {{ x }}"\nb: 名前 {{ y }}\n', "yaml")).toEqual({
+      a: "label: {{ x }}",
+      b: "名前 {{ y }}",
+    });
+  });
+});

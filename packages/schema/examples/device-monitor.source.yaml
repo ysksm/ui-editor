@@ -1,0 +1,530 @@
+# 手書きの元ファイル。sync:examples で device-monitor.project.{yaml,json} を生成する
+$schema: ../project.schema.json
+schemaVersion: "0"
+name: 機器の設定＆モニタリング
+description: 全プロトタイプ共通の題材アプリ（#1）
+entry: dashboard
+dataModel:
+  source: |
+    type DeviceStatus = "online" | "offline" | "warning";
+
+    interface Device {
+      id: string;
+      name: string;
+      model: string;
+      status: DeviceStatus;
+      ipAddress: string;
+      firmware: string;
+    }
+
+    interface DeviceSettings {
+      deviceId: string;
+      network: { dhcp: boolean; ip: string; subnet: string; gateway: string };
+      thresholds: { temperatureMax: number; cpuMax: number };
+      pollingIntervalSec: number;
+    }
+
+    interface Metric {
+      deviceId: string;
+      timestamp: string;
+      temperature: number;
+      cpu: number;
+      trafficMbps: number;
+    }
+
+    interface Alarm {
+      id: string;
+      deviceId: string;
+      level: "info" | "warn" | "error";
+      message: string;
+      occurredAt: string;
+      acknowledged: boolean;
+    }
+state:
+  draftSettings:
+    type: DeviceSettings | null
+    initial: null
+
+screens:
+  # ---- S1 ダッシュボード ----
+  - id: dashboard
+    name: ダッシュボード
+    path: /
+    root:
+      id: page
+      type: Box
+      style: { display: flex, flexDirection: column, gap: 24, padding: 24 }
+      children:
+        - id: header
+          type: Box
+          style: { display: flex, justifyContent: space-between, alignItems: center }
+          children:
+            - id: title
+              type: Text
+              props: { text: ダッシュボード, variant: title }
+            - id: toDevices
+              type: Button
+              props: { label: 機器一覧へ, variant: secondary }
+              events:
+                click:
+                  - { type: navigate, to: devices }
+
+        - id: statusSection
+          type: Box
+          style: { display: flex, flexDirection: column, gap: 8 }
+          children:
+            - id: statusTitle
+              type: Text
+              props: { text: 機器ステータス, variant: caption }
+            - id: statusList
+              type: Box
+              style: { display: flex, flexWrap: wrap, gap: 12 }
+              children:
+                - id: deviceCard
+                  type: Box
+                  repeat: { each: "{{ data.devices }}", as: device, key: "{{ device.id }}" }
+                  style:
+                    display: flex
+                    flexDirection: column
+                    gap: 4
+                    padding: 12
+                    width: 200
+                    border: "1px solid #ddd"
+                    borderRadius: 8
+                    cursor: pointer
+                  events:
+                    click:
+                      - type: navigate
+                        to: deviceSettings
+                        params: { deviceId: "{{ device.id }}" }
+                  children:
+                    - id: deviceName
+                      type: Text
+                      props: { text: "{{ device.name }}" }
+                    - id: deviceStatus
+                      type: StatusBadge
+                      props: { status: "{{ device.status }}" }
+
+        - id: metricSection
+          type: Box
+          style: { display: flex, gap: 12 }
+          children:
+            - id: temperatureCard
+              type: MetricCard
+              props:
+                label: 最高温度
+                value: "{{ Math.max(...data.devices.map(d => data.metrics.filter(m => m.deviceId === d.id).at(-1)?.temperature ?? 0)) }}"
+                unit: ℃
+            - id: cpuCard
+              type: MetricCard
+              props:
+                label: 最大 CPU 使用率
+                value: "{{ Math.max(...data.devices.map(d => data.metrics.filter(m => m.deviceId === d.id).at(-1)?.cpu ?? 0)) }}"
+                unit: "%"
+            - id: trafficCard
+              type: MetricCard
+              props:
+                label: 通信量（合計）
+                value: "{{ Math.round(data.devices.reduce((sum, d) => sum + (data.metrics.filter(m => m.deviceId === d.id).at(-1)?.trafficMbps ?? 0), 0)) }}"
+                unit: Mbps
+
+        - id: alarmSection
+          type: Box
+          style: { display: flex, flexDirection: column, gap: 8 }
+          children:
+            - id: alarmTitle
+              type: Text
+              props: { text: 最新アラーム, variant: caption }
+            - id: alarmRow
+              type: AlarmRow
+              repeat:
+                each: "{{ data.alarms.toSorted((a, b) => b.occurredAt.localeCompare(a.occurredAt)).slice(0, 5) }}"
+                as: alarm
+                key: "{{ alarm.id }}"
+              props:
+                alarm: "{{ alarm }}"
+                deviceName: "{{ data.devices.find(d => d.id === alarm.deviceId)?.name ?? alarm.deviceId }}"
+              events:
+                click:
+                  - type: openDialog
+                    dialog: alarmDetail
+                    params: { alarmId: "{{ alarm.id }}" }
+
+  # ---- S2 機器一覧 ----
+  - id: devices
+    name: 機器一覧
+    path: /devices
+    root:
+      id: page
+      type: Box
+      style: { display: flex, flexDirection: column, gap: 16, padding: 24 }
+      children:
+        - id: header
+          type: Box
+          style: { display: flex, justifyContent: space-between, alignItems: center }
+          children:
+            - id: title
+              type: Text
+              props: { text: 機器一覧, variant: title }
+            - id: toDashboard
+              type: Button
+              props: { label: ダッシュボードへ, variant: secondary }
+              events:
+                click:
+                  - { type: navigate, to: dashboard }
+        - id: deviceTable
+          type: Table
+          props:
+            rows: "{{ data.devices }}"
+            columns:
+              - { header: 名前, value: "{{ row.name }}" }
+              - { header: 型番, value: "{{ row.model }}" }
+              - header: ステータス
+                value: "{{ ({ online: 'オンライン', offline: 'オフライン', warning: '警告' })[row.status] }}"
+              - { header: IP アドレス, value: "{{ row.ipAddress }}" }
+              - { header: ファームウェア, value: "{{ row.firmware }}" }
+          events:
+            rowClick:
+              - type: navigate
+                to: deviceSettings
+                params: { deviceId: "{{ event.row.id }}" }
+
+  # ---- S3 機器設定 ----
+  - id: deviceSettings
+    name: 機器設定
+    path: /devices/:deviceId
+    params:
+      deviceId: { type: string }
+    events:
+      mount:
+        # 編集用の下書きを state に用意する
+        - type: setState
+          path: draftSettings
+          value: "{{ structuredClone(data.deviceSettings.find(s => s.deviceId === params.deviceId) ?? null) }}"
+    root:
+      id: page
+      type: Box
+      style: { display: flex, flexDirection: column, gap: 16, padding: 24, maxWidth: 560 }
+      children:
+        - id: header
+          type: Box
+          style: { display: flex, alignItems: center, gap: 12 }
+          children:
+            - id: title
+              type: Text
+              props:
+                text: "{{ data.devices.find(d => d.id === params.deviceId)?.name ?? params.deviceId }} の設定"
+                variant: title
+            - id: status
+              type: StatusBadge
+              props:
+                status: "{{ data.devices.find(d => d.id === params.deviceId)?.status ?? 'offline' }}"
+
+        - id: notFound
+          type: Text
+          visible: "{{ state.draftSettings === null }}"
+          props: { text: 機器が見つかりません }
+
+        - id: form
+          type: Box
+          visible: "{{ state.draftSettings !== null }}"
+          style: { display: flex, flexDirection: column, gap: 16 }
+          children:
+            - id: networkSection
+              type: Box
+              style: { display: flex, flexDirection: column, gap: 8 }
+              children:
+                - id: networkTitle
+                  type: Text
+                  props: { text: ネットワーク, variant: caption }
+                - id: dhcp
+                  type: Checkbox
+                  props: { label: DHCP を使う, checked: "{{ state.draftSettings.network.dhcp }}" }
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.dhcp
+                        value: "{{ event.value }}"
+                - id: ip
+                  type: TextInput
+                  props:
+                    label: IP アドレス
+                    value: "{{ state.draftSettings.network.ip }}"
+                    disabled: "{{ state.draftSettings.network.dhcp }}"
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.ip
+                        value: "{{ event.value }}"
+                - id: subnet
+                  type: TextInput
+                  props:
+                    label: サブネットマスク
+                    value: "{{ state.draftSettings.network.subnet }}"
+                    disabled: "{{ state.draftSettings.network.dhcp }}"
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.subnet
+                        value: "{{ event.value }}"
+                - id: gateway
+                  type: TextInput
+                  props:
+                    label: デフォルトゲートウェイ
+                    value: "{{ state.draftSettings.network.gateway }}"
+                    disabled: "{{ state.draftSettings.network.dhcp }}"
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.network.gateway
+                        value: "{{ event.value }}"
+
+            - id: thresholdSection
+              type: Box
+              style: { display: flex, flexDirection: column, gap: 8 }
+              children:
+                - id: thresholdTitle
+                  type: Text
+                  props: { text: 閾値, variant: caption }
+                - id: temperatureMax
+                  type: NumberInput
+                  props:
+                    label: 温度の上限（℃）
+                    value: "{{ state.draftSettings.thresholds.temperatureMax }}"
+                    min: 0
+                    max: 120
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.thresholds.temperatureMax
+                        value: "{{ event.value }}"
+                - id: cpuMax
+                  type: NumberInput
+                  props:
+                    label: CPU 使用率の上限（%）
+                    value: "{{ state.draftSettings.thresholds.cpuMax }}"
+                    min: 0
+                    max: 100
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.thresholds.cpuMax
+                        value: "{{ event.value }}"
+
+            - id: pollingSection
+              type: Box
+              style: { display: flex, flexDirection: column, gap: 8 }
+              children:
+                - id: pollingTitle
+                  type: Text
+                  props: { text: ポーリング, variant: caption }
+                - id: pollingInterval
+                  type: NumberInput
+                  props:
+                    label: ポーリング間隔（秒）
+                    value: "{{ state.draftSettings.pollingIntervalSec }}"
+                    min: 10
+                    step: 10
+                  events:
+                    change:
+                      - type: setState
+                        path: draftSettings.pollingIntervalSec
+                        value: "{{ event.value }}"
+
+            - id: buttons
+              type: Box
+              style: { display: flex, justifyContent: flex-end, gap: 8 }
+              children:
+                - id: cancel
+                  type: Button
+                  props: { label: キャンセル, variant: secondary }
+                  events:
+                    click:
+                      - { type: navigate, to: devices }
+                - id: save
+                  type: Button
+                  props: { label: 保存, variant: primary }
+                  events:
+                    click:
+                      - type: openDialog
+                        dialog: saveConfirm
+                        params: { deviceId: "{{ params.deviceId }}" }
+
+components:
+  - id: StatusBadge
+    name: ステータスバッジ
+    props:
+      status: { type: DeviceStatus }
+    root:
+      id: badge
+      type: Text
+      props:
+        text: "{{ ({ online: 'オンライン', offline: 'オフライン', warning: '警告' })[props.status] }}"
+      style:
+        padding: 4px 8px
+        borderRadius: 999
+        fontSize: 12
+        color: "#fff"
+        backgroundColor: "{{ ({ online: '#2e7d32', offline: '#757575', warning: '#ed6c02' })[props.status] }}"
+
+  - id: MetricCard
+    name: メトリクスカード
+    props:
+      label: { type: string }
+      value: { type: number }
+      unit: { type: string, default: "" }
+    root:
+      id: card
+      type: Box
+      style:
+        display: flex
+        flexDirection: column
+        gap: 4
+        padding: 16
+        width: 200
+        border: "1px solid #ddd"
+        borderRadius: 8
+      children:
+        - id: label
+          type: Text
+          props: { text: "{{ props.label }}", variant: caption }
+        - id: value
+          type: Text
+          props: { text: "{{ props.value }} {{ props.unit }}", variant: title }
+
+  - id: AlarmRow
+    name: アラーム行
+    props:
+      alarm: { type: Alarm }
+      deviceName: { type: string }
+    root:
+      id: row
+      type: Box
+      style:
+        display: flex
+        alignItems: center
+        gap: 12
+        padding: 8
+        border: "1px solid #eee"
+        borderRadius: 4
+        cursor: pointer
+      children:
+        - id: level
+          type: Text
+          props: { text: "{{ props.alarm.level.toUpperCase() }}" }
+          style:
+            width: 56
+            fontWeight: bold
+            color: "{{ ({ info: '#0288d1', warn: '#ed6c02', error: '#d32f2f' })[props.alarm.level] }}"
+        - id: message
+          type: Text
+          props: { text: "{{ props.alarm.message }}" }
+          style: { flexGrow: 1 }
+        - id: device
+          type: Text
+          props: { text: "{{ props.deviceName }}", variant: caption }
+        - id: occurredAt
+          type: Text
+          props:
+            text: "{{ props.alarm.occurredAt.slice(0, 16).replace('T', ' ') }}"
+            variant: caption
+        - id: acknowledged
+          type: Text
+          visible: "{{ props.alarm.acknowledged }}"
+          props: { text: 確認済み, variant: caption }
+
+dialogs:
+  # ---- D1 保存確認 ----
+  - id: saveConfirm
+    name: 保存確認
+    params:
+      deviceId: { type: string }
+    root:
+      id: body
+      type: Box
+      style: { display: flex, flexDirection: column, gap: 16, padding: 24 }
+      children:
+        - id: message
+          type: Text
+          props: { text: 設定を保存しますか？ }
+        - id: buttons
+          type: Box
+          style: { display: flex, justifyContent: flex-end, gap: 8 }
+          children:
+            - id: cancel
+              type: Button
+              props: { label: キャンセル, variant: secondary }
+              events:
+                click:
+                  - { type: closeDialog }
+            - id: ok
+              type: Button
+              props: { label: OK, variant: primary }
+              events:
+                click:
+                  - type: updateData
+                    collection: deviceSettings
+                    match: { deviceId: "{{ params.deviceId }}" }
+                    set:
+                      network: "{{ state.draftSettings.network }}"
+                      thresholds: "{{ state.draftSettings.thresholds }}"
+                      pollingIntervalSec: "{{ state.draftSettings.pollingIntervalSec }}"
+                  - type: updateData
+                    collection: devices
+                    match: { id: "{{ params.deviceId }}" }
+                    set: { ipAddress: "{{ state.draftSettings.network.ip }}" }
+                  - { type: closeDialog }
+                  - { type: navigate, to: devices }
+
+  # ---- D2 アラーム詳細 ----
+  - id: alarmDetail
+    name: アラーム詳細
+    params:
+      alarmId: { type: string }
+    root:
+      id: body
+      type: Box
+      style: { display: flex, flexDirection: column, gap: 12, padding: 24, minWidth: 400 }
+      children:
+        - id: level
+          type: Text
+          props:
+            text: "{{ data.alarms.find(a => a.id === params.alarmId)?.level.toUpperCase() }}"
+            variant: caption
+        - id: message
+          type: Text
+          props:
+            text: "{{ data.alarms.find(a => a.id === params.alarmId)?.message }}"
+            variant: title
+        - id: device
+          type: Text
+          props:
+            text: "機器: {{ data.devices.find(d => d.id === data.alarms.find(a => a.id === params.alarmId)?.deviceId)?.name }}"
+        - id: occurredAt
+          type: Text
+          props:
+            text: "発生日時: {{ data.alarms.find(a => a.id === params.alarmId)?.occurredAt.slice(0, 19).replace('T', ' ') }}"
+        - id: buttons
+          type: Box
+          style: { display: flex, justifyContent: flex-end, gap: 8 }
+          children:
+            - id: close
+              type: Button
+              props: { label: 閉じる, variant: secondary }
+              events:
+                click:
+                  - { type: closeDialog }
+            - id: acknowledge
+              type: Button
+              visible: "{{ !data.alarms.find(a => a.id === params.alarmId)?.acknowledged }}"
+              props: { label: 確認済みにする, variant: primary }
+              events:
+                click:
+                  - type: updateData
+                    collection: alarms
+                    match: { id: "{{ params.alarmId }}" }
+                    set: { acknowledged: true }
+                  - { type: closeDialog }
+
+# sampleData は sync:examples で src/domain/sample-data.ts から書き込む
+sampleData: {}

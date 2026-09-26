@@ -16,6 +16,8 @@ UI エディタのプロトタイプ群を比較検証するための pnpm works
 
 現時点で存在するのは `packages/schema` のみ。その他は各フェーズで追加する。
 
+各プロトタイプの共通入力（題材アプリのプロジェクトファイル）は [`packages/schema/examples/`](packages/schema/examples/README.md) にある。スキーマの設計メモは [`packages/schema/README.md`](packages/schema/README.md)。
+
 ルートの共通設定:
 
 - `pnpm-workspace.yaml` … ワークスペース定義（`packages/*`, `apps/*`）
@@ -43,6 +45,7 @@ pnpm typecheck      # 型チェック
 pnpm lint           # ESLint
 pnpm format         # Prettier で整形
 pnpm format:check   # 整形チェック
+pnpm validate       # 題材のプロジェクトファイルを検証
 ```
 
 特定のパッケージだけ実行する場合は `--filter` を使う:
