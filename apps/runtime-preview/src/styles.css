@@ -257,3 +257,53 @@ code,
 .grow {
   flex: 1;
 }
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.banner {
+  margin: 8px 16px;
+  cursor: pointer;
+}
+
+.table-scroll {
+  overflow: auto;
+  margin-bottom: 12px;
+}
+
+.data-table td {
+  padding: 2px 4px;
+  min-width: 90px;
+}
+
+.data-table th {
+  white-space: nowrap;
+}
+
+.required {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+.warn-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+}
+
+.invalid-cell {
+  background: #ffebe9;
+  outline: 1px solid var(--danger);
+}
+
+.invalid-row {
+  background: #fff8c5;
+}
