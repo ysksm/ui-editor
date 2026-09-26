@@ -106,6 +106,9 @@ importers:
       '@ui-editor/schema':
         specifier: workspace:*
         version: link:../schema
+      acorn:
+        specifier: ^8.18.0
+        version: 8.18.0
       prettier:
         specifier: ^3.9.9
         version: 3.9.9

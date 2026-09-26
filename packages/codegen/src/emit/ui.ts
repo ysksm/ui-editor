@@ -10,10 +10,10 @@ const TEMPLATES = new URL("../../templates/ui/", import.meta.url);
 export function writeUi(files: FileSet, used: ReadonlySet<string>) {
   const names = [...used].sort();
   for (const name of names) {
-    const file = name === "unbound" ? "unbound.ts" : `${name}.tsx`;
+    const file = `${name}.tsx`;
     files.add(`src/ui/${file}`, readFileSync(new URL(file, TEMPLATES), "utf8"));
   }
-  if (names.some((n) => n !== "unbound")) {
+  if (names.length > 0) {
     files.add("src/ui/ui.module.css", readFileSync(new URL("ui.module.css", TEMPLATES), "utf8"));
   }
 }

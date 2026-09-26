@@ -2,6 +2,7 @@ import type { Project } from "@ui-editor/schema";
 import { writeAppTemplate } from "./app-template.js";
 import { modelSource, modelTypeNames } from "./emit/model.js";
 import { writeComponent, writeDialog, writeScreen, type ProjectContext } from "./emit/modules.js";
+import { writeStore } from "./emit/store.js";
 import { writeUi } from "./emit/ui.js";
 import { FileSet, type GeneratedFile } from "./files.js";
 import { formatFile } from "./format.js";
@@ -32,6 +33,7 @@ export async function generate(
   writeApp(files, project);
   const model = modelSource(project);
   if (model !== undefined) files.add("src/model.ts", model);
+  writeStore(files, project, pc.modelTypes);
   for (const screen of project.screens) writeScreen(files, screen, pc);
   for (const component of project.components ?? []) writeComponent(files, component, pc);
   for (const dialog of project.dialogs ?? []) writeDialog(files, dialog, pc);
