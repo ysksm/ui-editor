@@ -1,10 +1,10 @@
 import { useEditor } from "@craftjs/core";
 import type { Project, ProjectFormat } from "@ui-editor/schema";
 import { useRef } from "react";
-import { p0ToCraft } from "../project/convert";
-import { DOC_KIND_LABEL, findDoc, listDocs, sameDoc, type DocKey } from "../project/documents";
+import { DOC_KIND_LABEL, listDocs, sameDoc } from "../project/documents";
 import { baseNameOf, exportProject, importProject } from "../project/io";
 import { cx } from "../parts/view";
+import { useWorkspace } from "./workspace";
 
 export interface Message {
   kind: "info" | "error";
@@ -13,19 +13,12 @@ export interface Message {
 }
 
 export function Toolbar({
-  project,
   filename,
-  docKey,
-  onOpenDoc,
   onLoadProject,
   onDownload,
   onMessage,
 }: {
-  project: Project;
   filename: string;
-  docKey: DocKey;
-  /** 開くドキュメントが変わる直前に呼ぶ（Craft に読み込む前）。 */
-  onOpenDoc: (key: DocKey) => void;
   onLoadProject: (project: Project, filename: string) => void;
   onDownload: (filename: string, text: string) => void;
   onMessage: (message: Message | undefined) => void;
@@ -34,17 +27,8 @@ export function Toolbar({
     canUndo: q.history.canUndo(),
     canRedo: q.history.canRedo(),
   }));
+  const { project, docKey, openDoc } = useWorkspace();
   const fileInput = useRef<HTMLInputElement>(null);
-
-  /** ドキュメントの root を Craft に読み込む。 */
-  const load = (from: Project, key: DocKey) => {
-    const doc = findDoc(from, key);
-    if (!doc) return;
-    onOpenDoc(key);
-    actions.history.ignore().deserialize(p0ToCraft(doc.root));
-    actions.history.clear();
-    actions.selectNode();
-  };
 
   const openFile = async (file: File) => {
     const result = importProject(await file.text(), file.name);
@@ -53,7 +37,7 @@ export function Toolbar({
       return;
     }
     onLoadProject(result.project, file.name);
-    load(result.project, { kind: "screen", id: result.project.screens[0]!.id });
+    openDoc({ kind: "screen", id: result.project.screens[0]!.id }, result.project);
     onMessage({ kind: "info", title: `${file.name} を読み込みました`, lines: [] });
   };
 
@@ -90,7 +74,7 @@ export function Toolbar({
                   key={d.key.id}
                   type="button"
                   className={cx("doc-tab", sameDoc(d.key, docKey) && "is-active")}
-                  onClick={() => !sameDoc(d.key, docKey) && load(project, d.key)}
+                  onClick={() => !sameDoc(d.key, docKey) && openDoc(d.key)}
                 >
                   {d.label}
                 </button>

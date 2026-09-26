@@ -108,7 +108,12 @@ export function Palette() {
       className="palette-item"
       title="ドラッグしてキャンバスに置く（クリックで選択中のコンテナに追加）"
       ref={(el) => {
-        if (el) connectors.create(el, () => create(item));
+        if (el) {
+          connectors.create(el, () => create(item), {
+            // 置いたパーツをそのまま選択して、すぐ編集できるようにする
+            onCreate: (tree) => actions.selectNode(tree.rootNodeId),
+          });
+        }
       }}
       onClick={() => add(item)}
     >
