@@ -1,0 +1,668 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/Project",
+  "$defs": {
+    "Project": {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "schemaVersion": {
+          "type": "string",
+          "const": "0"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "entry": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+        },
+        "dataModel": {
+          "$ref": "#/$defs/DataModel"
+        },
+        "state": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/StateDef"
+          }
+        },
+        "screens": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Screen"
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Component"
+          }
+        },
+        "dialogs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dialog"
+          }
+        },
+        "sampleData": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "name",
+        "dataModel",
+        "screens",
+        "sampleData"
+      ],
+      "additionalProperties": false,
+      "title": "ui-editor project file v0"
+    },
+    "DataModel": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "StateDef": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "initial": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "type",
+        "initial"
+      ],
+      "additionalProperties": false
+    },
+    "JsonValue": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      ]
+    },
+    "Screen": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "format": "starts_with",
+          "pattern": "^\\/.*"
+        },
+        "params": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ParamDef"
+          }
+        },
+        "events": {
+          "$ref": "#/$defs/Events"
+        },
+        "root": {
+          "$ref": "#/$defs/Node"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "path",
+        "root"
+      ],
+      "additionalProperties": false
+    },
+    "ParamDef": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "default": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "Events": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/Action"
+        }
+      }
+    },
+    "Action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "navigate"
+            },
+            "to": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+            },
+            "params": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "type",
+            "to"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "openDialog"
+            },
+            "dialog": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+            },
+            "params": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "type",
+            "dialog"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "closeDialog"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "setState"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+            },
+            "value": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "required": [
+            "type",
+            "path",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "updateData"
+            },
+            "collection": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "match": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            },
+            "set": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "type",
+            "collection",
+            "match",
+            "set"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Node": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "props": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "repeat": {
+          "$ref": "#/$defs/Repeat"
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "description": "`{{ 式 }}` 形式のバインディングを含む文字列"
+            }
+          ]
+        },
+        "events": {
+          "$ref": "#/$defs/Events"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Node"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "Style": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "height": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "minWidth": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "maxWidth": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "minHeight": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "maxHeight": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "padding": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "margin": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "display": {
+          "type": "string",
+          "enum": [
+            "flex",
+            "inline-flex",
+            "block",
+            "inline-block",
+            "grid",
+            "none"
+          ]
+        },
+        "flexDirection": {
+          "type": "string",
+          "enum": [
+            "row",
+            "row-reverse",
+            "column",
+            "column-reverse"
+          ]
+        },
+        "flexWrap": {
+          "type": "string",
+          "enum": [
+            "nowrap",
+            "wrap",
+            "wrap-reverse"
+          ]
+        },
+        "justifyContent": {
+          "type": "string",
+          "enum": [
+            "flex-start",
+            "flex-end",
+            "center",
+            "space-between",
+            "space-around",
+            "space-evenly"
+          ]
+        },
+        "alignItems": {
+          "type": "string",
+          "enum": [
+            "flex-start",
+            "flex-end",
+            "center",
+            "stretch",
+            "baseline"
+          ]
+        },
+        "gap": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "flex": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "flexGrow": {
+          "type": "number"
+        },
+        "flexShrink": {
+          "type": "number"
+        },
+        "overflow": {
+          "type": "string",
+          "enum": [
+            "visible",
+            "hidden",
+            "auto",
+            "scroll"
+          ]
+        },
+        "color": {
+          "type": "string",
+          "description": "`{{ 式 }}` 形式のバインディングを含む文字列"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "description": "`{{ 式 }}` 形式のバインディングを含む文字列"
+        },
+        "border": {
+          "type": "string"
+        },
+        "borderRadius": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "fontSize": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "fontWeight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "normal",
+                "bold"
+              ]
+            }
+          ]
+        },
+        "textAlign": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "cursor": {
+          "type": "string",
+          "enum": [
+            "default",
+            "pointer"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "description": "主要な CSS プロパティ。数値は px として扱う"
+    },
+    "Repeat": {
+      "type": "object",
+      "properties": {
+        "each": {
+          "type": "string",
+          "description": "`{{ 式 }}` 形式のバインディングを含む文字列"
+        },
+        "as": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "key": {
+          "type": "string",
+          "description": "`{{ 式 }}` 形式のバインディングを含む文字列"
+        }
+      },
+      "required": [
+        "each",
+        "as"
+      ],
+      "additionalProperties": false
+    },
+    "Component": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "props": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ParamDef"
+          }
+        },
+        "root": {
+          "$ref": "#/$defs/Node"
+        }
+      },
+      "required": [
+        "id",
+        "root"
+      ],
+      "additionalProperties": false
+    },
+    "Dialog": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "params": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ParamDef"
+          }
+        },
+        "root": {
+          "$ref": "#/$defs/Node"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "root"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
