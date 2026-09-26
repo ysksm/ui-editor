@@ -1,4 +1,5 @@
 import { hasBinding, type Component, type JsonValue, type Node } from "@ui-editor/schema";
+import { templateExpr, templateParts, type Scope } from "./binding.js";
 import { styleEntries } from "./css.js";
 import type { CssModule } from "./css-module.js";
 import type { Imports } from "./imports.js";
@@ -22,18 +23,73 @@ export interface TreeContext {
   srcDir: string;
   /** 使った src/ui/ のファイル名（拡張子なし）。プロジェクト全体で共有する。 */
   ui: Set<string>;
+  /** エラーメッセージ用の持ち主の名前。例: `screens.dashboard` */
+  owner: string;
 }
 
-/** ノードを JSX の式にする。描画しないノードは undefined。 */
-export function emitNode(node: Node, ctx: TreeContext): string | undefined {
+/**
+ * ノードを JSX の子にする。要素（`<div>...</div>`）か、式のコンテナ（`{...}`）を返す。
+ * 描画しないノードは undefined。
+ */
+export function emitNode(node: Node, ctx: TreeContext, scope: Scope): string | undefined {
   if (node.visible === false) return undefined;
+  const where = (field: string) => `${ctx.owner} のノード "${node.id}" の ${field}`;
 
-  const attrs: string[] = [];
-  const entries = styleEntries(node.style).filter(([, v]) => !isBinding(v));
-  if (entries.length > 0) attrs.push(`className={styles.${ctx.css.add(node.id, entries)}}`);
+  if (node.repeat) {
+    const { each, as, key } = node.repeat;
+    const list = templateExpr(each, scope, where("repeat.each"));
+    const inner = scope.child([as, "index"]);
+    // key が無ければ添字を使う
+    const keyExpr =
+      key !== undefined
+        ? templateExpr(key, inner, where("repeat.key"))
+        : (inner.resolve("index"), "index");
+    const body = conditional(node, inner, where, element(node, ctx, inner, `key={${keyExpr}}`));
+    const params = inner.used.has("index") ? `(${as}, index)` : `(${as})`;
+    return `{${list}.map(${params} => (${body}))}`;
+  }
+  const el = element(node, ctx, scope);
+  return typeof node.visible === "string" ? `{${conditional(node, scope, where, el)}}` : el;
+}
 
+/** return に置ける形にする。式のコンテナならフラグメントで囲む。 */
+export function rootJsx(child: string | undefined): string {
+  if (child === undefined) return "null";
+  return child.startsWith("{") ? `<>${child}</>` : child;
+}
+
+/** visible が式なら `式 && 要素` にする。 */
+function conditional(node: Node, scope: Scope, where: (f: string) => string, el: string): string {
+  if (typeof node.visible !== "string") return el;
+  return `${templateExpr(node.visible, scope, where("visible"))} && ${el}`;
+}
+
+function element(node: Node, ctx: TreeContext, scope: Scope, key?: string): string {
+  const where = (field: string) => `${ctx.owner} のノード "${node.id}" の ${field}`;
+
+  // 属性の並び: key → props → className / style
+  const styleAttrs: string[] = [];
+  const entries = styleEntries(node.style);
+  const fixed = entries.filter(([, v]) => !isBinding(v));
+  const bound = entries.filter(([, v]) => isBinding(v));
+  if (fixed.length > 0) styleAttrs.push(`className={styles.${ctx.css.add(node.id, fixed)}}`);
+  if (bound.length > 0) {
+    // バインディングを含む style だけ style 属性にする
+    const fields = bound.map(
+      ([k, v]) => `${k}: ${templateExpr(String(v), scope, where(`style.${k}`))}`,
+    );
+    styleAttrs.push(`style={{ ${fields.join(", ")} }}`);
+  }
+  const attrs = (props: [string, JsonValue][], ...extra: string[]) => [
+    ...(key ? [key] : []),
+    ...props.map(([name, value]) => attr(name, value, scope, where(`props.${name}`))),
+    ...extra,
+    ...styleAttrs,
+  ];
+  const props = Object.entries(node.props ?? {});
+  const except = (...names: string[]) => props.filter(([k]) => !names.includes(k));
   const children = (node.children ?? [])
-    .map((child) => emitNode(child, ctx))
+    .map((child) => emitNode(child, ctx, scope))
     .filter((c): c is string => c !== undefined);
 
   const component = ctx.components.get(node.type);
@@ -41,44 +97,39 @@ export function emitNode(node: Node, ctx: TreeContext): string | undefined {
     ctx.imports.value(`${ctx.srcDir}/components/${component.id}`, component.id);
     // コンポーネントの props は定義の順に並べる
     const order = Object.keys(component.props ?? {});
-    const props = Object.entries(node.props ?? {}).sort(
-      ([a], [b]) => order.indexOf(a) - order.indexOf(b),
-    );
-    return element(component.id, [...propAttrs(Object.fromEntries(props), ctx), ...attrs], []);
+    const sorted = [...props].sort(([a], [b]) => order.indexOf(a) - order.indexOf(b));
+    return tag(component.id, attrs(sorted), []);
   }
 
+  const p = node.props ?? {};
   switch (node.type) {
     case "Box":
-      return element("div", attrs, children);
-    case "Text": {
-      const { text, ...rest } = node.props ?? {};
-      return element(useUi("Text", ctx), [...propAttrs(rest, ctx), ...attrs], textChildren(text));
-    }
-    case "Button": {
-      const { label, ...rest } = node.props ?? {};
-      return element(
-        useUi("Button", ctx),
-        [...propAttrs(rest, ctx), ...attrs],
-        textChildren(label),
+      return tag("div", attrs(props), children);
+    case "Text":
+      return tag(
+        useUi("Text", ctx),
+        attrs(except("text")),
+        textChildren(p.text, scope, where("props.text")),
       );
-    }
-    case "Table": {
-      const { rows, columns, ...rest } = node.props ?? {};
-      // 行はまだバインディングを変換しないので空にしておく（テンプレートはコメントで残す）
-      const rowsAttr =
-        typeof rows === "string" && hasBinding(rows)
-          ? `rows={[] /* ${rows.replace(/\*\//g, "* /")} */}`
-          : attr("rows", rows ?? [], ctx);
-      return element(
+    case "Button":
+      return tag(
+        useUi("Button", ctx),
+        attrs(except("label")),
+        textChildren(p.label, scope, where("props.label")),
+      );
+    case "Table":
+      return tag(
         useUi("Table", ctx),
-        [rowsAttr, ...propAttrs(rest, ctx), `columns={${tableColumns(columns, ctx)}}`, ...attrs],
+        attrs(
+          [["rows", p.rows ?? []], ...except("rows", "columns")],
+          `columns={${tableColumns(p.columns, scope, where("props.columns"))}}`,
+        ),
         [],
       );
-    }
     default: {
       const ui = UI_COMPONENTS[node.type];
-      if (!ui) throw new Error(`type "${node.type}" の生成方法がありません`);
-      return element(useUi(ui, ctx), [...propAttrs(node.props, ctx), ...attrs], children);
+      if (!ui) throw new Error(`${ctx.owner}: type "${node.type}" の生成方法がありません`);
+      return tag(useUi(ui, ctx), attrs(props), children);
     }
   }
 }
@@ -89,65 +140,63 @@ function useUi(name: string, ctx: TreeContext): string {
   return name;
 }
 
-function element(tag: string, attrs: string[], children: string[]): string {
-  const open = [tag, ...attrs].join(" ");
+function tag(name: string, attrs: string[], children: string[]): string {
+  const open = [name, ...attrs].join(" ");
   if (children.length === 0) return `<${open} />`;
-  return `<${open}>\n${children.join("\n")}\n</${tag}>`;
-}
-
-function propAttrs(props: Record<string, JsonValue> | undefined, ctx: TreeContext): string[] {
-  return Object.entries(props ?? {}).map(([name, value]) => attr(name, value, ctx));
+  return `<${open}>\n${children.join("\n")}\n</${name}>`;
 }
 
 /** JSX の属性 1 つ。固定の文字列は `name="..."`、それ以外は `name={式}`。 */
-function attr(name: string, value: JsonValue, ctx: TreeContext): string {
+function attr(name: string, value: JsonValue, scope: Scope, where: string): string {
   if (value === true) return name;
   if (typeof value === "string" && !hasBinding(value) && !/["\\\n]/.test(value)) {
     return `${name}="${value}"`;
   }
-  return `${name}={${valueExpr(value, ctx)}}`;
+  return `${name}={${valueExpr(value, scope, where)}}`;
 }
 
-/** JSON の値を TS の式にする。 */
-function valueExpr(value: JsonValue, ctx: TreeContext): string {
-  if (typeof value === "string")
-    return hasBinding(value) ? binding(value, ctx) : JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map((v) => valueExpr(v, ctx)).join(", ")}]`;
+/** JSON の値を TS の式にする。文字列のバインディングは式に変換する。 */
+export function valueExpr(value: JsonValue, scope: Scope, where: string): string {
+  if (typeof value === "string") return templateExpr(value, scope, where);
+  if (Array.isArray(value)) {
+    return `[${value.map((v, i) => valueExpr(v, scope, `${where}[${i}]`)).join(", ")}]`;
+  }
   if (value !== null && typeof value === "object") {
     const fields = Object.entries(value).map(
-      ([k, v]) => `${propertyKey(k)}: ${valueExpr(v as JsonValue, ctx)}`,
+      ([k, v]) => `${propertyKey(k)}: ${valueExpr(v as JsonValue, scope, `${where}.${k}`)}`,
     );
     return `{ ${fields.join(", ")} }`;
   }
   return JSON.stringify(value);
 }
 
-/**
- * バインディングを含む文字列を式にする。
- * まだ変換しないので、テンプレートのまま unbound() で仮置きする。
- */
-function binding(template: string, ctx: TreeContext): string {
-  useUi("unbound", ctx);
-  return `unbound(${JSON.stringify(template)})`;
-}
-
-/** Text の text / Button の label を JSX の子にする。 */
-function textChildren(value: JsonValue | undefined): string[] {
+/** Text の text / Button の label を JSX の子にする。`{{ }}` の部分は `{式}`。 */
+function textChildren(value: JsonValue | undefined, scope: Scope, where: string): string[] {
   if (value === undefined || value === null) return [];
-  const text = String(value);
-  if (/[{}<>]/.test(text) || text !== text.trim()) return [`{${JSON.stringify(text)}}`];
-  return [text];
+  const parts = templateParts(String(value), scope, where);
+  const jsx = parts
+    .map((p) => {
+      if ("expr" in p) return `{${p.expr}}`;
+      return /[{}<>]/.test(p.text) || p.text !== p.text.trim()
+        ? `{${JSON.stringify(p.text)}}`
+        : p.text;
+    })
+    .join("");
+  return jsx === "" ? [] : [jsx];
 }
 
-/** Table の columns。value は行（row）を受け取る関数にする。 */
-function tableColumns(columns: JsonValue | undefined, ctx: TreeContext): string {
+/** Table の columns。value は行（`row`）を受け取る関数にする。 */
+function tableColumns(columns: JsonValue | undefined, scope: Scope, where: string): string {
   if (!Array.isArray(columns)) return "[]";
-  const items = columns.map((column) => {
+  const items = columns.map((column, i) => {
     if (column === null || typeof column !== "object" || Array.isArray(column)) {
-      throw new Error("Table の columns は { header, value } の配列で指定してください");
+      throw new Error(`${where}: { header, value } の配列で指定してください`);
     }
     const { header, value } = column as Record<string, JsonValue>;
-    return `{ header: ${valueExpr(header ?? "", ctx)}, value: () => ${valueExpr(value ?? "", ctx)} }`;
+    const rowScope = scope.child(["row"]);
+    const valueCode = valueExpr(value ?? "", rowScope, `${where}[${i}].value`);
+    const param = rowScope.used.has("row") ? "row" : "";
+    return `{ header: ${valueExpr(header ?? "", scope, `${where}[${i}].header`)}, value: (${param}) => ${valueCode} }`;
   });
   return `[${items.join(", ")}]`;
 }

@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@ui-editor/schema": "workspace:*",
+    "acorn": "^8.18.0",
     "prettier": "^3.9.9"
   }
 }

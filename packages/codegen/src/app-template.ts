@@ -9,6 +9,7 @@ import type { FileSet } from "./files.js";
 export const APP_DEPENDENCIES = {
   react: "^19.3.0",
   "react-dom": "^19.3.0",
+  zustand: "^5.0.15",
 } as const;
 
 export const APP_DEV_DEPENDENCIES = {

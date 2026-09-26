@@ -13,7 +13,7 @@ export interface SaveConfirmDialogProps {
   params: SaveConfirmDialogParams;
 }
 
-export function SaveConfirmDialog({ open, onClose, params }: SaveConfirmDialogProps) {
+export function SaveConfirmDialog({ open, onClose }: SaveConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} label="保存確認">
       <div className={styles.body}>

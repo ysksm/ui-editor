@@ -8,8 +8,15 @@ export interface StatusBadgeProps {
 
 export function StatusBadge(props: StatusBadgeProps) {
   return (
-    <Text className={styles.badge}>
-      {"{{ ({ online: 'オンライン', offline: 'オフライン', warning: '警告' })[props.status] }}"}
+    <Text
+      className={styles.badge}
+      style={{
+        backgroundColor: { online: "#2e7d32", offline: "#757575", warning: "#ed6c02" }[
+          props.status
+        ],
+      }}
+    >
+      {{ online: "オンライン", offline: "オフライン", warning: "警告" }[props.status]}
     </Text>
   );
 }

@@ -11,8 +11,10 @@ export function MetricCard(input: MetricCardProps) {
   const props = { unit: "", ...input };
   return (
     <div className={styles.card}>
-      <Text variant="caption">{"{{ props.label }}"}</Text>
-      <Text variant="title">{"{{ props.value }} {{ props.unit }}"}</Text>
+      <Text variant="caption">{props.label}</Text>
+      <Text variant="title">
+        {props.value} {props.unit}
+      </Text>
     </div>
   );
 }
