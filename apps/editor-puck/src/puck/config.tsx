@@ -11,7 +11,8 @@ import {
   type TableColumn,
 } from "../parts/builtins.tsx";
 import { componentProps, NodeView, type ComponentMap } from "../render/NodeView.tsx";
-import { valueField } from "./fields.tsx";
+import type { P0Extra } from "../convert/convert.ts";
+import { detailField, valueField } from "./fields.tsx";
 import { styleField } from "./style-field.tsx";
 
 /**
@@ -22,7 +23,7 @@ import { styleField } from "./style-field.tsx";
  * （ラッパーがあると flex の子要素にならず、幅や flexGrow が効かないため）。
  */
 
-type WithStyle = { style?: Style };
+type WithStyle = { style?: Style; _p0?: P0Extra };
 
 export type Components = {
   Box: WithStyle & { children: Slot };
@@ -65,7 +66,7 @@ const builtinComponents: Config<{ components: Components }>["components"] = {
   Box: {
     label: "Container (Box)",
     inline: true,
-    fields: { style: styleField, children: { type: "slot" } },
+    fields: { style: styleField, _p0: detailField, children: { type: "slot" } },
     defaultProps: {
       style: { display: "flex", flexDirection: "column", gap: 8, padding: 8 },
       children: [],
@@ -78,6 +79,7 @@ const builtinComponents: Config<{ components: Components }>["components"] = {
     inline: true,
     fields: {
       style: styleField,
+      _p0: detailField,
       text: { type: "text", label: "text" },
       variant: variantField(["body", "title", "caption"]),
     },
@@ -90,6 +92,7 @@ const builtinComponents: Config<{ components: Components }>["components"] = {
     inline: true,
     fields: {
       style: styleField,
+      _p0: detailField,
       label: { type: "text", label: "label" },
       variant: variantField(["primary", "secondary", "danger"]),
       disabled: valueField("disabled"),
@@ -106,6 +109,7 @@ const builtinComponents: Config<{ components: Components }>["components"] = {
       ...inputFields,
       placeholder: { type: "text", label: "placeholder" },
       style: styleField,
+      _p0: detailField,
     },
     defaultProps: { label: "ラベル" },
     render: ({ puck, style, ...props }) => (
@@ -120,6 +124,7 @@ const builtinComponents: Config<{ components: Components }>["components"] = {
       max: valueField("max"),
       step: valueField("step"),
       style: styleField,
+      _p0: detailField,
     },
     defaultProps: { label: "数値" },
     render: ({ puck, style, ...props }) => (
@@ -130,6 +135,7 @@ const builtinComponents: Config<{ components: Components }>["components"] = {
     inline: true,
     fields: {
       style: styleField,
+      _p0: detailField,
       label: { type: "text", label: "label" },
       checked: valueField("checked"),
       disabled: valueField("disabled"),
@@ -143,6 +149,7 @@ const builtinComponents: Config<{ components: Components }>["components"] = {
     inline: true,
     fields: {
       style: styleField,
+      _p0: detailField,
       rows: valueField("rows"),
       columns: {
         type: "array",
@@ -197,9 +204,10 @@ function projectComponent(component: Component, components: ComponentMap): Compo
   return {
     label: component.name ? `${component.name}（${component.id}）` : component.id,
     inline: true,
-    fields: Object.fromEntries(
-      defs.map(([name, def]) => [name, valueField(`${name}: ${def.type}`)]),
-    ),
+    fields: {
+      ...Object.fromEntries(defs.map(([name, def]) => [name, valueField(`${name}: ${def.type}`)])),
+      _p0: detailField,
+    },
     defaultProps: Object.fromEntries(
       defs.filter(([, def]) => def.default !== undefined).map(([name, def]) => [name, def.default]),
     ),

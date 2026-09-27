@@ -29,6 +29,25 @@ function lengthField(label: string, placeholder = "例: 200 / 100% / auto"): Cus
   };
 }
 
+function textField(label: string, placeholder: string): CustomField<string | undefined> {
+  return {
+    type: "custom",
+    label,
+    render: ({ name, value, onChange, readOnly }) => (
+      <FieldLabel label={label} readOnly={readOnly}>
+        <input
+          className="value-field"
+          name={name}
+          value={value ?? ""}
+          readOnly={readOnly}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.currentTarget.value || undefined)}
+        />
+      </FieldLabel>
+    ),
+  };
+}
+
 function numberField(label: string): CustomField<number | undefined> {
   return {
     type: "custom",
@@ -97,5 +116,7 @@ export const styleField: ObjectField<Style> = {
     alignItems: enumField("alignItems", s.alignItems.unwrap().options),
     gap: lengthField("gap", "例: 8"),
     flexGrow: numberField("flexGrow"),
+    border: textField("border", "例: 1px solid #ddd"),
+    borderRadius: lengthField("borderRadius", "例: 8"),
   },
 };
