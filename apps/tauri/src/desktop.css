@@ -1,0 +1,38 @@
+/* エディタ（P3）の上にファイルのバーを 1 段足す。.app は 100vh なので残りの高さに収める */
+.desktop {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.desktop .app {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.desktop-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #0f172a;
+  color: #cbd5e1;
+}
+
+.desktop-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+}
+
+.desktop-status {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.desktop-status--error {
+  color: #fca5a5;
+}
