@@ -12,6 +12,7 @@ import { BUILTIN_TYPES, createConfig } from "./puck/config.tsx";
 import {
   createComponent,
   createDialog,
+  createScreen,
   cyclicComponents,
   extractComponent,
   getParams,
@@ -90,9 +91,11 @@ export function App() {
 
   function create(kind: NewItemKind, id: string, name: string): string | undefined {
     const result =
-      kind === "component"
-        ? createComponent(project, id, name, BUILTIN_TYPES)
-        : createDialog(project, id, name);
+      kind === "screen"
+        ? createScreen(project, id, name)
+        : kind === "component"
+          ? createComponent(project, id, name, BUILTIN_TYPES)
+          : createDialog(project, id, name);
     const message = apply(result, { kind, id });
     if (!message) {
       setShowNew(false);

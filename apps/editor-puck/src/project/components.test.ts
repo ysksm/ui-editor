@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   createComponent,
   createDialog,
+  createScreen,
   cyclicComponents,
   extractComponent,
   getParams,
@@ -48,6 +49,16 @@ describe("コンポーネント・ダイアログの作成", () => {
     expect(createComponent(project, "TempCard", "", BUILTINS).ok).toBe(false);
     expect(createComponent(project, "Box", "", BUILTINS).ok).toBe(false);
     expect(createComponent(project, "tempCard", "", BUILTINS).ok).toBe(false);
+  });
+
+  it("画面を作れる（path は /id）", () => {
+    const project = ok(createScreen(example(), "report", "レポート"));
+    expect(project.screens.at(-1)).toMatchObject({
+      id: "report",
+      name: "レポート",
+      path: "/report",
+    });
+    expect(createScreen(project, "report", "").ok).toBe(false);
   });
 
   it("ダイアログを作れる", () => {

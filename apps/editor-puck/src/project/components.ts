@@ -2,7 +2,7 @@ import type { Component, Dialog, Node, ParamDef, Project } from "@ui-editor/sche
 import { getTree, setTree, type Target } from "./targets.ts";
 
 /**
- * コンポーネント・ダイアログを作る操作（P2-4）。どれもプロジェクトを受け取り、新しいプロジェクトを返す。
+ * 画面・コンポーネント・ダイアログを作る操作（P2-4, P2-5）。どれもプロジェクトを受け取り、新しいプロジェクトを返す。
  */
 
 export type OpResult = { ok: true; project: Project } | { ok: false; message: string };
@@ -39,6 +39,27 @@ export function createComponent(
     ok: true,
     project: { ...project, components: [...(project.components ?? []), component] },
   };
+}
+
+export function createScreen(project: Project, id: string, name: string): OpResult {
+  if (!ID.test(id))
+    return { ok: false, message: "画面の id は英字で始まる英数字・_・- で指定してください" };
+  if (project.screens.some((s) => s.id === id))
+    return { ok: false, message: `画面 ${id} は既にあります` };
+  const path = `/${id}`;
+  if (project.screens.some((s) => s.path === path))
+    return { ok: false, message: `パス ${path} は既に使われています` };
+  const screen = {
+    id,
+    name: name || id,
+    path,
+    root: {
+      id: "page",
+      type: "Box",
+      style: { display: "flex" as const, flexDirection: "column" as const, gap: 16, padding: 24 },
+    },
+  };
+  return { ok: true, project: { ...project, screens: [...project.screens, screen] } };
 }
 
 export function createDialog(project: Project, id: string, name: string): OpResult {

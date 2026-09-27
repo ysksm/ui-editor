@@ -170,3 +170,14 @@ body,
   gap: 6px;
   font-size: 13px;
 }
+
+.detail-field {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+.detail-field__error {
+  margin-top: 4px;
+  color: #b71c1c;
+  font-size: 12px;
+}

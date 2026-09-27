@@ -1,8 +1,14 @@
 import { useState } from "react";
 
-export type NewItemKind = "component" | "dialog";
+export type NewItemKind = "screen" | "component" | "dialog";
 
-/** コンポーネント・ダイアログを新しく作るフォーム。 */
+const PLACEHOLDER: Record<NewItemKind, string> = {
+  screen: "id（例: report）",
+  component: "id（例: TempCard）",
+  dialog: "id（例: deleteConfirm）",
+};
+
+/** 画面・コンポーネント・ダイアログを新しく作るフォーム。 */
 export function NewItemForm(props: {
   onCreate: (kind: NewItemKind, id: string, name: string) => string | undefined;
   onClose: () => void;
@@ -26,13 +32,14 @@ export function NewItemForm(props: {
         value={kind}
         onChange={(e) => setKind(e.currentTarget.value as NewItemKind)}
       >
+        <option value="screen">画面</option>
         <option value="component">コンポーネント</option>
         <option value="dialog">ダイアログ</option>
       </select>
       <input
         aria-label="id"
         value={id}
-        placeholder={kind === "component" ? "id（例: TempCard）" : "id（例: deleteConfirm）"}
+        placeholder={PLACEHOLDER[kind]}
         onChange={(e) => setId(e.currentTarget.value)}
       />
       <input
