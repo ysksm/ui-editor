@@ -9,6 +9,9 @@ export default tseslint.config(
       "**/dist/**",
       "**/coverage/**",
       "**/node_modules/**",
+      // Tauri（Rust）のビルド出力
+      "**/src-tauri/target/**",
+      "**/src-tauri/gen/**",
       // コード生成の出力
       "packages/codegen/snapshots/**",
       "packages/codegen/out/**",
