@@ -5,3 +5,6 @@ packages/schema/project.schema.json
 packages/schema/examples/*.project.*
 packages/codegen/snapshots
 packages/codegen/out
+# Tauri（Rust）のビルド出力
+**/src-tauri/target
+**/src-tauri/gen
