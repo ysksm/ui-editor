@@ -458,6 +458,10 @@
       }
 
       @media print {
+        * {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
         @page {
           size: 1280px 720px;
           margin: 0;
@@ -819,8 +823,9 @@ sampleData:
 pnpm --filter @ui-editor/schema validate &lt;file&gt;</code></pre>
               </li>
               <li>
-                コードから使う: <code>loadProject(text, "yaml")</code> →
-                <code>validateProject</code> → <code>serializeProject(p, "yaml")</code>
+                コードから使う:
+                <code>const r = loadProject(text, "yaml")</code>（読込と検証をまとめて行う）→
+                <code>r.success</code> なら <code>serializeProject(r.project, "yaml")</code>
               </li>
               <li>
                 スキーマを変えたら JSON Schema を再生成
@@ -1126,7 +1131,10 @@ pnpm --filter @ui-editor/editor-puck eval:rebuild</code></pre>
                 1 件目）
               </li>
               <li>events の GUI（params の無い画面遷移・ダイアログ開閉）</li>
-              <li>S1〜S3 を UI 操作で作り直すと題材と完全一致</li>
+              <li>
+                S1〜S3 を UI 操作で作り直すとノードのツリーは題材と完全一致（画面の
+                <code>events.mount</code> は作れない）
+              </li>
             </ul>
             <p class="tiny muted">
               弱点: UI をすべて書くので P2 の約 2 倍のコード／Craft.js は 2025-02
@@ -1206,7 +1214,7 @@ pnpm --filter @ui-editor/editor-craft dev</code></pre>
           <tr>
             <td>S1〜S3 の作り直し</td>
             <td>S3 の入れ子 1 つを作れず。操作数 61 / 35 / 78</td>
-            <td>完全一致。操作数 99 / 28 / 130</td>
+            <td>ツリーは完全一致（画面の mount イベントを除く）。操作数 99 / 28 / 130</td>
           </tr>
           <tr>
             <td>P0 との相性</td>
@@ -1729,6 +1737,14 @@ pnpm --filter @ui-editor/tauri tauri dev</code></pre>
 
         document.addEventListener("keydown", function (e) {
           if (e.metaKey || e.ctrlKey || e.altKey) return;
+          var t = e.target;
+          if (
+            (e.key === " " || e.key === "Enter") &&
+            t &&
+            t.closest &&
+            t.closest("button, a, input, textarea, select")
+          )
+            return;
           if (["ArrowRight", "PageDown", " ", "Enter"].indexOf(e.key) >= 0) {
             e.preventDefault();
             show(current + 1);
