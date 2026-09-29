@@ -1,0 +1,1776 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ui-editor ツール解説</title>
+    <style>
+      :root {
+        --bg: #e9ecf1;
+        --slide: #ffffff;
+        --ink: #1b2330;
+        --muted: #5b6676;
+        --line: #d8dde5;
+        --soft: #f3f5f8;
+        --accent: #2f5bd3;
+        --accent-soft: #e6ecfb;
+        --p0: #2f5bd3;
+        --p1: #0f8a6b;
+        --p2: #c2410c;
+        --p3: #9333ea;
+        --p4: #b45309;
+        --p5: #0e7490;
+        --p6: #be185d;
+        --code-bg: #f4f6fa;
+        --code-ink: #243042;
+        --good: #0f7a4f;
+        --bad: #b3261e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0d1117;
+          --slide: #161b22;
+          --ink: #e6edf3;
+          --muted: #9aa6b4;
+          --line: #2d3540;
+          --soft: #1d242d;
+          --accent: #7ea2ff;
+          --accent-soft: #1d2a47;
+          --p0: #7ea2ff;
+          --p1: #4fd1a8;
+          --p2: #fb8a4c;
+          --p3: #c084fc;
+          --p4: #f5b454;
+          --p5: #4cc4dc;
+          --p6: #f472b6;
+          --code-bg: #0f141a;
+          --code-ink: #d6dee8;
+          --good: #4ade9a;
+          --bad: #ff7b72;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0d1117;
+        --slide: #161b22;
+        --ink: #e6edf3;
+        --muted: #9aa6b4;
+        --line: #2d3540;
+        --soft: #1d242d;
+        --accent: #7ea2ff;
+        --accent-soft: #1d2a47;
+        --p0: #7ea2ff;
+        --p1: #4fd1a8;
+        --p2: #fb8a4c;
+        --p3: #c084fc;
+        --p4: #f5b454;
+        --p5: #4cc4dc;
+        --p6: #f472b6;
+        --code-bg: #0f141a;
+        --code-ink: #d6dee8;
+        --good: #4ade9a;
+        --bad: #ff7b72;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+        overflow: hidden;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+      }
+
+      /* ステージ: 1280x720 のスライドを画面に合わせて縮小する */
+      #stage {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: 1280px;
+        height: 720px;
+        transform-origin: center center;
+      }
+      .slide {
+        position: absolute;
+        inset: 0;
+        background: var(--slide);
+        border-radius: 14px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+        padding: 56px 72px 64px;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        --tag: var(--accent);
+      }
+      .slide.active {
+        display: flex;
+      }
+      .slide::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background: var(--tag);
+      }
+      .slide .foot {
+        position: absolute;
+        left: 72px;
+        right: 72px;
+        bottom: 22px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .kicker {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--tag);
+        margin-bottom: 6px;
+      }
+      h1 {
+        font-size: 54px;
+        line-height: 1.2;
+        margin: 0 0 20px;
+      }
+      h2 {
+        font-size: 34px;
+        line-height: 1.3;
+        margin: 0 0 22px;
+      }
+      h3 {
+        font-size: 20px;
+        margin: 0 0 10px;
+        color: var(--tag);
+      }
+      p,
+      li {
+        font-size: 19px;
+        line-height: 1.65;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul,
+      ol {
+        margin: 0;
+        padding-left: 1.3em;
+      }
+      li {
+        margin: 3px 0;
+      }
+      li::marker {
+        color: var(--tag);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .small,
+      .small li,
+      .small p {
+        font-size: 16px;
+      }
+      .tiny,
+      .tiny li,
+      .tiny p,
+      .tiny td,
+      .tiny th {
+        font-size: 14px;
+      }
+      strong {
+        color: var(--tag);
+      }
+      code {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        padding: 1px 6px;
+        border-radius: 5px;
+        font-size: 0.9em;
+      }
+      pre {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin: 0 0 12px;
+        font-size: 15px;
+        line-height: 1.55;
+        overflow: hidden;
+        white-space: pre;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: inherit;
+      }
+      pre .c {
+        color: var(--muted);
+      }
+
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        flex: 1;
+        min-height: 0;
+      }
+      .cols.c3 {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+      }
+      .cols.w60 {
+        grid-template-columns: 1.35fr 1fr;
+      }
+      .card {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px 22px;
+      }
+      .card h3 {
+        margin-bottom: 8px;
+      }
+      .card p,
+      .card li {
+        font-size: 16px;
+        line-height: 1.6;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--line);
+        font-size: 15.5px;
+        line-height: 1.5;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 700;
+        background: var(--soft);
+      }
+
+      .steps {
+        counter-reset: step;
+        list-style: none;
+        padding: 0;
+      }
+      .steps > li {
+        counter-increment: step;
+        position: relative;
+        padding-left: 46px;
+        margin: 0 0 12px;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+      .steps > li::before {
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        top: 1px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--tag);
+        color: var(--slide);
+        font-weight: 700;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .steps pre {
+        margin-top: 6px;
+        font-size: 14px;
+        padding: 8px 12px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        border: 1px solid currentColor;
+      }
+      .good {
+        color: var(--good);
+      }
+      .bad {
+        color: var(--bad);
+      }
+
+      /* 表紙・章扉 */
+      .cover {
+        justify-content: center;
+      }
+      .cover h1 {
+        font-size: 60px;
+      }
+      .cover .sub {
+        font-size: 24px;
+        color: var(--muted);
+        margin-bottom: 36px;
+      }
+      .section {
+        justify-content: center;
+      }
+      .section .big {
+        font-size: 110px;
+        font-weight: 800;
+        color: var(--tag);
+        line-height: 1;
+        margin-bottom: 12px;
+      }
+      .section h1 {
+        font-size: 50px;
+      }
+      .section .lead {
+        font-size: 24px;
+        color: var(--muted);
+        max-width: 900px;
+        line-height: 1.6;
+      }
+      .section .meta {
+        margin-top: 28px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .section .meta code {
+        font-size: 17px;
+      }
+
+      /* 全体図 */
+      .arch {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr 1fr;
+        gap: 20px;
+        align-items: center;
+        flex: 1;
+      }
+      .arch .box {
+        border: 2px solid var(--c);
+        border-radius: 12px;
+        padding: 10px 14px;
+        background: var(--soft);
+      }
+      .arch .box b {
+        color: var(--c);
+        font-size: 16px;
+      }
+      .arch .box span {
+        display: block;
+        font-size: 14px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      .arch .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .arch .center {
+        border: 3px solid var(--p0);
+        border-radius: 16px;
+        padding: 22px;
+        text-align: center;
+        background: var(--accent-soft);
+      }
+      .arch .center b {
+        font-size: 22px;
+        color: var(--p0);
+      }
+      .arch .center p {
+        font-size: 15px;
+        margin: 8px 0 0;
+        color: var(--ink);
+      }
+      .arrow {
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      /* ナビゲーション */
+      #nav {
+        position: fixed;
+        right: 16px;
+        bottom: 12px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 13px;
+        color: var(--muted);
+        z-index: 10;
+      }
+      #nav button {
+        background: var(--slide);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      #nav button:hover {
+        border-color: var(--accent);
+      }
+      #progress {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 4px;
+        background: var(--accent);
+        z-index: 10;
+        transition: width 0.2s;
+      }
+      #hint {
+        position: fixed;
+        left: 16px;
+        bottom: 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      @media (max-width: 700px) {
+        #hint {
+          display: none;
+        }
+      }
+
+      @media print {
+        @page {
+          size: 1280px 720px;
+          margin: 0;
+        }
+        html,
+        body {
+          overflow: visible;
+          height: auto;
+          background: #fff;
+        }
+        #nav,
+        #progress,
+        #hint {
+          display: none;
+        }
+        #stage {
+          position: static;
+          transform: none !important;
+          width: auto;
+          height: auto;
+        }
+        .slide {
+          display: flex !important;
+          position: relative;
+          width: 1280px;
+          height: 720px;
+          border-radius: 0;
+          box-shadow: none;
+          page-break-after: always;
+          break-after: page;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="progress"></div>
+    <div id="stage">
+      <!-- 1. 表紙 -->
+      <section class="slide cover">
+        <div class="kicker">ysksm/ui-editor</div>
+        <h1>UI エディタ・プロトタイプ群<br />各ツールの思想・特徴・使い方</h1>
+        <div class="sub">
+          P0 スキーマから P6 デスクトップ版まで、7 つのツールを 1 つずつ解説する
+        </div>
+        <table style="width: auto">
+          <tr>
+            <th>P0</th>
+            <td><code>packages/schema</code></td>
+            <td>プロジェクトスキーマと題材</td>
+          </tr>
+          <tr>
+            <th>P1</th>
+            <td><code>packages/codegen</code></td>
+            <td>コード生成</td>
+          </tr>
+          <tr>
+            <th>P2 / P3</th>
+            <td><code>apps/editor-puck</code> / <code>apps/editor-craft</code></td>
+            <td>画面エディタ 2 方式</td>
+          </tr>
+          <tr>
+            <th>P4</th>
+            <td><code>packages/runtime</code> + <code>apps/runtime-preview</code></td>
+            <td>実行時解釈のプレビュー</td>
+          </tr>
+          <tr>
+            <th>P5 / P6</th>
+            <td><code>apps/flow</code> / <code>apps/tauri</code></td>
+            <td>画面遷移図 / デスクトップ版</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- 2. 全体像 -->
+      <section class="slide">
+        <div class="kicker">全体像</div>
+        <h2>1 つのプロジェクトファイルを、7 つの方式で扱う</h2>
+        <div class="arch">
+          <div class="stack">
+            <div class="box" style="--c: var(--p2)">
+              <b>P2 Puck エディタ</b><span>完成品のページビルダーに乗る</span>
+            </div>
+            <div class="box" style="--c: var(--p3)">
+              <b>P3 Craft.js エディタ</b><span>エディタを部品から組み立てる</span>
+            </div>
+            <div class="box" style="--c: var(--p5)">
+              <b>P5 画面遷移図</b><span>navigate / openDialog を線で編集</span>
+            </div>
+            <div class="box" style="--c: var(--p6)">
+              <b>P6 Tauri</b><span>P3 をデスクトップアプリに包む</span>
+            </div>
+          </div>
+          <div>
+            <div class="arrow">編集（読込 ⇄ 保存）→</div>
+            <div class="center">
+              <b>P0 プロジェクトファイル</b>
+              <p>
+                JSON / YAML ・ エディタの「唯一の正」<br />画面・部品・ダイアログ・状態・<br />データモデル・サンプルデータ・アクション
+              </p>
+            </div>
+            <div class="arrow">→ 解釈 / 生成</div>
+          </div>
+          <div class="stack">
+            <div class="box" style="--c: var(--p1)">
+              <b>P1 コード生成</b><span>Vite + React + TS のアプリを出力</span>
+            </div>
+            <div class="box" style="--c: var(--p4)">
+              <b>P4 ランタイム</b><span>生成せずに実行時に解釈して動かす</span>
+            </div>
+          </div>
+        </div>
+        <p class="small muted" style="margin-top: 14px">
+          どのツールも独自形式を保存しない。ライブラリ固有のデータは開いている間だけ持ち、変更のたびに
+          P0 形式に戻す ─
+          だから方式同士を公平に比較でき、ライブラリを差し替えても保存形式は変わらない。
+        </p>
+        <div class="foot"><span>全体像</span><span></span></div>
+      </section>
+
+      <!-- 3. 共通セットアップ -->
+      <section class="slide">
+        <div class="kicker">共通の準備</div>
+        <h2>セットアップと起動ポート</h2>
+        <div class="cols">
+          <div>
+            <p class="small">必要環境: Node.js 20 以上、pnpm 11（<code>corepack enable</code>）</p>
+            <pre><code>pnpm install
+pnpm --filter @ui-editor/schema build  <span class="c"># 最初に 1 回（各アプリが dist を読む）</span>
+pnpm -r build     <span class="c"># 全パッケージをビルド</span>
+pnpm -r test      <span class="c"># 全テスト（Vitest）</span>
+pnpm typecheck    <span class="c"># 型チェック</span>
+pnpm lint         <span class="c"># ESLint</span>
+pnpm format:check <span class="c"># Prettier</span>
+pnpm validate     <span class="c"># 題材ファイルを検証</span></code></pre>
+            <p class="small">個別に動かすときは <code>--filter</code>:</p>
+            <pre><code>pnpm --filter @ui-editor/editor-craft dev</code></pre>
+          </div>
+          <div>
+            <table>
+              <tr>
+                <th>ツール</th>
+                <th>起動コマンド</th>
+                <th>URL</th>
+              </tr>
+              <tr>
+                <td>P2 Puck</td>
+                <td><code>--filter @ui-editor/editor-puck dev</code></td>
+                <td>:5174</td>
+              </tr>
+              <tr>
+                <td>P3 Craft.js</td>
+                <td><code>--filter @ui-editor/editor-craft dev</code></td>
+                <td>:5175</td>
+              </tr>
+              <tr>
+                <td>P4 プレビュー</td>
+                <td><code>--filter @ui-editor/runtime-preview dev</code></td>
+                <td>:5176</td>
+              </tr>
+              <tr>
+                <td>P5 遷移図</td>
+                <td><code>--filter @ui-editor/flow dev</code></td>
+                <td>:5177</td>
+              </tr>
+              <tr>
+                <td>P1 生成アプリ</td>
+                <td>生成先で <code>pnpm dev</code></td>
+                <td>:5178</td>
+              </tr>
+              <tr>
+                <td>P6 Tauri</td>
+                <td><code>--filter @ui-editor/tauri tauri dev</code></td>
+                <td>:5179</td>
+              </tr>
+            </table>
+            <p class="small muted" style="margin-top: 12px">
+              ポートは固定（<code>strictPort</code>）なので、複数のツールを同時に起動して見比べられる。
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>共通の準備</span><span></span></div>
+      </section>
+
+      <!-- 4. 題材 -->
+      <section class="slide">
+        <div class="kicker">共通の入力</div>
+        <h2>題材アプリ「機器の設定＆モニタリング」</h2>
+        <div class="cols w60">
+          <div>
+            <table>
+              <tr>
+                <th>ID</th>
+                <th>id</th>
+                <th>内容</th>
+              </tr>
+              <tr>
+                <td>S1</td>
+                <td><code>dashboard</code></td>
+                <td>機器ステータス・メトリクス 3 枚・最新アラーム 5 件</td>
+              </tr>
+              <tr>
+                <td>S2</td>
+                <td><code>devices</code></td>
+                <td>機器の Table。行クリックで S3 へ</td>
+              </tr>
+              <tr>
+                <td>S3</td>
+                <td><code>deviceSettings</code></td>
+                <td>
+                  <code>mount</code> で下書きを用意し、入力 → <code>setState</code>。保存で D1
+                </td>
+              </tr>
+              <tr>
+                <td>D1</td>
+                <td><code>saveConfirm</code></td>
+                <td>OK で <code>updateData</code> → 閉じる → S2</td>
+              </tr>
+              <tr>
+                <td>D2</td>
+                <td><code>alarmDetail</code></td>
+                <td>「確認済みにする」。確認済みならボタンを隠す</td>
+              </tr>
+              <tr>
+                <td>部品</td>
+                <td colspan="2">
+                  <code>StatusBadge</code> / <code>MetricCard</code> / <code>AlarmRow</code>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div>
+            <div class="card">
+              <h3>ファイル（packages/schema/examples/）</h3>
+              <ul class="small">
+                <li>
+                  <code>device-monitor.source.yaml</code><br />手書きの元ファイル（コメントあり）
+                </li>
+                <li>
+                  <code>device-monitor.project.yaml / .json</code><br />生成物。<strong
+                    >P1〜P5 はこれを読む</strong
+                  >
+                </li>
+              </ul>
+            </div>
+            <p class="small" style="margin-top: 14px">
+              5 種類のアクションをすべて使い、8 本の遷移を持つ。<br />各ツールは「この題材を作れるか・動かせるか」で評価している。
+            </p>
+            <pre><code>pnpm --filter @ui-editor/schema sync:examples
+<span class="c"># 元ファイル → 生成物（生成物は直接編集しない）</span></code></pre>
+          </div>
+        </div>
+        <div class="foot"><span>共通の入力</span><span></span></div>
+      </section>
+
+      <!-- ===== P0 ===== -->
+      <section class="slide section" style="--tag: var(--p0)">
+        <div class="big">P0</div>
+        <h1>schema ─ プロジェクトスキーマ</h1>
+        <div class="lead">
+          「エディタの唯一の正」となるファイル形式を決める。<br />ほかのすべてのツールの共通の土台。
+        </div>
+        <div class="meta">
+          <code>packages/schema</code><code>zod</code><code>yaml</code><code>JSON Schema</code>
+        </div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p0)">
+        <div class="kicker">P0 schema ─ 思想と特徴</div>
+        <h2>ファイルが正。決定的に書き出し、静的に解析できる</h2>
+        <div class="cols">
+          <div>
+            <h3>思想</h3>
+            <ul class="small">
+              <li>
+                <strong>唯一の正</strong>:
+                エディタもコード生成もランタイムも、このファイルだけを読み書きする
+              </li>
+              <li>
+                <strong>決定性</strong>: 同じ内容なら入力のキー順に関係なく同じテキストになる → git
+                の diff が安定
+              </li>
+              <li>
+                <strong>静的に読める</strong>: <code>navigate.to</code> /
+                <code>openDialog.dialog</code> はバインディング不可の固定
+                id。ファイルから遷移図を作れる
+              </li>
+              <li>
+                <strong>式は JS のまま</strong>:
+                <code>{{ 式 }}</code> で埋め込み、独自言語を作らない
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3>特徴</h3>
+            <ul class="small">
+              <li>
+                node = <code>type / props / style / repeat / visible / events / children</code>
+              </li>
+              <li>組み込み 7 種: Box・Text・Button・TextInput・NumberInput・Checkbox・Table</li>
+              <li>
+                スコープ:
+                <code>data</code
+                >・<code>state</code>・<code>params</code>・<code>props</code>・<code>event</code>・repeat
+                の変数
+              </li>
+              <li>
+                アクション 5 種:
+                <code>navigate</code
+                >・<code>openDialog</code>・<code>closeDialog</code>・<code>setState</code>・<code
+                  >updateData</code
+                >
+              </li>
+              <li>
+                2 段階の検証: 形（zod の <code>strictObject</code> で typo も検出）→ 参照（id
+                の重複・存在・params の整合）
+              </li>
+              <li>データモデルは TS のソース文字列（<code>dataModel.source</code>）</li>
+            </ul>
+          </div>
+        </div>
+        <div class="foot"><span>P0 schema</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p0)">
+        <div class="kicker">P0 schema ─ 使い方</div>
+        <h2>プロジェクトファイルを書いて検証する</h2>
+        <div class="cols">
+          <div>
+            <pre><code>schemaVersion: "0"
+name: 機器モニタリング
+entry: devices
+screens:
+  - id: devices
+    name: 機器一覧
+    path: /devices
+    root:
+      id: root
+      type: Box
+      style: { display: flex, gap: 8 }
+      children:
+        - id: title
+          type: Text
+          props: { text: "{{ data.devices.length }} 台" }
+          events:
+            click:
+              - { type: navigate, to: dashboard }
+sampleData:
+  devices: [...]</code></pre>
+          </div>
+          <div>
+            <ol class="steps">
+              <li>
+                YAML（または JSON）でファイルを書く。先頭に
+                <code>$schema</code> を書くとエディタで補完が効く
+              </li>
+              <li>
+                検証する
+                <pre><code>pnpm validate                 <span class="c"># 題材を検証</span>
+pnpm --filter @ui-editor/schema validate &lt;file&gt;</code></pre>
+              </li>
+              <li>
+                コードから使う: <code>loadProject(text, "yaml")</code> →
+                <code>validateProject</code> → <code>serializeProject(p, "yaml")</code>
+              </li>
+              <li>
+                スキーマを変えたら JSON Schema を再生成
+                <pre><code>pnpm --filter @ui-editor/schema gen:json-schema</code></pre>
+              </li>
+            </ol>
+            <p class="tiny muted">
+              <span class="pill bad">注意</span> YAML では
+              <code>{{</code> で始まる値は必ずクォート（ローダーが行番号付きで検出）。<code
+                >#ddd</code
+              >
+              や <code>%</code> もクォートが必要。
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>P0 schema</span><span></span></div>
+      </section>
+
+      <!-- ===== P1 ===== -->
+      <section class="slide section" style="--tag: var(--p1)">
+        <div class="big">P1</div>
+        <h1>codegen ─ コード生成</h1>
+        <div class="lead">
+          プロジェクトファイルから、人が読んで育てられる<br />Vite + React + TypeScript + CSS
+          Modules のアプリを生成する。
+        </div>
+        <div class="meta">
+          <code>packages/codegen</code><code>react-router</code><code>Zustand</code
+          ><code>acorn</code><code>Prettier</code>
+        </div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p1)">
+        <div class="kicker">P1 codegen ─ 思想と特徴</div>
+        <h2>「手で書いた React」と同じ形のコードを、純粋関数で</h2>
+        <div class="cols">
+          <div>
+            <h3>思想</h3>
+            <ul class="small">
+              <li>
+                <strong>読める生成コード</strong>: 1 画面 = 1 ファイル、CSS のクラス名 =
+                エディタ上のノード id。生成後は人が育てる前提
+              </li>
+              <li>
+                <strong>決定性</strong>:
+                <code>generate(project) → {path, content}[]</code> は純粋関数。依存バージョンも
+                Prettier 設定もコード内に固定し、日時・絶対パスは出さない
+              </li>
+              <li>
+                <strong>式は書き換えない</strong>:
+                <code>{device.name}</code> のように、書いた式がそのまま出る。acorn
+                でスコープ外の名前を<strong>生成時にエラー</strong>にする
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3>特徴</h3>
+            <table class="tiny">
+              <tr>
+                <th>ファイル</th>
+                <th>変換</th>
+              </tr>
+              <tr>
+                <td>Box</td>
+                <td><code>&lt;div&gt;</code> ＋ <code>styles.nodeId</code></td>
+              </tr>
+              <tr>
+                <td>repeat / visible</td>
+                <td><code>{each.map(...)}</code> / <code>{式 &amp;&amp; &lt;…&gt;}</code></td>
+              </tr>
+              <tr>
+                <td>navigate</td>
+                <td>react-router ＋ <code>paths.xxx(params)</code></td>
+              </tr>
+              <tr>
+                <td>openDialog</td>
+                <td>ストアの <code>dialog</code> ＋ <code>DialogHost</code></td>
+              </tr>
+              <tr>
+                <td>setState / updateData</td>
+                <td>Zustand ストアのアクション</td>
+              </tr>
+              <tr>
+                <td>events.mount</td>
+                <td><code>useEffect</code></td>
+              </tr>
+            </table>
+            <p class="tiny muted" style="margin-top: 8px">
+              比較用に Redux Toolkit
+              版のストアも出力できる（<code>generateRtkStore</code>）。読みやすさで Zustand を採用。
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>P1 codegen</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p1)">
+        <div class="kicker">P1 codegen ─ 使い方</div>
+        <h2>プロジェクトファイル → 動くアプリ</h2>
+        <div class="cols">
+          <div>
+            <ol class="steps">
+              <li>
+                生成器をビルド
+                <pre><code>pnpm --filter @ui-editor/codegen build</code></pre>
+              </li>
+              <li>
+                生成する（検証エラーがあれば箇所を表示して止まる）
+                <pre><code>pnpm --filter @ui-editor/codegen gen \
+  packages/schema/examples/device-monitor.project.yaml \
+  --out ../my-app --clean</code></pre>
+              </li>
+              <li>
+                生成したアプリを起動
+                <pre><code>cd ../my-app &amp;&amp; pnpm install &amp;&amp; pnpm dev   <span class="c"># :5178</span></code></pre>
+              </li>
+            </ol>
+          </div>
+          <div>
+            <div class="card">
+              <h3>オプション</h3>
+              <ul>
+                <li><code>--name</code>: 生成アプリの package 名（省略時はファイル名から）</li>
+                <li>
+                  <code>--clean</code>: 出力先の <code>src/</code> を消してから書く（<code
+                    >node_modules</code
+                  >
+                  には触らない）
+                </li>
+              </ul>
+            </div>
+            <div class="card" style="margin-top: 14px">
+              <h3>生成器を直したら</h3>
+              <pre><code>pnpm --filter @ui-editor/codegen snapshots:update
+pnpm --filter @ui-editor/codegen build:examples</code></pre>
+              <p class="tiny">
+                生成結果は <code>snapshots/</code> にそのまま置いてあり、生成器の変更は<strong
+                  >生成コードの diff</strong
+                >
+                としてレビューできる。
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span>P1 codegen</span><span></span></div>
+      </section>
+
+      <!-- ===== P2 ===== -->
+      <section class="slide section" style="--tag: var(--p2)">
+        <div class="big">P2</div>
+        <h1>editor-puck ─ 完成品エディタに乗る</h1>
+        <div class="lead">
+          Puck（ページビルダー）の UI をそのまま使い、<br />少ないコードで「それらしい」画面エディタを作る。
+        </div>
+        <div class="meta">
+          <code>apps/editor-puck</code><code>@puckeditor/core</code><code>:5174</code>
+        </div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p2)">
+        <div class="kicker">P2 editor-puck ─ 思想と特徴</div>
+        <h2>標準的な操作感を最小のコードで手に入れる</h2>
+        <div class="cols">
+          <div>
+            <h3>思想</h3>
+            <ul class="small">
+              <li>
+                <strong>完成品に乗る</strong>:
+                パレット・アウトライン・右パネル・パンくず・undo/redo・ビューポート切替・ズームは
+                Puck 付属
+              </li>
+              <li>
+                <strong>名前を読み替えない</strong>: Puck のコンポーネント名 = P0 の
+                <code>type</code>
+              </li>
+              <li>
+                <strong>Puck の形式はファイルに出さない</strong>: 開いているツリーだけを Puck
+                データにし、変更のたびに P0 に戻す（<code>convert.ts</code> 約 140 行）
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3>特徴</h3>
+            <ul class="small">
+              <li>
+                Puck で編集できない <code>repeat</code> / <code>visible</code> /
+                <code>events</code> は <code>props._p0</code> に退避して保つ
+              </li>
+              <li>題材の全画面を往復させても<strong>1 文字も変わらない</strong>（テストで確認）</li>
+              <li>
+                プロジェクトの <code>components</code> がパレットに自動で並ぶ。インスタンスの欄も
+                props 定義から生成
+              </li>
+              <li>「選択をコンポーネント化」で既存のパーツを部品に切り出せる</li>
+              <li>
+                style 欄は Puck の <code>object</code> フィールド＋カスタム欄。候補は
+                <code>StyleSchema</code>（zod）から
+              </li>
+            </ul>
+            <p class="tiny muted">
+              弱点: 右パネルのレイアウトの自由度が低い／入れ子の入れ物へのドロップが狙いにくい／JS
+              約 1.44 MB
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>P2 editor-puck</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p2)">
+        <div class="kicker">P2 editor-puck ─ 使い方</div>
+        <h2>画面を組み立てて P0 形式で保存する</h2>
+        <div class="cols">
+          <div>
+            <ol class="steps">
+              <li>
+                起動。前回の作業（localStorage）か、題材ファイルが開く
+                <pre><code>pnpm --filter @ui-editor/editor-puck dev</code></pre>
+              </li>
+              <li>
+                上部のタブで画面・ダイアログ・コンポーネントを切り替える。「＋ 新規」で新しく作る
+              </li>
+              <li>
+                左のパレットからキャンバスへパーツをドラッグ（Container / Text / Button / Input /
+                Table …）
+              </li>
+              <li>右パネルで props を入力。値は固定値でも <code>{{ 式 }}</code> でもよい</li>
+              <li>右パネルの「スタイル」で幅・高さ・padding・flex・border などを設定</li>
+              <li>repeat / events などは「詳細（JSON）」欄で入力</li>
+              <li>ツールバーの「保存」で YAML / JSON をダウンロード（保存前に検証）</li>
+            </ol>
+          </div>
+          <div>
+            <div class="card">
+              <h3>コツ</h3>
+              <ul>
+                <li>
+                  padding / gap が 0 の入れ物は境目が無く狙いにくい。作る間は padding
+                  を付け、最後に消す
+                </li>
+                <li>
+                  コンポーネントのタブでは上部で props（名前・TS の型・既定値）を定義し、中から
+                  <code>{{ props.名前 }}</code> で参照
+                </li>
+                <li>
+                  キャンバスは画面の式を評価せず式のまま表示（コンポーネント内の
+                  <code>props</code> だけ評価）
+                </li>
+              </ul>
+            </div>
+            <pre><code><span class="c"># UI 操作で S1〜S3 を作り直す評価スクリプト</span>
+pnpm --filter @ui-editor/editor-puck eval:rebuild</code></pre>
+          </div>
+        </div>
+        <div class="foot"><span>P2 editor-puck</span><span></span></div>
+      </section>
+
+      <!-- ===== P3 ===== -->
+      <section class="slide section" style="--tag: var(--p3)">
+        <div class="big">P3</div>
+        <h1>editor-craft ─ エディタを組み立てる</h1>
+        <div class="lead">
+          Craft.js には選択・DnD・ノードツリー・undo だけを任せ、<br />パレット・レイヤー・プロパティパネルはすべて自前で作る。
+        </div>
+        <div class="meta">
+          <code>apps/editor-craft</code><code>@craftjs/core</code><code>:5175</code>
+        </div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p3)">
+        <div class="kicker">P3 editor-craft ─ 思想と特徴</div>
+        <h2>欲しい UI を制約なく作れる「組み立て型」</h2>
+        <div class="cols">
+          <div>
+            <h3>思想</h3>
+            <ul class="small">
+              <li>
+                <strong>骨組みだけ借りる</strong>: Craft.js
+                が担うのは選択・ドラッグ＆ドロップ・ノードツリー・undo
+              </li>
+              <li>
+                <strong>P0 が正</strong>: 開いているドキュメントの <code>root</code> だけを Craft
+                に読み込み、変化のたびに P0 に書き戻す
+              </li>
+              <li>
+                <strong>見た目を共通化</strong>:
+                <code>parts/view.tsx</code> をキャンバスとコンポーネントのプレビューで共用
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3>特徴</h3>
+            <ul class="small">
+              <li>
+                P0 のフィールドを Craft の props
+                にそのまま入れるので<strong>退避が不要</strong>。ルートが 1 つの P0 とそのまま合う
+              </li>
+              <li>
+                自由な style パネル: グループ・2
+                列・横並び/縦並びボタン・キャンバス上のリサイズハンドル
+              </li>
+              <li>
+                キャンバスでバインディングを<strong>サンプルデータで評価</strong>して表示（repeat は
+                1 件目）
+              </li>
+              <li>events の GUI（params の無い画面遷移・ダイアログ開閉）</li>
+              <li>S1〜S3 を UI 操作で作り直すと題材と完全一致</li>
+            </ul>
+            <p class="tiny muted">
+              弱点: UI をすべて書くので P2 の約 2 倍のコード／Craft.js は 2025-02
+              以降リリースが無い／HTML5 DnD でタッチ非対応
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>P3 editor-craft</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p3)">
+        <div class="kicker">P3 editor-craft ─ 使い方</div>
+        <h2>パレット → レイヤー → プロパティの順に作る</h2>
+        <div class="cols">
+          <div>
+            <ol class="steps">
+              <li>
+                起動すると題材（<code>device-monitor.project.json</code>）が開く
+                <pre><code>pnpm --filter @ui-editor/schema build   <span class="c"># 初回のみ</span>
+pnpm --filter @ui-editor/editor-craft dev</code></pre>
+              </li>
+              <li>左の「新規作成」で画面・コンポーネント・ダイアログを作る（空の Box が root）</li>
+              <li>パレットのクリック／ドラッグでパーツを置き、レイヤーで選択・並べ替え</li>
+              <li>右のプロパティ欄と style 欄で編集。キャンバス上のハンドルでリサイズ</li>
+              <li>
+                「events」で click に画面遷移・ダイアログを割り当てる（それ以外は「詳細（JSON）」）
+              </li>
+              <li>「JSON で保存」「YAML で保存」（検証結果を一覧表示）</li>
+            </ol>
+          </div>
+          <div>
+            <div class="card">
+              <h3>部品化の流れ</h3>
+              <ol class="small">
+                <li>パーツを選んで「コンポーネント化」</li>
+                <li>元の場所がインスタンスに置き換わる</li>
+                <li>右の「ドキュメント」で props を定義</li>
+                <li>「〜を開く」で中身を編集 → インスタンスにすぐ反映</li>
+              </ol>
+            </div>
+            <div class="card" style="margin-top: 14px">
+              <h3>まだできないこと</h3>
+              <ul class="small">
+                <li>画面の <code>events.mount</code> の編集（読込値は保たれる）</li>
+                <li>プレビュー用の params / state の値</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span>P3 editor-craft</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p3)">
+        <div class="kicker">P2 と P3 の比較</div>
+        <h2>「完成品に乗る」か「組み立てる」か</h2>
+        <table>
+          <tr>
+            <th style="width: 22%">観点</th>
+            <th>P2: Puck（完成品）</th>
+            <th>P3: Craft.js（組み立て型）</th>
+          </tr>
+          <tr>
+            <td>エディタの UI</td>
+            <td>ほぼ付属。自前はタブ・ツールバー・props 定義欄</td>
+            <td>すべて自前</td>
+          </tr>
+          <tr>
+            <td>実装量（src）</td>
+            <td>約 1,840 行 ＋ CSS 285 行</td>
+            <td>約 2,300 行 ＋ CSS 620 行</td>
+          </tr>
+          <tr>
+            <td>依存・サイズ</td>
+            <td>推移的に 36 個 / JS 1.44 MB（gzip 430 kB）</td>
+            <td>推移的に 7 個 / JS 601 kB（gzip 172 kB）</td>
+          </tr>
+          <tr>
+            <td>S1〜S3 の作り直し</td>
+            <td>S3 の入れ子 1 つを作れず。操作数 61 / 35 / 78</td>
+            <td>完全一致。操作数 99 / 28 / 130</td>
+          </tr>
+          <tr>
+            <td>P0 との相性</td>
+            <td>root の扱いに回避策が 2 つ要った</td>
+            <td>そのまま合う</td>
+          </tr>
+          <tr>
+            <td>ライブラリの状態</td>
+            <td>活発（0.x で API が変わる）</td>
+            <td>停滞（fork して持つ覚悟が要る）</td>
+          </tr>
+        </table>
+        <p class="small" style="margin-top: 16px">
+          <strong>判断の目安</strong>: 標準的なページビルダーの操作感で十分なら
+          Puck。スタイルパネル・リサイズ・イベント GUI など<br />エディタの見た目と操作を自分たちで決めたいなら、組み立て型（または自作寄り）。
+        </p>
+        <div class="foot"><span>P2 / P3 比較</span><span></span></div>
+      </section>
+
+      <!-- ===== P4 ===== -->
+      <section class="slide section" style="--tag: var(--p4)">
+        <div class="big">P4</div>
+        <h1>runtime ─ 実行時に解釈して動かす</h1>
+        <div class="lead">
+          コードを生成せず、定義をその場で解釈するプレビュー（社内ツールビルダー型）。<br />評価エンジンは
+          UI 非依存のパッケージとして切り出してある。
+        </div>
+        <div class="meta">
+          <code>packages/runtime</code><code>apps/runtime-preview</code
+          ><code>TypeScript Compiler API</code><code>:5176</code>
+        </div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p4)">
+        <div class="kicker">P4 runtime ─ 思想と特徴</div>
+        <h2>純粋関数のエンジン ＋ 5 つのタブの UI</h2>
+        <div class="cols">
+          <div>
+            <h3>思想</h3>
+            <ul class="small">
+              <li>
+                <strong>UI から切り離す</strong>:
+                <code>packages/runtime</code>
+                は純粋関数だけ。エディタのプレビューにも、生成コードの振る舞いの基準にも使える
+              </li>
+              <li>
+                <strong>アクション = 状態 → 状態</strong>:
+                <code>runActions(project, state, actions)</code> は新しい状態とログを返す。reducer
+                に載り、ログ・やり直し・テストが簡単
+              </li>
+              <li>
+                <strong>TS 型をスキーマとして使う</strong>:
+                <code>dataModel.source</code> を構文木だけで解析（型チェッカー不要）
+              </li>
+              <li>
+                <strong>JS の式を安全寄りに</strong>: TS パーサーで検査 →
+                <code>new Function</code>。例外は投げず <code>{ ok: false, error }</code>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3>式の検査で弾くもの</h3>
+            <ul class="small">
+              <li>スコープ外の名前（<code>window</code> / <code>fetch</code> など）</li>
+              <li>代入・<code>++</code>・<code>delete</code>・<code>this</code></li>
+              <li><code>constructor</code> / <code>__proto__</code> への参照</li>
+              <li>状態は深く凍結 → <code>sort()</code> などの破壊的操作もエラー</li>
+            </ul>
+            <h3 style="margin-top: 14px">主な export</h3>
+            <p class="tiny">
+              <code>parseDataModel</code> <code>checkSampleData</code>
+              <code>evaluateExpression</code> <code>evaluateTemplate</code>
+              <code>collectBindings</code> <code>suggest</code> <code>runActions</code>
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>P4 runtime</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p4)">
+        <div class="kicker">P4 runtime-preview ─ 使い方</div>
+        <h2>5 つのタブで、データ・式・イベントを確かめる</h2>
+        <div class="cols w60">
+          <div>
+            <table class="tiny">
+              <tr>
+                <th style="width: 22%">タブ</th>
+                <th>できること</th>
+              </tr>
+              <tr>
+                <td>プレビュー</td>
+                <td>
+                  題材アプリを実際に操作。右に表示中の画面・ダイアログ・<code>state</code>・イベントごとの実行ログ。式のエラーは
+                  ⚠
+                </td>
+              </tr>
+              <tr>
+                <td>データモデル</td>
+                <td>
+                  TS の型一覧と詳細。フォームでフィールドを追加・編集すると TS ソースを書き出す
+                </td>
+              </tr>
+              <tr>
+                <td>サンプルデータ</td>
+                <td>コレクションごとの表。型に合わせた入力で編集・追加・複製・削除。型違反は赤</td>
+              </tr>
+              <tr>
+                <td>式</td>
+                <td>補完つきで式を試す。プロジェクト内の全式と、その場所で使える名前の一覧</td>
+              </tr>
+              <tr>
+                <td>イベント</td>
+                <td>
+                  ノードを選び <code>click</code> / <code>change</code> / <code>rowClick</code> /
+                  <code>mount</code> にアクションを割り当て、並べ替え、試し実行
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div>
+            <ol class="steps">
+              <li>
+                起動
+                <pre><code>pnpm --filter @ui-editor/runtime-preview dev</code></pre>
+              </li>
+              <li>
+                「プレビュー」で S1 → S2 → S3 → 保存 → D1 と操作し、ログと <code>state</code> を確認
+              </li>
+              <li>「式」で <code>data.devices.find(d =&gt; d.</code> と打って補完を試す</li>
+              <li>「サンプルデータ」「イベント」で編集し、プレビューに戻って確認</li>
+              <li>ヘッダーの「保存」で検証して P0 形式で書き出す</li>
+            </ol>
+            <p class="tiny muted">タブは URL の hash（<code>#sampleData</code> など）に残る。</p>
+          </div>
+        </div>
+        <div class="foot"><span>P4 runtime</span><span></span></div>
+      </section>
+
+      <!-- ===== P5 ===== -->
+      <section class="slide section" style="--tag: var(--p5)">
+        <div class="big">P5</div>
+        <h1>flow ─ 画面遷移図</h1>
+        <div class="lead">
+          Figma のプロトタイプモードのように、画面をノード、<br /><code>navigate</code> /
+          <code>openDialog</code> をエッジとして描き、線で遷移を編集する。
+        </div>
+        <div class="meta">
+          <code>apps/flow</code><code>@xyflow/react</code><code>dagre</code><code>:5177</code>
+        </div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p5)">
+        <div class="kicker">P5 flow ─ 思想と特徴</div>
+        <h2>「どのボタンでどこへ行くか」を一目で</h2>
+        <div class="cols">
+          <div>
+            <h3>思想</h3>
+            <ul class="small">
+              <li>
+                <strong>ファイルから静的に作る</strong>: 遷移先が固定 id
+                なので、実行せずに遷移図が描ける（P0 の設計の成果）
+              </li>
+              <li>
+                <strong>遷移だけを担当</strong>: ツリー・props・style は読むだけ。同じ
+                <code>events</code> の中の他のアクションは残したまま、遷移だけ足し引きする
+              </li>
+              <li>
+                <strong>住所で書き換える</strong>: 遷移の id は起点の住所<br /><code
+                  >screen:dashboard/alarmRow#click[0]</code
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3>特徴</h3>
+            <ul class="small">
+              <li>
+                線は<strong>起点のパーツ</strong>（ボタン・カード・行）から出る。<code
+                  >navigate</code
+                >
+                は実線、<code>openDialog</code> は破線
+              </li>
+              <li>
+                ノードはワイヤーフレーム表示。<code>repeat</code> は <code>×n</code>、条件表示は
+                <code>if</code> バッジ
+              </li>
+              <li>dagre の自動配置 ＋ 手動配置（<code>layouts/*.layout.json</code> に別保存）</li>
+              <li>
+                プロトタイプモード: ホットスポットをクリックして遷移を再生。<code>mount</code>
+                のリダイレクトも追う
+              </li>
+              <li>検証結果をツールバーに常時表示</li>
+            </ul>
+          </div>
+        </div>
+        <div class="foot"><span>P5 flow</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p5)">
+        <div class="kicker">P5 flow ─ 使い方</div>
+        <h2>線を引いて遷移を作り、プロトタイプで確かめる</h2>
+        <div class="cols">
+          <div>
+            <ol class="steps">
+              <li>
+                起動すると題材の遷移図が描かれる（「ファイルを開く」で他の P0 ファイルも）
+                <pre><code>pnpm --filter @ui-editor/flow dev</code></pre>
+              </li>
+              <li>
+                <strong>追加</strong>:
+                ノードにマウスを乗せ、パーツ右端の点から画面・ダイアログへドラッグ。画面なら
+                <code>navigate</code>、ダイアログなら <code>openDialog</code>
+              </li>
+              <li>
+                <strong>編集</strong>: 線を選ぶとパネルにイベント・params。必須 params の空欄は赤枠
+              </li>
+              <li><strong>削除</strong>: 線を選んで Delete／パネルの「この遷移を削除」</li>
+              <li>ノードを動かしたら「配置を保存」、内容は「プロジェクトを保存」</li>
+            </ol>
+          </div>
+          <div>
+            <div class="card">
+              <h3>プロトタイプモード</h3>
+              <ol class="small">
+                <li>「▶ プロトタイプ」またはノードをダブルクリック</li>
+                <li>光るホットスポットをクリックして進む（それ以外をクリックすると場所が光る）</li>
+                <li>「戻る」「最初から」、右側に実行ログ</li>
+                <li>「遷移図に戻る」で最後の画面を選択</li>
+              </ol>
+              <p class="tiny muted">
+                <code>setState</code> /
+                <code>updateData</code> と式は評価しない（ログに残すだけ）。見た目の確認は P4 で。
+              </p>
+            </div>
+            <p class="tiny muted" style="margin-top: 10px">
+              保存: Chrome / Edge では File System Access API で開いたファイルに上書き。
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>P5 flow</span><span></span></div>
+      </section>
+
+      <!-- ===== P6 ===== -->
+      <section class="slide section" style="--tag: var(--p6)">
+        <div class="big">P6</div>
+        <h1>tauri ─ デスクトップ版</h1>
+        <div class="lead">
+          P3 のエディタを書き換えずに Tauri v2 で包み、<br />ローカルのプロジェクトファイルを開いて上書き保存できるようにする。
+        </div>
+        <div class="meta">
+          <code>apps/tauri</code><code>Tauri 2.11</code><code>Rust</code><code>:5179</code>
+        </div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p6)">
+        <div class="kicker">P6 tauri ─ 思想と特徴</div>
+        <h2>差し替え口だけで Web のコードを共有する</h2>
+        <div class="cols">
+          <div>
+            <h3>思想</h3>
+            <ul class="small">
+              <li>
+                <strong>エディタは書き換えない</strong>: <code>@ui-editor/editor-craft</code> を
+                workspace 依存にして直接 import
+              </li>
+              <li>
+                <strong>差し替え口</strong>: P3 の <code>App</code> の
+                <code>onDownload</code> をローカル書き込みにつなぐだけ
+              </li>
+              <li>
+                <strong>最小権限</strong>: capabilities は dialog の open/save と fs
+                の読み書きだけ。<strong>ダイアログで選んだパスだけ</strong>が許可される
+              </li>
+              <li><strong>git 運用と相性が良い</strong>: 「開いて直して上書き」がそのままできる</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Web 版との違い</h3>
+            <table class="tiny">
+              <tr>
+                <th></th>
+                <th>Web 版</th>
+                <th>Tauri 版</th>
+              </tr>
+              <tr>
+                <td>保存</td>
+                <td>毎回ダウンロード</td>
+                <td>同じファイルに上書き</td>
+              </tr>
+              <tr>
+                <td>配るもの</td>
+                <td>dist 604 KB</td>
+                <td>.app 9.7 MB（Electron の約 1/10）</td>
+              </tr>
+              <tr>
+                <td>必要環境</td>
+                <td>Node / pnpm</td>
+                <td>＋ Rust・Xcode 等</td>
+              </tr>
+              <tr>
+                <td>ビルド</td>
+                <td>0.1〜0.2 秒</td>
+                <td>約 32 秒、target/ 3.7 GB</td>
+              </tr>
+              <tr>
+                <td>配布</td>
+                <td>URL を渡す</td>
+                <td>OS 別ビルド・署名・更新の仕組み</td>
+              </tr>
+            </table>
+            <p class="tiny muted" style="margin-top: 8px">
+              結論: 当面は Web 版。上書き保存が本当に必要になったら包む。
+            </p>
+          </div>
+        </div>
+        <div class="foot"><span>P6 tauri</span><span></span></div>
+      </section>
+
+      <section class="slide" style="--tag: var(--p6)">
+        <div class="kicker">P6 tauri ─ 使い方</div>
+        <h2>開発起動からアプリのビルドまで</h2>
+        <div class="cols">
+          <div>
+            <ol class="steps">
+              <li>
+                Rust ツールチェーンと OS の前提（macOS: Xcode、Windows: MSVC + WebView2、Linux:
+                WebKitGTK）を用意
+              </li>
+              <li>
+                開発起動（Vite を :5179 で起動し、そのウィンドウを開く。HMR あり）
+                <pre><code>pnpm install
+pnpm --filter @ui-editor/schema build
+pnpm --filter @ui-editor/tauri tauri dev</code></pre>
+              </li>
+              <li>
+                上のバーの「ローカルのファイルを開く…」で <code>.json</code> /
+                <code>.yaml</code> を開く
+              </li>
+              <li>
+                編集して「JSON で保存」「YAML で保存」→
+                同じ形式なら<strong>ダイアログなしで上書き</strong>、形式を変えると保存先を聞く
+              </li>
+              <li>
+                配布用にビルド
+                <pre><code>pnpm --filter @ui-editor/tauri tauri build   <span class="c"># .app / .dmg</span></code></pre>
+              </li>
+            </ol>
+          </div>
+          <div>
+            <div class="card">
+              <h3>知っておくこと</h3>
+              <ul class="small">
+                <li>初回は Rust のクレート約 350 本をコンパイル（数十秒〜数分）</li>
+                <li><code>pnpm -r build</code> はフロントエンドだけ（Rust はビルドしない）</li>
+                <li>
+                  ブラウザだけで見るなら <code>pnpm --filter @ui-editor/tauri dev</code>（Tauri API
+                  は使えない）
+                </li>
+                <li>npm と Rust のマイナーバージョンを揃える（2.11 系に固定）</li>
+                <li>署名なしビルドは他の Mac で Gatekeeper に止められる</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span>P6 tauri</span><span></span></div>
+      </section>
+
+      <!-- ===== まとめ ===== -->
+      <section class="slide">
+        <div class="kicker">横断して見えたこと</div>
+        <h2>複数のツールで同じ不足に行き当たった</h2>
+        <div class="cols">
+          <div>
+            <ul class="small">
+              <li>
+                <strong>派生値（computed / vars）が無い</strong><br /><span class="muted"
+                  >D2 で同じ <code>find</code> を 5
+                  回書く。生成コードにも重複が出る（P0・P1・P4）</span
+                >
+              </li>
+              <li>
+                <strong>コレクションと型の対応が無い</strong><br /><span class="muted"
+                  ><code>devices</code> → <code>Device</code> を名前の規約で推測（P1・P4）</span
+                >
+              </li>
+              <li>
+                <strong>コンポーネントの独自イベントが無い</strong><br /><span class="muted"
+                  ><code>AlarmRow</code> のクリックはルート要素で代用（P0・P4・P5）</span
+                >
+              </li>
+              <li>
+                <strong>書き出しでキー順が変わる</strong><br /><span class="muted"
+                  >props 定義の宣言順が失われる（P1・P2）</span
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <ul class="small">
+              <li>
+                <strong>エディタ用情報の置き場所</strong><br /><span class="muted"
+                  >遷移図の座標 → トップレベルに <code>editor</code> 名前空間を提案（P5）</span
+                >
+              </li>
+              <li>
+                <strong>アクションの不足</strong><br /><span class="muted"
+                  >レコード追加・削除、条件分岐、通知、戻る、非同期（P4）</span
+                >
+              </li>
+              <li>
+                <strong>プレビュー用の値</strong><br /><span class="muted"
+                  >params や mount 後の state がエディタに無い（P2・P3）</span
+                >
+              </li>
+              <li>
+                <strong>式の型チェック</strong><br /><span class="muted"
+                  ><code>device.nmae</code> の typo は実行しても見つからない（P1・P4）</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="foot"><span>まとめ</span><span></span></div>
+      </section>
+
+      <section class="slide">
+        <div class="kicker">まとめ</div>
+        <h2>どのツールを、いつ使うか</h2>
+        <table>
+          <tr>
+            <th style="width: 18%">やりたいこと</th>
+            <th style="width: 22%">ツール</th>
+            <th>ポイント</th>
+          </tr>
+          <tr>
+            <td>画面を定義する・検証する</td>
+            <td style="color: var(--p0)"><b>P0 schema</b></td>
+            <td>YAML で書いて <code>pnpm validate</code>。すべての出発点</td>
+          </tr>
+          <tr>
+            <td>本番コードの叩き台を得る</td>
+            <td style="color: var(--p1)"><b>P1 codegen</b></td>
+            <td>決定的・読める React。生成後は人が育てる</td>
+          </tr>
+          <tr>
+            <td>手早く画面を並べる</td>
+            <td style="color: var(--p2)"><b>P2 Puck</b></td>
+            <td>少ないコードで標準的なエディタ体験</td>
+          </tr>
+          <tr>
+            <td>エディタ UI を作り込む</td>
+            <td style="color: var(--p3)"><b>P3 Craft.js</b></td>
+            <td>自由な UI。コード量と保守は自分持ち</td>
+          </tr>
+          <tr>
+            <td>動きとデータを確かめる</td>
+            <td style="color: var(--p4)"><b>P4 runtime</b></td>
+            <td>生成せずに実行。式・型・アクションの検査</td>
+          </tr>
+          <tr>
+            <td>画面のつながりを設計する</td>
+            <td style="color: var(--p5)"><b>P5 flow</b></td>
+            <td>線で遷移を編集し、プロトタイプで再生</td>
+          </tr>
+          <tr>
+            <td>ローカルで上書き保存したい</td>
+            <td style="color: var(--p6)"><b>P6 tauri</b></td>
+            <td>P3 をそのまま包む。配布コストは増える</td>
+          </tr>
+        </table>
+        <p class="small" style="margin-top: 18px">
+          共通の約束はひとつ ─
+          <strong>プロジェクトファイルが唯一の正</strong
+          >。だからツールを組み合わせても、差し替えても、保存形式は変わらない。
+        </p>
+        <div class="foot"><span>まとめ</span><span></span></div>
+      </section>
+    </div>
+
+    <div id="hint">← → / Space で移動・F で全画面・P で印刷（PDF）</div>
+    <div id="nav">
+      <button id="prev" aria-label="前のスライド">←</button>
+      <span id="count"></span>
+      <button id="next" aria-label="次のスライド">→</button>
+    </div>
+
+    <script>
+      (function () {
+        var stage = document.getElementById("stage");
+        var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+        var count = document.getElementById("count");
+        var progress = document.getElementById("progress");
+        var current = 0;
+
+        slides.forEach(function (s, i) {
+          var foot = s.querySelector(".foot span:last-child");
+          if (foot) foot.textContent = i + 1 + " / " + slides.length;
+        });
+
+        function fit() {
+          var margin = window.innerWidth < 700 ? 8 : 40;
+          var scale = Math.min(
+            (window.innerWidth - margin) / 1280,
+            (window.innerHeight - margin - 30) / 720,
+          );
+          stage.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+        }
+
+        function show(i) {
+          current = Math.max(0, Math.min(slides.length - 1, i));
+          slides.forEach(function (s, j) {
+            s.classList.toggle("active", j === current);
+          });
+          count.textContent = current + 1 + " / " + slides.length;
+          progress.style.width = ((current + 1) / slides.length) * 100 + "%";
+          try {
+            history.replaceState(null, "", "#" + (current + 1));
+          } catch (e) {}
+        }
+
+        document.addEventListener("keydown", function (e) {
+          if (e.metaKey || e.ctrlKey || e.altKey) return;
+          if (["ArrowRight", "PageDown", " ", "Enter"].indexOf(e.key) >= 0) {
+            e.preventDefault();
+            show(current + 1);
+          } else if (["ArrowLeft", "PageUp", "Backspace"].indexOf(e.key) >= 0) {
+            e.preventDefault();
+            show(current - 1);
+          } else if (e.key === "Home") show(0);
+          else if (e.key === "End") show(slides.length - 1);
+          else if (e.key === "f" || e.key === "F") {
+            if (!document.fullscreenElement)
+              document.documentElement.requestFullscreen &&
+                document.documentElement.requestFullscreen();
+            else document.exitFullscreen && document.exitFullscreen();
+          } else if (e.key === "p" || e.key === "P") window.print();
+        });
+        document.getElementById("prev").onclick = function () {
+          show(current - 1);
+        };
+        document.getElementById("next").onclick = function () {
+          show(current + 1);
+        };
+
+        var touchX = null;
+        document.addEventListener(
+          "touchstart",
+          function (e) {
+            touchX = e.touches[0].clientX;
+          },
+          { passive: true },
+        );
+        document.addEventListener("touchend", function (e) {
+          if (touchX === null) return;
+          var dx = e.changedTouches[0].clientX - touchX;
+          if (Math.abs(dx) > 50) show(current + (dx < 0 ? 1 : -1));
+          touchX = null;
+        });
+
+        window.addEventListener("resize", fit);
+        fit();
+        var start = parseInt((location.hash || "").slice(1), 10);
+        show(isNaN(start) ? 0 : start - 1);
+      })();
+    </script>
+  </body>
+</html>
