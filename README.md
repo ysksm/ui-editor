@@ -16,6 +16,8 @@ UI エディタのプロトタイプ群を比較検証するための pnpm works
 
 現時点で存在するのは `packages/schema` のみ。その他は各フェーズで追加する。
 
+各ツールの思想・特徴・使い方の手順は、スライド [`docs/slides.html`](docs/slides.html)（ブラウザで開き、← → で移動）にまとめている。
+
 各プロトタイプの共通入力（題材アプリのプロジェクトファイル）は [`packages/schema/examples/`](packages/schema/examples/README.md) にある。スキーマの設計メモは [`packages/schema/README.md`](packages/schema/README.md)。
 
 ルートの共通設定:
