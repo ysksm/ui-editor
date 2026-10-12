@@ -1,0 +1,10 @@
+# Alibaba LowCodeEngine の公式デモ（lowcode-demo の demo-general）をビルドして nginx で配信する
+# 公式オンライン版: https://lowcode-engine.cn/demo/demo-general/index.html
+name: lowcode-engine
+
+services:
+  lowcode-engine:
+    build: .
+    ports:
+      - "9103:80"
+    restart: unless-stopped

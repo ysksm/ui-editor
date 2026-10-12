@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GrapesJS</title>
+    <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.23.6/dist/css/grapes.min.css" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="gjs">
+      <header style="padding: 16px; background: #1f2937; color: #fff">
+        <h1 style="margin: 0; font: 600 20px sans-serif">デバイス一覧</h1>
+      </header>
+      <section style="display: flex; gap: 16px; padding: 16px; font-family: sans-serif">
+        <div style="flex: 1; padding: 16px; border: 1px solid #ddd; border-radius: 8px">
+          <h2 style="margin: 0 0 8px">センサー A</h2>
+          <p style="margin: 0">状態: 稼働中</p>
+        </div>
+        <div style="flex: 1; padding: 16px; border: 1px solid #ddd; border-radius: 8px">
+          <h2 style="margin: 0 0 8px">センサー B</h2>
+          <p style="margin: 0">状態: 停止</p>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://unpkg.com/grapesjs@0.23.6/dist/grapes.min.js"></script>
+    <script src="https://unpkg.com/grapesjs-blocks-basic@1.0.2/dist/index.js"></script>
+    <script src="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/index.js"></script>
+    <script>
+      // 編集内容はブラウザの localStorage に自動保存される。
+      // 上部パネルの「</>」で出力される HTML / CSS を確認できる。
+      const editor = grapesjs.init({
+        container: "#gjs",
+        height: "100%",
+        fromElement: true,
+        storageManager: { type: "local", autosave: true, stepsBeforeSave: 1 },
+        plugins: ["gjs-blocks-basic", "grapesjs-preset-webpage"],
+      });
+      window.editor = editor;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+# amis の公式ビジュアルエディタ（amis-editor-demo のビルド済みファイル）を nginx で配信する
+# 公式オンライン版: https://aisuda.github.io/amis-editor-demo/
+name: amis-editor
+
+services:
+  amis-editor:
+    build: .
+    ports:
+      - "9102:80"
+    restart: unless-stopped

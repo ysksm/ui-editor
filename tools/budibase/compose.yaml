@@ -1,0 +1,15 @@
+# Budibase（シングルイメージ版。CouchDB・MinIO・Redis を内蔵）
+# 公式: https://docs.budibase.com/docs/docker
+name: budibase
+
+services:
+  budibase:
+    image: budibase/budibase:v3.47.0
+    ports:
+      - "9004:80"
+    volumes:
+      - budibase-data:/data
+    restart: unless-stopped
+
+volumes:
+  budibase-data:

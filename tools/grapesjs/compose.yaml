@@ -1,0 +1,12 @@
+# GrapesJS（ライブラリ）を CDN から読み込む最小ページを nginx で配信する
+# 公式デモ: https://grapesjs.com/demo.html
+name: grapesjs
+
+services:
+  grapesjs:
+    image: nginx:1.27-alpine
+    ports:
+      - "9101:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    restart: unless-stopped
