@@ -1,0 +1,19 @@
+# Appsmith Community Edition（オールインワン）
+# 公式: https://github.com/appsmithorg/appsmith/blob/release/deploy/docker/docker-compose.yml
+name: appsmith
+
+services:
+  appsmith:
+    image: appsmith/appsmith-ce:v2.4.3
+    ports:
+      - "9002:80"
+    environment:
+      # ローカル評価用の固定値。外部公開する環境では使わない
+      APPSMITH_ENCRYPTION_PASSWORD: local-dev-only
+      APPSMITH_ENCRYPTION_SALT: local-dev-only
+    volumes:
+      - appsmith-stacks:/appsmith-stacks
+    restart: unless-stopped
+
+volumes:
+  appsmith-stacks:

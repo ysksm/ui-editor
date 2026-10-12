@@ -1,0 +1,39 @@
+# Lowcoder Community Edition（オールインワン。MongoDB・Redis を内蔵）
+# 公式: https://github.com/lowcoder-org/lowcoder/tree/2.7.6/deploy/docker
+# 同じ版の公式 default.env から、ローカルで触るのに必要な分だけを書いている
+name: lowcoder
+
+services:
+  lowcoder:
+    image: lowcoderorg/lowcoder-ce:2.7.6
+    ports:
+      - "9005:3000"
+    environment:
+      LOWCODER_PUBLIC_URL: http://localhost:9005/
+      LOWCODER_REDIS_ENABLED: "true"
+      LOWCODER_MONGODB_ENABLED: "true"
+      LOWCODER_API_SERVICE_ENABLED: "true"
+      LOWCODER_NODE_SERVICE_ENABLED: "true"
+      LOWCODER_FRONTEND_ENABLED: "true"
+      LOWCODER_MONGODB_URL: mongodb://localhost:27017/lowcoder?authSource=admin
+      LOWCODER_REDIS_URL: redis://localhost:6379
+      LOWCODER_API_SERVICE_URL: http://localhost:8080
+      LOWCODER_NODE_SERVICE_URL: http://localhost:6060
+      LOWCODER_EMAIL_SIGNUP_ENABLED: "true"
+      LOWCODER_EMAIL_AUTH_ENABLED: "true"
+      LOWCODER_CREATE_WORKSPACE_ON_SIGNUP: "true"
+      LOWCODER_WORKSPACE_MODE: SAAS
+      # ローカル評価用の固定値。外部公開する環境では使わない
+      LOWCODER_DB_ENCRYPTION_PASSWORD: local-dev-only
+      LOWCODER_DB_ENCRYPTION_SALT: local-dev-only
+      LOWCODER_API_KEY_SECRET: 5a41b090758b39b226603177ef48d73ae9839dd458ccb7e66f7e7cc028d5a50b
+      LOWCODER_NODE_SERVICE_SECRET: 62e348319ab9f5c43c3b5a380b4d82525cdb68740f21140e767989b509ab0aa2
+      LOWCODER_NODE_SERVICE_SECRET_SALT: local-dev-only
+      LOWCODER_SUPERUSER_USERNAME: admin@localhost
+      LOWCODER_SUPERUSER_PASSWORD: admin-local-dev
+    volumes:
+      - lowcoder-stacks:/lowcoder-stacks
+    restart: unless-stopped
+
+volumes:
+  lowcoder-stacks:

@@ -1,0 +1,20 @@
+# ToolJet（お試し用オールインワンイメージ。PostgreSQL・PostgREST・Redis を内蔵）
+# 公式: https://docs.tooljet.com/docs/setup/try-tooljet/
+# イメージは amd64 のみ。Apple Silicon ではエミュレーションで動く（起動が遅い）
+name: tooljet
+
+services:
+  tooljet:
+    image: tooljet/try:v3.20.233-lts
+    platform: linux/amd64
+    ports:
+      - "9003:80"
+    environment:
+      TOOLJET_HOST: http://localhost:9003
+      TOOLJET_SERVER_URL: http://localhost:9003
+    volumes:
+      - tooljet-data:/var/lib/postgresql/13/main
+    restart: unless-stopped
+
+volumes:
+  tooljet-data:
