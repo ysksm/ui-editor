@@ -1,6 +1,6 @@
 # Lowcoder Community Edition（オールインワン。MongoDB・Redis を内蔵）
-# 公式: https://github.com/lowcoder-org/lowcoder/tree/main/deploy/docker
-# 公式の default.env から、ローカルで触るのに必要な分だけを書いている
+# 公式: https://github.com/lowcoder-org/lowcoder/tree/2.7.6/deploy/docker
+# 同じ版の公式 default.env から、ローカルで触るのに必要な分だけを書いている
 name: lowcoder
 
 services:
@@ -15,9 +15,6 @@ services:
       LOWCODER_API_SERVICE_ENABLED: "true"
       LOWCODER_NODE_SERVICE_ENABLED: "true"
       LOWCODER_FRONTEND_ENABLED: "true"
-      # 共同編集（hocuspocus）とビデオ通話（Agora）は評価に使わないので切る
-      LOWCODER_HOCUSPOCUS_ENABLED: "false"
-      LOWCODER_AGORA_TOKEN_SERVICE_ENABLED: "false"
       LOWCODER_MONGODB_URL: mongodb://localhost:27017/lowcoder?authSource=admin
       LOWCODER_REDIS_URL: redis://localhost:6379
       LOWCODER_API_SERVICE_URL: http://localhost:8080

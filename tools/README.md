@@ -55,13 +55,13 @@ docker compose -f tools/appsmith/compose.yaml down -v
 - **Penpot**: 公式の compose ファイルをもとに、版の固定（`2.18.0`）・テレメトリー無効化・ポート変更だけを加えている。版は `PENPOT_VERSION=2.17.2 docker compose ...` のように変えられる。
 - **ToolJet**: お試し用のオールインワンイメージ（`tooljet/try`、PostgreSQL などを内蔵）を使う。イメージは amd64 のみなので、Apple Silicon ではエミュレーションで動き、起動に数分かかる。
 - **Budibase**: シングルイメージ版（`budibase/budibase`）。CouchDB・MinIO・Redis を内蔵する。
-- **Lowcoder**: オールインワンイメージ。公式の `default.env` から必要な分だけを書き、共同編集（hocuspocus）とビデオ通話（Agora）は切っている。
+- **Lowcoder**: オールインワンイメージ。同じ版（2.7.6）の公式 `default.env` から必要な分だけを書いている。3.0.0 は公開直後のため使っていない。
 - **amis**: amis-editor-demo リポジトリにあるビルド済みファイル（`demo-6.11.0/`）を取り出し、GitHub Pages 向けの絶対 URL をローカル用に書き換えて配信する。JSON だけで画面を表す方法は、エディタのコード（JSON）表示で確認できる。
 - **LowCodeEngine**: lowcode-demo リポジトリは 2024 年で更新が止まっており、ビルドに Node 16 を使う。エンジン本体と UI ライブラリは CDN（alicdn）から読み込む。出码（コード生成）はデモ上部の「出码」ボタンから試せる。
 
 ## 版の固定
 
-イメージ・リポジトリの版はすべて固定している（`latest` は使わない）。新しすぎる版は避け、公開から 2 週間ほど経った版を選んだ（ルートの pnpm の `minimumReleaseAge` と同じ考え方）。上げるときは各 `compose.yaml` / `Dockerfile` の版を書き換える。
+イメージ・リポジトリの版は固定している（`latest` は使わない）。ただし LowCodeEngine は、元のリポジトリにロックファイルが無く一部の依存が `latest` 指定のため、npm の依存はビルドのたびに解決される。新しすぎる版は避け、公開から 2 週間ほど経った版を選んだ（ルートの pnpm の `minimumReleaseAge` と同じ考え方）。上げるときは各 `compose.yaml` / `Dockerfile` の版を書き換える。
 
 | ツール        | 版                                                                                         |
 | ------------- | ------------------------------------------------------------------------------------------ |
@@ -82,4 +82,4 @@ docker compose -f tools/appsmith/compose.yaml down -v
 - 指定したイメージのタグが Docker Hub に存在し、arm64 に対応していること（ToolJet のみ amd64 のみ）
 - GrapesJS のページをローカルの静的サーバーで開き、エディタ・ブロック・コード出力ボタンが表示されること
 
-初めて起動したときに動かない設定があれば、このファイルと該当の `compose.yaml` を直す。
+初めて起動したときに動かない設定があれば、このファイルと該当の `compose.yaml` を直す。たとえば amis のエディタで URL を直接開いて 404 になる場合は、nginx に `try_files $uri /index.html;` を足す。
