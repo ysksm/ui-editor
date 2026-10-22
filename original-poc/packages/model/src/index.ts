@@ -10,3 +10,4 @@ export * from "./walk.js";
 export * from "./io.js";
 export * from "./ops/ids.js";
 export * from "./ops/er.js";
+export * from "./ops/containers.js";
