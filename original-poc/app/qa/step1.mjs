@@ -10,24 +10,14 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { extractTransitions, formatIssue, loadProject } from "@ui-editor/poc-model";
-import { checklist, commit, ensurePreview, openEditor, OUT_DIR } from "./lib.mjs";
-
-const CONTAINERS = [
-  { kind: "画面", id: "dashboard", name: "ダッシュボード" },
-  { kind: "画面", id: "devices", name: "機器一覧" },
-  { kind: "画面", id: "deviceDetail", name: "機器詳細" },
-  { kind: "ダイアログ", id: "deviceEdit", name: "機器の編集" },
-  { kind: "ダイアログ", id: "deviceDelete", name: "削除の確認" },
-];
-const TRANSITIONS = [
-  ["dashboard", "devices"],
-  ["devices", "deviceEdit"],
-  ["devices", "dashboard"],
-  ["devices", "deviceDetail"],
-  ["deviceDetail", "deviceDelete"],
-  ["deviceDetail", "devices"],
-  ["deviceDelete", "devices"],
-];
+import {
+  buildDeviceFlow,
+  checklist,
+  DEVICE_TRANSITIONS as TRANSITIONS,
+  ensurePreview,
+  openEditor,
+  OUT_DIR,
+} from "./lib.mjs";
 
 const stop = await ensurePreview();
 const { browser, page: p, errors } = await openEditor();
@@ -36,51 +26,13 @@ const started = Date.now();
 let ops = 0; // 人が行う操作（クリック・入力の確定・ドラッグ）の数
 const nav = p.getByRole("navigation", { name: "ビュー" });
 
-async function drag(from, to) {
-  const a = await p
-    .locator(`.react-flow__node[data-id=${from}] .react-flow__handle-right`)
-    .boundingBox();
-  const b = await p
-    .locator(`.react-flow__node[data-id=${to}] .react-flow__handle-left`)
-    .boundingBox();
-  await p.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
-  await p.mouse.down();
-  await p.mouse.move((a.x + b.x) / 2, (a.y + b.y) / 2 + 40, { steps: 8 });
-  await p.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 6 });
-  await p.mouse.up();
-  ops++;
-}
-
 try {
-  await p.getByRole("button", { name: "新規", exact: true }).click();
-  ops++;
-  await nav.getByRole("button", { name: "フロー" }).click();
-  ops++;
-
-  // ---- 3 画面・2 ダイアログ ----
-  for (const c of CONTAINERS) {
-    await p.getByRole("button", { name: `＋ ${c.kind}` }).click();
-    await commit(p, `${c.kind}の名前`, c.name);
-    await commit(p, `${c.kind}の id`, c.id);
-    ops += 3;
-  }
+  ops += await buildDeviceFlow(p);
   const listed = await p
     .getByRole("navigation", { name: "画面とダイアログ" })
     .getByRole("button")
     .allTextContents();
   qa.check("一覧に 3 画面・2 ダイアログ", listed.length === 5, listed.join(" / "));
-  await p.getByRole("button", { name: "整列" }).click();
-  ops++;
-  await p.waitForTimeout(400);
-
-  // ---- 遷移 7 本（フロー図でドラッグ）----
-  for (const [from, to] of TRANSITIONS) {
-    await drag(from, to);
-    await p.waitForTimeout(80);
-  }
-  await p.getByRole("button", { name: "整列" }).click();
-  ops++;
-  await p.waitForTimeout(500);
   qa.check("フロー図に遷移の線が 7 本", (await p.locator(".react-flow__edge").count()) === 7);
   qa.check(
     "ダイアログの呼び出し（破線）が 2 本",
