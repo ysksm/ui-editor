@@ -96,3 +96,43 @@ describe("画面ビュー: 部品の編集", () => {
     });
   });
 });
+
+describe("画面ビュー: 部品から遷移を作る・仮の部品の遷移を移す（FR-UI-03）", () => {
+  it("ボタンを足して遷移を作る。仮の部品のままの遷移を本物のボタンに移す", () => {
+    const store = renderDetail();
+    // 詳細に仮のボタン（→ 機器一覧）を足しておく
+    act(() =>
+      store.getState().edit("準備", (d) => {
+        const toolbar = findNode(d.screens.find((s) => s.id === "deviceDetail")!.root, "toolbar")!;
+        toolbar.children!.push({
+          id: "btn9",
+          type: "Button",
+          placeholder: true,
+          props: { label: "機器一覧へ" },
+          events: { click: [{ type: "navigate", to: "devices" }] },
+        });
+      }),
+    );
+    fireEvent.click(within(outline()).getByText("toolbar"));
+    fireEvent.change(within(outline()).getByLabelText("部品を追加"), {
+      target: { value: "Button" },
+    });
+    const group = () => within(panel()).getByRole("group", { name: "部品の遷移" });
+    fireEvent.change(within(group()).getByLabelText("遷移先"), { target: { value: "deviceEdit" } });
+    fireEvent.click(within(group()).getByRole("button", { name: "遷移を追加" }));
+    expect(findNode(detailRoot(store), "button1")!.events!.click).toEqual([
+      { type: "openDialog", dialog: "deviceEdit", params: { deviceId: "{{ params.deviceId }}" } },
+    ]);
+    expect(within(group()).getByRole("list", { name: "この部品の遷移" }).textContent).toContain(
+      "→ 機器の編集",
+    );
+    // 仮の部品のままの遷移をこのボタンに移すと、仮のボタンは消える
+    const placeholders = within(group()).getByRole("list", { name: "仮の部品の遷移" });
+    fireEvent.click(within(placeholders).getByRole("button", { name: "この部品に移す" }));
+    expect(findNode(detailRoot(store), "btn9")).toBeUndefined();
+    expect(findNode(detailRoot(store), "button1")!.events!.click!.map((a) => a.type)).toEqual([
+      "openDialog",
+      "navigate",
+    ]);
+  });
+});
