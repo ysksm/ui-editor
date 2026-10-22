@@ -1109,6 +1109,7 @@ h2.pv-text {
   border-bottom: 1px solid var(--line);
   padding: 4px 6px;
   text-align: left;
+  white-space: nowrap;
 }
 .pv-table tbody tr {
   cursor: pointer;
@@ -1214,7 +1215,7 @@ path.flow-edge.last {
 }
 .screen-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 12px;
   padding: 12px 16px;
   align-items: start;
@@ -1283,4 +1284,59 @@ path.flow-edge.last {
   flex-direction: column;
   gap: 6px;
   align-items: flex-start;
+}
+
+.outline-row {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+.outline-row:hover {
+  background: var(--soft);
+}
+.outline-row.selected {
+  background: var(--accent-soft);
+}
+.node-panel {
+  min-width: 0;
+}
+.node-panel h4 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 0 0 8px;
+}
+.node-panel h5 {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.node-panel .row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.node-id {
+  width: 140px;
+}
+.node-buttons {
+  margin-left: auto;
+  display: inline-flex;
+}
+.binding-input input {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.columns-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 8px;
+}
+.column-row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) auto;
+  gap: 4px;
 }
