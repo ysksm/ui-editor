@@ -4,7 +4,7 @@ import {
   findContainer,
   KIND_LABELS,
   KINDS,
-  templateConflicts,
+  replacedNodes,
   type ContainerRef,
   type Kind,
   type Node,
@@ -58,10 +58,10 @@ function ScreenEditor({ project, info }: { project: Project; info: ContainerRef 
       edit(`テンプレート（${KIND_LABELS[kind]}）を適用`, (d) =>
         applyTemplate(d, c.id, { kind, entity }),
       );
-    const n = templateConflicts(c);
-    if (n > 0)
+    const replaced = replacedNodes(c);
+    if (replaced.length > 0)
       requestConfirm(
-        `「${c.name}」の中身（仮の部品でない部品 ${n} 個）がテンプレートで置き換わります。続けますか？（元に戻すで戻せます）`,
+        `「${c.name}」の中身（仮の部品でない部品 ${replaced.length} 個: ${replaced.slice(0, 8).join("、")}${replaced.length > 8 ? " ほか" : ""}）がテンプレートで置き換わります。仮の部品（遷移）は残ります。続けますか？（元に戻すで戻せます）`,
         "置き換える",
         run,
       );
