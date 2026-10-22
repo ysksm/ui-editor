@@ -16,6 +16,7 @@ import { ActionListEditor } from "../../components/actions/ActionListEditor";
 import { BindingCandidates, BindingInput } from "../../components/form/BindingInput";
 import { CommitInput } from "../../components/form/CommitInput";
 import { useEditor } from "../../state/store";
+import { NodeTransitions } from "./NodeTransitions";
 
 const VARIANTS: Partial<Record<BuiltinNodeType, string[]>> = {
   Text: ["title", "body", "caption"],
@@ -235,6 +236,7 @@ export function NodePanel({
           }
         />
       </label>
+      <NodeTransitions project={project} container={container} node={node} />
       {events.map((event) => (
         <div key={event} className="node-event">
           <h5>{event} のアクション</h5>

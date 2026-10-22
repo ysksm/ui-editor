@@ -7,6 +7,7 @@ import { checkProject } from "../validate.js";
 import { addContainer } from "./containers.js";
 import {
   addTransition,
+  addTransitionFrom,
   retargetTransition,
   setTransitionActions,
   setTransitionParams,
@@ -168,5 +169,34 @@ describe("遷移先・渡す値・アクション列", () => {
     const r = apply(q, (d) => void (gone = setTransitionActions(d, next!, [])));
     expect(gone).toBeUndefined();
     expect(r.screens[2]!.root).toBeUndefined();
+  });
+});
+
+describe("addTransitionFrom", () => {
+  it("ボタンからは click、表からは rowClick に足し、パラメータを埋める", () => {
+    let k1 = "";
+    let k2 = "";
+    let k3 = "";
+    const p = apply(smallProject(), (d) => {
+      addContainer(d, "dialog", { id: "deviceEdit", name: "編集" });
+      d.dialogs[1]!.params = { deviceId: { type: "ref", entity: "Device" } };
+      k1 = addTransitionFrom(d, "deviceDetail", "btn1", "deviceEdit");
+      k2 = addTransitionFrom(d, "devices", "table", "deviceEdit");
+      d.screens[0]!.root!.children!.push({
+        id: "edit",
+        type: "Button",
+        props: { requires: "selection.Device" },
+      });
+      k3 = addTransitionFrom(d, "devices", "edit", "deviceEdit");
+    });
+    expect([k1, k2, k3]).toEqual([
+      "deviceDetail:btn1:click:1",
+      "devices:table:rowClick:1",
+      "devices:edit:click:0",
+    ]);
+    expect(findTransition(p, k1)!.params).toEqual({ deviceId: "{{ params.deviceId }}" });
+    expect(findTransition(p, k2)!.params).toEqual({ deviceId: "{{ event.row.id }}" });
+    expect(findTransition(p, k3)!.params).toEqual({ deviceId: "{{ state.selection.Device?.id }}" });
+    expect(findTransition(p, k3)).toMatchObject({ kind: "openDialog", placeholder: false });
   });
 });

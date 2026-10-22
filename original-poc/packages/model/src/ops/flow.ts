@@ -329,3 +329,46 @@ export function tableColumns(entity: Entity): { header: string; value: string }[
   const ordered = first ? [first, ...fields.filter((f) => f !== first)] : fields;
   return ordered.slice(0, 4).map((f) => ({ header: f.name ?? f.id, value: `{{ row.${f.id} }}` }));
 }
+
+/**
+ * 部品から遷移を作る（仮の部品を経ない。FR-UI-03）。ボタンなどは click、表は rowClick に足す。
+ * 遷移先のレコードを指す ref パラメータは、表の行・ボタンの requires の選択・遷移元のパラメータから埋める。
+ * 作った遷移の key を返す。
+ */
+export function addTransitionFrom(
+  draft: Project,
+  containerId: string,
+  nodeId: string,
+  to: string,
+): string {
+  const c = refOf(draft, containerId).container;
+  const target = refOf(draft, to);
+  const node = findNode(c.root, nodeId);
+  if (!node) throw new Error(`部品 "${nodeId}" がありません`);
+  const event = node.type === "Table" ? "rowClick" : "click";
+  node.events ??= {};
+  const list = node.events[event] ?? [];
+  node.events[event] = [...list, moveAction(target)];
+  const key = `${containerId}:${nodeId}:${event}:${list.length}`;
+  const entities = new Map(draft.entities.map((e) => [e.id, e]));
+  if (node.type === "Table" && typeof node.props?.entity === "string") {
+    fillParam(draft, key, target, entities.get(node.props.entity), (pk) => `{{ event.row.${pk} }}`);
+  } else if (
+    typeof node.props?.requires === "string" &&
+    node.props.requires.startsWith("selection.")
+  ) {
+    const e = entities.get(node.props.requires.slice("selection.".length));
+    fillParam(draft, key, target, e, (pk) => `{{ state.selection.${e?.id}?.${pk} }}`);
+  }
+  // 遷移元に同じエンティティを指すパラメータがあれば、それを渡す（詳細 → 編集・削除の確認など）
+  for (const [name, def] of Object.entries(target.container.params ?? {})) {
+    if (def.type !== "ref" || !def.entity) continue;
+    const own = Object.entries(c.params ?? {}).find(
+      ([, d]) => d.type === "ref" && d.entity === def.entity,
+    )?.[0];
+    const action = actionOf(draft, transitionOf(draft, key));
+    if (own && action.params?.[name] === undefined)
+      action.params = { ...action.params, [name]: `{{ params.${own} }}` };
+  }
+  return key;
+}
