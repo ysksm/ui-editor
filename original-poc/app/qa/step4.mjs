@@ -65,13 +65,10 @@ try {
   ]);
   await chooser.setFiles(erOnlyPath);
   // 読み込みは非同期なので、名前が入るまで待つ
-  await p
-    .waitForFunction(
-      () => document.querySelector('[aria-label="プロジェクト名"]')?.value === "QA ステップ 4",
-      undefined,
-      { timeout: 3000 },
-    )
-    .catch(() => {});
+  for (let i = 0; i < 30; i++) {
+    if ((await p.getByLabel("プロジェクト名").inputValue()) === "QA ステップ 4") break;
+    await p.waitForTimeout(100);
+  }
   qa.check(
     "ER とデータだけのプロジェクトを開ける",
     (await p.getByLabel("プロジェクト名").inputValue()) === "QA ステップ 4",
