@@ -13,6 +13,16 @@ const files = await generate(project, { appName: "device-monitor" }); // { path,
 - 式に誤り・その場所で使えない名前があれば、場所付きの理由（例: `画面 deviceDetail / page / title / props: {{ recrd?.name }}: recrd はここでは使えません（使える名前: …）`）で `GenerateError`。
 - Node だけで使うもの（`readProjectFile`・`writeFiles`・題材の一覧 `EXAMPLES`）は `@ui-editor/poc-codegen/node`。
 
+## CLI
+
+```sh
+pnpm --filter @ui-editor/poc-codegen build
+node original-poc/packages/codegen/dist/cli.js original-poc/examples/device-monitor.poc.json --out ../device-monitor
+cd ../device-monitor && pnpm install && pnpm dev   # http://localhost:5181/
+```
+
+`poc-codegen <project.poc.json> [--out <フォルダ>] [--name <アプリ名>] [--clean]`。`--out` の既定はファイル名から作ったアプリ名、`--clean` は書き出す前にフォルダの中身を消す（node_modules とロックファイルは残す）。エディタの「コードを書き出す」と同じ出力（バイト単位で同じ）になる。
+
 ## 生成するアプリ
 
 | パス                                                                | 中身                                                                                                         | 生成 / 固定 |

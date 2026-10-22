@@ -45,6 +45,14 @@ export function Header() {
         <button onClick={() => void actions.save(false)}>保存</button>
         <button onClick={() => void actions.save(true)}>名前を付けて保存</button>
       </div>
+      <div className="toolbar" role="toolbar" aria-label="コード">
+        <button
+          onClick={() => void actions.exportCode()}
+          title="Vite + React + TypeScript のアプリとして書き出す（フォルダを選ぶ。選べないブラウザでは zip）"
+        >
+          コードを書き出す
+        </button>
+      </div>
       <div className="toolbar" role="toolbar" aria-label="履歴">
         <button
           onClick={undo}
