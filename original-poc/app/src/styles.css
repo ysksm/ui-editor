@@ -1,0 +1,263 @@
+:root {
+  --bg: #f5f6f8;
+  --paper: #ffffff;
+  --ink: #1d2330;
+  --muted: #667085;
+  --line: #d9dde4;
+  --soft: #eef1f5;
+  --accent: #2f5bd3;
+  --accent-soft: #e6ecfb;
+  --danger: #c2410c;
+  --danger-soft: #fdecdf;
+  --warn: #a16207;
+  --warn-soft: #fdf4d8;
+  --ok: #0f8a6b;
+  --er: #7c3aed;
+  --font:
+    "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+button.link {
+  border: none;
+  background: none;
+  padding: 0 4px;
+  color: var(--muted);
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: var(--paper);
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ---- レイアウト ---- */
+
+/* 通知・検証パネルは出たり消えたりするので grid ではなく flex で縦に並べる */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.brand {
+  font-weight: 700;
+  color: var(--accent);
+}
+.project-name {
+  font-weight: 600;
+  min-width: 220px;
+}
+.toolbar {
+  display: flex;
+  gap: 4px;
+}
+.file-name {
+  margin-left: auto;
+  color: var(--muted);
+}
+.dirty {
+  color: var(--warn);
+}
+.issues-badge.has-errors {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.issues-badge.has-warnings {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.notice-info {
+  background: var(--accent-soft);
+}
+.notice-error {
+  background: var(--danger-soft);
+}
+.notice-text {
+  white-space: pre-wrap;
+  flex: 1;
+}
+
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  min-height: 0;
+}
+.view-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-right: 1px solid var(--line);
+  background: var(--paper);
+}
+.main {
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+}
+
+.placeholder {
+  padding: 16px 24px;
+}
+.placeholder h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+/* ---- 検証パネル ---- */
+
+.issues-panel {
+  flex: none;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+  max-height: 32vh;
+  overflow: auto;
+  padding: 8px 12px;
+}
+.issues-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.issues-head .close {
+  margin-left: auto;
+  font-size: 16px;
+}
+.issues-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.issue {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+.issue:hover {
+  background: var(--soft);
+}
+.issue-mark {
+  font-weight: 600;
+  flex: none;
+}
+.issue-error .issue-mark {
+  color: var(--danger);
+}
+.issue-warning .issue-mark {
+  color: var(--warn);
+}
+.issue-path {
+  color: var(--muted);
+  flex: none;
+}
+
+/* ---- 確認ダイアログ ---- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 35%);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+.modal {
+  background: var(--paper);
+  border-radius: 10px;
+  padding: 16px 20px;
+  max-width: 440px;
+  box-shadow: 0 10px 30px rgb(15 23 42 / 25%);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
