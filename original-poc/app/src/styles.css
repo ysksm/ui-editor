@@ -423,8 +423,8 @@ label.inline {
   text-overflow: ellipsis;
   max-width: 120px;
 }
-.er-field-children .er-field-type,
-.er-field-ref .er-field-type {
+.er-type-children .er-field-type,
+.er-type-ref .er-field-type {
   color: var(--er);
 }
 .er-field .pk {
