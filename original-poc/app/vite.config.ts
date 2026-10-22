@@ -6,5 +6,5 @@ export default defineConfig({
   // 並行で動かすプロトタイプとぶつからないよう固定（#1「開発サーバーのポート」）
   server: { port: 5180, strictPort: true },
   preview: { port: 5180, strictPort: true },
-  test: { environment: "jsdom" },
+  test: { environment: "jsdom", setupFiles: ["./src/test-setup.ts"] },
 });

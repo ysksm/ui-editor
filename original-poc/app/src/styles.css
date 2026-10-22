@@ -261,3 +261,267 @@ code {
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* ---- 共通の部品 ---- */
+
+.view-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  flex-wrap: wrap;
+}
+.legend {
+  display: flex;
+  gap: 12px;
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.legend-nest {
+  color: var(--ink);
+}
+.legend-ref {
+  color: var(--muted);
+}
+
+.inspector {
+  border-left: 1px solid var(--line);
+  background: var(--paper);
+  padding: 12px;
+  overflow: auto;
+  min-height: 0;
+}
+.inspector h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.inspector h4 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.inspector .row {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.inspector hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 16px 0 12px;
+}
+.commit-input {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.commit-input input {
+  width: 100%;
+}
+.field-error {
+  color: var(--danger);
+  font-size: 11px;
+}
+input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.warn-text {
+  color: var(--warn);
+}
+.small {
+  font-size: 11px;
+}
+label.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+/* ---- ER 図 ---- */
+
+.er-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.er-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  min-height: 0;
+}
+.er-canvas {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.canvas-empty {
+  position: absolute;
+  top: 40%;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+.er-node {
+  width: 230px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+.er-node.selected {
+  border-color: var(--er);
+  box-shadow: 0 0 0 3px rgb(124 58 237 / 18%);
+}
+.er-node-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #f5f0ff;
+  border-radius: 8px 8px 0 0;
+}
+.er-node-head code {
+  color: var(--muted);
+}
+.er-node-issues {
+  margin-left: auto;
+  color: var(--danger);
+  font-weight: 600;
+}
+.er-node-fields {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+.er-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 1px 10px;
+  height: 22px;
+  align-items: center;
+}
+.er-field-id {
+  font-family: var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.er-field-type {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+.er-field-children .er-field-type,
+.er-field-ref .er-field-type {
+  color: var(--er);
+}
+.er-field .pk {
+  margin-right: 2px;
+}
+.er-field .required {
+  color: var(--danger);
+}
+.er-edge path,
+path.er-edge {
+  stroke: #475569;
+  stroke-width: 1.5;
+}
+path.er-edge-ref {
+  stroke-dasharray: 6 4;
+}
+path.er-edge.selected {
+  stroke: var(--er);
+  stroke-width: 2.5;
+}
+.er-edge-label {
+  position: absolute;
+  font-size: 11px;
+  font-family: var(--mono);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 4px;
+  pointer-events: none;
+}
+.er-edge-label-ref {
+  color: var(--muted);
+}
+
+.field-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.field-row {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 6px;
+}
+.field-row.selected {
+  border-color: var(--er);
+  box-shadow: 0 0 0 2px rgb(124 58 237 / 15%);
+}
+.field-main {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 76px 48px auto;
+  gap: 4px;
+  align-items: center;
+}
+.field-detail {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.field-detail:not(:empty) {
+  margin-top: 4px;
+}
+.field-main select {
+  min-width: 0;
+}
+.field-main .field-id input {
+  font-family: var(--mono);
+}
+
+.field-buttons {
+  display: inline-flex;
+  justify-content: flex-end;
+}
+.field-buttons button {
+  padding: 0 3px;
+}
+.narrow {
+  width: 84px;
+}
+.relation-form {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.relation-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+.relation-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 2px;
+  padding: 8px 10px;
+}
