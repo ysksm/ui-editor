@@ -1,0 +1,153 @@
+.box {
+  display: flex;
+}
+
+.text {
+  margin: 0;
+}
+.title {
+  font-size: 20px;
+}
+.caption {
+  color: var(--muted);
+}
+
+.button {
+  align-self: flex-start;
+  font: inherit;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.field input,
+.field select {
+  font: inherit;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.error {
+  color: var(--danger);
+  font-size: 12px;
+}
+.check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tableWrap {
+  overflow: auto;
+}
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+.table th,
+.table td {
+  border-bottom: 1px solid var(--line);
+  padding: 6px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+.table tbody tr {
+  cursor: pointer;
+}
+.table tbody tr:hover {
+  background: var(--soft);
+}
+.table tr.selected {
+  background: var(--accent-soft);
+}
+.empty {
+  color: var(--muted);
+  text-align: center;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 30%);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.dialog {
+  background: var(--paper);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgb(15 23 42 / 30%);
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow: auto;
+}
+.dialogTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
+.dialogBody {
+  padding: 16px;
+}
+.close {
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.notice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.notice.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.notice.info {
+  background: var(--accent-soft);
+  color: var(--accent);
+}

@@ -13,3 +13,6 @@ original-poc/docs/*.html
 original-poc/examples/*.poc.json
 # QA スクリプトの出力（git にも入れない）
 original-poc/app/qa/out
+# オリジナル PoC のコード生成: スナップショットと、インストールして確かめる出力
+original-poc/packages/codegen/snapshots
+original-poc/packages/codegen/out

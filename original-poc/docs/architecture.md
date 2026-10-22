@@ -36,6 +36,7 @@ flowchart LR
   runtime --> datastore
   runtime --> v0rt
   codegen --> model
+  codegen --> v0rt
   app --> model
   app --> datastore
   app --> seed
@@ -43,21 +44,21 @@ flowchart LR
   app --> codegen
 ```
 
-| パッケージ                 | パス                              | 責務                                                                                                                                           | 主な依存                                           |
-| -------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `@ui-editor/poc-model`     | `original-poc/packages/model`     | スキーマ poc-0（zod）と型、検証（形・参照・警告）、決定的な読み書き、移行、編集操作、遷移の抽出（フロー図用）、役割テンプレート、ER からの生成 | zod                                                |
-| `@ui-editor/poc-datastore` | `original-poc/packages/datastore` | 入れ子のサンプルデータの検索・CRUD、参照（`ref`）の `onDelete`、レコードの検証、id の採番、エンティティごとの平らな一覧（派生）                | poc-model                                          |
-| `@ui-editor/poc-seed`      | `original-poc/packages/seed`      | ER からのサンプルデータ生成（件数・シード指定、親子の入れ子、参照の整合、列挙値・型・書式）                                                    | poc-model, @faker-js/faker                         |
-| `@ui-editor/poc-runtime`   | `original-poc/packages/runtime`   | プレビューの実行（式の評価、イベント → アクション、画面の履歴とダイアログ、選択、下書き、ログ）                                                | poc-model, poc-datastore, @ui-editor/runtime       |
-| `@ui-editor/poc-codegen`   | `original-poc/packages/codegen`   | poc-0 → Vite + React + TS のアプリ（型・データ・ストア・ルーティング・画面・ダイアログ・部品）。決定的・読みやすい・プレビューと同じ動き       | poc-model, prettier, acorn                         |
-| `@ui-editor/poc-app`       | `original-poc/app`                | エディタ（ER 図・データ・フロー図・画面・プレビュー・コード書き出し）                                                                          | 上記 + React, @xyflow/react, dagre, zustand, immer |
-| —                          | `original-poc/examples`           | 題材「機器の設定＆モニタリング」の poc-0 版（`*.poc.json`）                                                                                    | —                                                  |
+| パッケージ                 | パス                              | 責務                                                                                                                                           | 主な依存                                            |
+| -------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `@ui-editor/poc-model`     | `original-poc/packages/model`     | スキーマ poc-0（zod）と型、検証（形・参照・警告）、決定的な読み書き、移行、編集操作、遷移の抽出（フロー図用）、役割テンプレート、ER からの生成 | zod                                                 |
+| `@ui-editor/poc-datastore` | `original-poc/packages/datastore` | 入れ子のサンプルデータの検索・CRUD、参照（`ref`）の `onDelete`、レコードの検証、id の採番、エンティティごとの平らな一覧（派生）                | poc-model                                           |
+| `@ui-editor/poc-seed`      | `original-poc/packages/seed`      | ER からのサンプルデータ生成（件数・シード指定、親子の入れ子、参照の整合、列挙値・型・書式）                                                    | poc-model, @faker-js/faker                          |
+| `@ui-editor/poc-runtime`   | `original-poc/packages/runtime`   | プレビューの実行（式の評価、イベント → アクション、画面の履歴とダイアログ、選択、下書き、ログ）                                                | poc-model, poc-datastore, @ui-editor/runtime        |
+| `@ui-editor/poc-codegen`   | `original-poc/packages/codegen`   | poc-0 → Vite + React + TS のアプリ（型・データ・ストア・ルーティング・画面・ダイアログ・部品）。決定的・読みやすい・プレビューと同じ動き       | poc-model, @ui-editor/runtime（式の検査）, prettier |
+| `@ui-editor/poc-app`       | `original-poc/app`                | エディタ（ER 図・データ・フロー図・画面・プレビュー・コード書き出し）                                                                          | 上記 + React, @xyflow/react, dagre, zustand, immer  |
+| —                          | `original-poc/examples`           | 題材「機器の設定＆モニタリング」の poc-0 版（`*.poc.json`）                                                                                    | —                                                   |
 
 要求仕様 11 章のフォルダ構成からの変更:
 
 - `store` → `datastore`。エディタの状態管理（Zustand のストア）と名前がぶつかるため。
 - `runtime` を追加。プレビューの実行（遷移・CRUD・ダイアログの重なり）を UI から切り離して単体テストするため（NFR-05）。
-- `codegen` を追加。ゴールを「書き出したコードを本番の土台にする」にしたため、v0 経由ではなく poc-0 から直接生成する。P1 の `packages/codegen` の構成（react-router・Zustand・`src/ui/` の部品・Prettier・acorn での式の検査）を下敷きにする。
+- `codegen` を追加。ゴールを「書き出したコードを本番の土台にする」にしたため、v0 経由ではなく poc-0 から直接生成する。P1 の `packages/codegen` の構成（react-router・Zustand・`src/ui/` の部品・Prettier）を下敷きにする（式の検査は acorn ではなく `@ui-editor/runtime` の検査を使う。4.12）。
 - パッケージ名は既存に合わせて `@ui-editor/` スコープに `poc-` を付ける。各パッケージは `packages/schema` と同じく `tsc` で `dist/` に出力し、`pnpm -r build` の順序で解決する。
 - ワークスペースには `original-poc/packages/*` と `original-poc/app` を登録する（`pnpm-workspace.yaml` の変更はこの 2 行だけ）。
 - 開発サーバーのポートは **5180**、生成したアプリの確認用は **5181**（どちらも `strictPort`）。5173〜5179 は既存のプロトタイプが使っている。
@@ -269,12 +270,57 @@ v0 の `serializeProject` と同じ方針。キーを固定の順（`schemaVersi
 
 ### 4.12 コード生成（本番の土台）
 
-- `poc-codegen` の `generate(project) → { path, content }[]` は純粋関数。CLI とエディタ（File System Access API でフォルダに書き出す）の両方から使う。
-- 生成するアプリ: Vite + React + TS、react-router（1 画面 = 1 ルート）、Zustand のストア（データ・state・選択・ダイアログ）、`src/ui/` の部品、CSS Modules。P1 の命名と構成を引き継ぐ。
-- ER から型（`interface Device { …; alarms: Alarm[] }`）、データ操作（エンティティごとの `createAlarm(parentId, values)` などの型付き関数。入れ子の位置探し・カスケード・参照の `onDelete`・検証）を生成する。データの取得元を API に差し替えるときの境目はストアの 1 か所にまとめる。
-- 画面・ダイアログはノードの木を JSX に、アクションを型付きの関数呼び出しに変換する。フォームの下書きはコンポーネントの state、検証は ER から生成した関数。
-- 生成アプリは `strictNullChecks` を有効にする（P1 は手書きの式が null を考慮していなかったため外した）。そのため、テンプレートと ER からの生成（ステップ 4・5）が書く式は最初から null を考慮する（`record?.name`、`state.selection.Device?.id`）。
-- 決定的（Prettier で整形、依存の版はコード内に固定、日時や絶対パスを出さない）。生成物は `tsc` が通ること、題材の生成結果のスナップショット、そして **プレビューと同じ QA の筋書きが生成アプリでも通ること** をテストする。
+- `poc-codegen` の `generate(project, { appName }) → Promise<{ path, content }[]>` はファイルを読み書きしない関数で、CLI とエディタ（ブラウザ）の両方から呼ぶ。固定のファイル（部品・データ操作・ストア）は `templates/` に実物の `.ts` / `.tsx` / `.css` として置き、文字列の定数にした `src/templates.generated.ts`（`pnpm embed` で作り直す。ずれはテストで検出）を使う。
+- 整形は `prettier/standalone`（プラグイン: typescript・estree・babel・postcss）を CLI とブラウザで共通に使い、どちらで生成しても同じバイト列にする。日時・絶対パス・乱数は出さない（決定的）。依存の版はコードの中に固定する（リポジトリのロックファイルにある版。react-router は P1 と同じ）。
+- 生成の前に `checkProject` のエラーが無いことを確かめる（エラーがあれば生成しない）。`{{ }}` の式は TS の式としてそのまま埋め込み、`@ui-editor/runtime` の `analyzeExpression` で構文と使える名前を調べて、誤りは場所付きの生成時エラーにする（P1 の acorn は使わない）。
+- 名前: 画面・ダイアログ・部品の id（`-` を含みうる）は camelCase / PascalCase にし、ぶつかれば番号を付ける。エンティティ id はそのまま型名にするので、組み込みの型や生成するコードの名前（`Date`・`Event`・`Node`・`Text`・`Table` など）とぶつかるものは、エンティティ id を示して生成時のエラーにする。
+- 生成アプリは `strict: true`（`strictNullChecks` を含む）。テンプレートと ER からの生成（ステップ 4・5）が書く式は最初から null を考慮する（`record?.name`、`state.selection.Device?.id`）。
+
+生成するアプリ（Vite + React + TS、react-router、Zustand、CSS Modules）:
+
+| ファイル                                           | 中身                                                                                                                                                                                            | 生成 / 固定   |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `src/model/types.ts`                               | エンティティの型、項目名の型、`Dataset`（入れ子）、`DataView`（式の `data`）、`UiState`、画面・ダイアログのパラメータの型                                                                       | 生成          |
+| `src/model/schema.ts`                              | ER（主キー・項目の型・必須・既定値・列挙値・範囲・参照先と `onDelete`・入れ子）                                                                                                                 | 生成          |
+| `src/model/data.ts`                                | サンプルデータ（入れ子のまま）と `state` の初期値                                                                                                                                               | 生成          |
+| `src/runtime/datastore.ts`                         | 入れ子のデータの検索・CRUD。poc-datastore と同じ規則（採番、必須・型・列挙値・範囲・参照先の検証、入れ子の親、子ごとの削除、`onDelete` の cascade / setNull / restrict）                        | 固定          |
+| `src/store/store.ts`・`hooks.ts`                   | Zustand のストア（data・state・選択・ダイアログの重なり・お知らせ）と、式のスコープを返すフック（`useDataView`・`useUiState`・`useRecord`）                                                     | 固定          |
+| `src/store/records.ts`                             | エンティティごとの型付きの CRUD（`createDevice(values)`、入れ子は `createAlarm(parentId, values)`、`updateDevice(match, set)`、`deleteDevice(match)`）。データの取得元を API に替えるときの境目 | 生成          |
+| `src/ui/*`                                         | 組み込みの部品（Box・Text・Button・TextInput・NumberInput・Checkbox・Select・Table・Dialog）                                                                                                    | 固定          |
+| `src/screens/*`・`src/dialogs/*`・`src/routes.tsx` | 画面・ダイアログ・ルート                                                                                                                                                                        | 生成（OP6-4） |
+
+ER から型への規則（サンプルデータがそのまま型に合うこと）:
+
+| 項目                     | 型                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| 主キー（`id`）           | `id: string`                                                                             |
+| 必須の項目               | `name: T`                                                                                |
+| 必須でない項目           | `model?: T \| null`（サンプルデータで省略されうるので `?`、空は `null`）                 |
+| string / date / ref      | `string`（date は ISO 8601 の文字列、ref は参照先の主キー）                              |
+| number / boolean / enum  | `number` / `boolean` / 値の文字列リテラルの合併                                          |
+| children（many / one）   | `alarms?: Alarm[]` / `settings?: DeviceSettings \| null`                                 |
+| 作成・更新・検索に渡す値 | 項目名 → `string \| number \| boolean \| null`（フォームの入力など。保存の前に検証する） |
+
+プレビュー（poc-runtime）と生成コードの対応:
+
+| プレビュー                                         | 生成コード                                                                                                                                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 式の `data`                                        | `useDataView()`。ルートのエンティティは入れ子のまま、入れ子のエンティティは全親の子を並べた読み取り専用の一覧（`dataView` と同じ）                                              |
+| `state` / `state.selection.X`                      | `useUiState()`。state と、選択中のレコード（ストアは id を持ち、データから引く。消えたら null）                                                                                 |
+| `params`                                           | 画面: ルートのパス（`/devices/:deviceId`）とクエリ文字列から型付きで読む。ダイアログ: 開いたときの値                                                                            |
+| `record`                                           | `useRecord("Device", params.deviceId)`（画面のエンティティと同じエンティティの ref パラメータ）                                                                                 |
+| `draft` / `errors` / `setDraft` / `saveDraft`      | フォームのコンポーネントの state（`useForm`）。開くと record の複製（編集）か既定値（作成）、閉じると捨てる。保存は record があれば更新、無ければ作成（入れ子は親のパラメータ） |
+| イベントのアクション列                             | イベントの関数に 1 アクション 1 文で順に書く。失敗しうるもの（CRUD・保存）は `if (!…) return;` で後続を止める。`when` は `if`                                                   |
+| 各アクションは直前のアクションの結果を見て評価する | データ・state を変えるアクションのあとで `data` などを使うアクションは、ストアから読み直してから評価する                                                                        |
+| Button の `requires`                               | `disabled` と、イベントの最初のガード（`if (!state.selection.Device) return;`）。ガードで型が絞られるので `!` は使わない                                                        |
+| `navigate`                                         | 開いているダイアログを閉じて `navigate(path)`。履歴は積むだけで、プレビューの「履歴に同じ画面があればそこまで戻す」はしない（差分として許容し、QA で履歴の深さは確かめない）    |
+| `back`                                             | ダイアログが開いていれば最前面を閉じる（結果 cancel）、無ければブラウザの履歴を 1 つ戻る（アプリの最初の画面なら何もしない）                                                    |
+| `openDialog` / `onClose` / `closeDialog`           | ストアのダイアログの重なり `{ key, name, params, onClose }`。`onClose` は結果 → 呼び出し元で作った関数。`closeDialog(result)` は最前面を閉じてから `onClose[result]` を呼ぶ     |
+| 画面の `mount`                                     | 画面のコンポーネントを作ったあと 1 回（`useMount`）。navigate のたびに画面を作り直す（`location.key`）ので、同じ画面への遷移でも下書きと mount はやり直す                       |
+| 表の `rowSelect`                                   | 表に `entity` があれば先に選択を変え、そのあとアクション                                                                                                                        |
+| 失敗の表示（restrict の削除など）                  | ストアのお知らせ（画面の上に出す）。プレビューはログに出す                                                                                                                      |
+
+テスト: 題材の生成結果のスナップショット、同じ入力で同じ出力（決定的）、固定のデータ操作（`templates/src/runtime/datastore.ts`）を poc-datastore と同じ操作で比べるテスト。生成したアプリを別にインストールして `tsc && vite build` する確認（`pnpm --filter @ui-editor/poc-codegen build:example`。ネットワークを使うので `pnpm test` には入れない）。ステップ 6 の QA で、プレビューと同じ筋書きを生成アプリ（ポート 5181）に流す。
 
 ### 4.13 Undo / Redo
 
@@ -365,3 +411,4 @@ v0 形式への書き出し（FR-PRJ-06、Should）は、コード生成を poc-
 ## 変更履歴
 
 - 2026-10-23 初版（要求仕様 13 章の確認結果を反映）
+- 2026-10-23 4.12 にコード生成の決めごと（固定のファイルの埋め込み、ブラウザと共通の整形、ER から型への規則、プレビューとの対応と許容する差分）を追加。データ操作はエンティティごとの型付きの関数を、固定の汎用のデータ操作（poc-datastore と同じ規則）の上に生成する
