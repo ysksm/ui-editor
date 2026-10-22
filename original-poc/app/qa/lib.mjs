@@ -157,3 +157,37 @@ export async function selectByText(select, prefix) {
   if (value === undefined) throw new Error(`「${prefix}」の選択肢がありません`);
   await select.selectOption(value);
 }
+
+/**
+ * ER ビューのパネルで、エンティティと属性を作る（ステップ 3・5 の QA で使う）。
+ * fields: { id, name, type, required?, values?, format?, min?, max? }[]
+ */
+export async function createEntity(page, { id, name, fields }) {
+  await page.getByRole("button", { name: "＋ エンティティ" }).click();
+  await commit(page, "エンティティの名前", name);
+  await commit(page, "エンティティの id", id);
+  for (const f of fields) {
+    await page.getByRole("button", { name: "＋ 属性" }).click();
+    await commit(page, "属性 field1 の id", f.id);
+    await commit(page, `属性 ${f.id} の名前`, f.name);
+    await page.getByLabel(`属性 ${f.id} の型`, { exact: true }).selectOption(f.type);
+    if (f.required) await page.getByLabel(`属性 ${f.id} は必須`, { exact: true }).check();
+    if (f.values) await commit(page, `属性 ${f.id} の値`, f.values);
+    if (f.format)
+      await page.getByLabel(`属性 ${f.id} の書式`, { exact: true }).selectOption(f.format);
+    if (f.min) await commit(page, `属性 ${f.id} の最小値`, f.min);
+    if (f.max) await commit(page, `属性 ${f.id} の最大値`, f.max);
+  }
+}
+
+/** ER 図のノードを選ぶ。 */
+export async function selectEntity(page, id) {
+  await page.locator(`.react-flow__node[data-id=${id}] .er-node-head`).click();
+}
+
+/** 選んでいるエンティティのパネルから関係を作る。 */
+export async function addRelationFromPanel(page, kind, to) {
+  await page.getByLabel("関係の種類", { exact: true }).selectOption({ label: kind });
+  await page.getByLabel("関係の相手", { exact: true }).selectOption(to);
+  await page.getByRole("button", { name: "追加", exact: true }).click();
+}
