@@ -7,3 +7,4 @@ export * from "./builtins.js";
 export * from "./er.js";
 export * from "./data.js";
 export * from "./walk.js";
+export * from "./io.js";
