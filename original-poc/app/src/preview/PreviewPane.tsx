@@ -20,6 +20,7 @@ export function PreviewPane() {
   const project = useEditor((s) => s.project);
   const runtime = useEditor((s) => s.runtime);
   const setRuntime = useEditor((s) => s.setRuntime);
+  const edit = useEditor((s) => s.edit);
   const restart = useEditor((s) => s.restartPreview);
   const toggle = useEditor((s) => s.togglePreview);
   const [showLog, setShowLog] = useState(false);
@@ -41,6 +42,15 @@ export function PreviewPane() {
         </button>
         <button onClick={restart}>最初から</button>
         <button onClick={() => setRuntime(resetData(project, runtime))}>データをリセット</button>
+        <button
+          disabled={runtime.data === project.data}
+          title="プレビューで変えたデータを、プロジェクトのサンプルデータとして保存する（元に戻すで戻せる）"
+          onClick={() =>
+            edit("プレビューのデータをサンプルデータにする", (d) => void (d.data = runtime.data))
+          }
+        >
+          このデータをサンプルデータにする
+        </button>
         <button aria-pressed={showLog} onClick={() => setShowLog(!showLog)}>
           ログ（{runtime.log.length}）
         </button>

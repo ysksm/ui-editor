@@ -80,6 +80,27 @@ describe("プレビュー", () => {
     );
   });
 
+  it("プレビューで変えたデータを、サンプルデータとして保存できる（元に戻すで戻る）", () => {
+    const store = renderWithPreview();
+    const save = () =>
+      within(pane()).getByRole("button", {
+        name: "このデータをサンプルデータにする",
+      }) as HTMLButtonElement;
+    expect(save().disabled).toBe(true);
+    fireEvent.click(within(pane()).getByRole("button", { name: "機器一覧へ" }));
+    fireEvent.click(within(frame("画面: 機器一覧")).getByText("無線 AP 2F"));
+    fireEvent.click(within(frame("画面: 機器詳細")).getByRole("button", { name: "削除" }));
+    fireEvent.click(
+      within(within(pane()).getByRole("dialog")).getByRole("button", { name: "削除する" }),
+    );
+    expect(save().disabled).toBe(false);
+    fireEvent.click(save());
+    expect(store.getState().project.data.Device!.map((d) => d.id)).not.toContain("dev-004");
+    expect(save().disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "↶ 元に戻す" }));
+    expect(store.getState().project.data.Device!.map((d) => d.id)).toContain("dev-004");
+  });
+
   it("フロー図で、今いる画面とたどった遷移を強調する", () => {
     const store = renderWithPreview("flow");
     fireEvent.click(within(pane()).getByRole("button", { name: "機器一覧へ" }));
