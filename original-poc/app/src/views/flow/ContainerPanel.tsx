@@ -1,7 +1,9 @@
 import {
   containerIdProblem,
+  containers,
   countTransitionsTo,
   deleteContainer,
+  extractTransitions,
   renameContainerId,
   setEntry,
   updateContainer,
@@ -10,6 +12,7 @@ import {
 } from "@ui-editor/poc-model";
 import { CommitInput } from "../../components/form/CommitInput";
 import { useEditor } from "../../state/store";
+import { triggerLabel } from "./graph";
 
 /** 選んだ画面・ダイアログの編集パネル（名前・id・path・最初の画面・削除）。 */
 export function ContainerPanel({ project, info: r }: { project: Project; info: ContainerRef }) {
@@ -85,10 +88,66 @@ export function ContainerPanel({ project, info: r }: { project: Project; info: C
           )}
         </p>
       )}
+      <TransitionLists project={project} id={c.id} isScreen={isScreen} />
       <hr />
       <button className="danger" onClick={remove}>
         {kindLabel}を削除
       </button>
     </aside>
+  );
+}
+
+/** 出ていく遷移と、入ってくる遷移（ダイアログなら呼び出し元）の一覧（FR-FLOW-05）。 */
+function TransitionLists({
+  project,
+  id,
+  isScreen,
+}: {
+  project: Project;
+  id: string;
+  isScreen: boolean;
+}) {
+  const select = useEditor((s) => s.select);
+  const transitions = extractTransitions(project);
+  const name = (x: string) =>
+    containers(project).find((r) => r.container.id === x)?.container.name ?? x;
+  const out = transitions.filter((t) => t.from === id);
+  const into = transitions.filter((t) => t.to === id);
+  const item = (key: string, text: string, sub: string, placeholder: boolean) => (
+    <li key={key}>
+      <button className="transition-item" onClick={() => select({ kind: "transition", key })}>
+        <span>{text}</span>
+        <span className="muted small">
+          {sub}
+          {placeholder && <span className="placeholder-count">仮</span>}
+        </span>
+      </button>
+    </li>
+  );
+  return (
+    <>
+      <h4>出ていく遷移（{out.length}）</h4>
+      {out.length === 0 ? (
+        <p className="muted small">
+          ありません（フロー図でこのノードの右の点からドラッグして作る）
+        </p>
+      ) : (
+        <ul className="transition-list" aria-label="出ていく遷移">
+          {out.map((t) => item(t.key, `→ ${name(t.to)}`, triggerLabel(t), t.placeholder))}
+        </ul>
+      )}
+      <h4>
+        {isScreen ? "入ってくる遷移" : "呼び出し元"}（{into.length}）
+      </h4>
+      {into.length === 0 ? (
+        <p className="muted small">
+          {isScreen ? "どこからも遷移してきません" : "どこからも呼ばれていません"}
+        </p>
+      ) : (
+        <ul className="transition-list" aria-label={isScreen ? "入ってくる遷移" : "呼び出し元"}>
+          {into.map((t) => item(t.key, `${name(t.from)} →`, triggerLabel(t), t.placeholder))}
+        </ul>
+      )}
+    </>
   );
 }

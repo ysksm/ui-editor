@@ -13,3 +13,4 @@ export * from "./ops/er.js";
 export * from "./ops/containers.js";
 export * from "./flow.js";
 export * from "./ops/flow.js";
+export * from "./ops/nodes.js";

@@ -182,7 +182,7 @@ export function mapActionLists(draft: Project, fn: (list: Action[]) => Action[])
   }
 }
 
-/** イベントが空になった仮の部品を消す（子の無い Box の仮の部品も）。 */
+/** イベントが空になった仮の部品を消す（子の無い Box の仮の部品も。選択できる仮の表は残す）。 */
 export function pruneAll(draft: Project): void {
   for (const { container } of containers(draft)) {
     if (container.root) {
@@ -198,9 +198,11 @@ function pruneNode(node: Node): Node | undefined {
     const kept = node.children.map(pruneNode).filter((n): n is Node => n !== undefined);
     if (kept.length !== node.children.length) node.children = kept;
   }
+  // 選択できる仮の表は、イベントが無くても選択（T3）に使うので残す
   const empty =
     node.placeholder === true &&
     Object.keys(node.events ?? {}).length === 0 &&
-    (node.children?.length ?? 0) === 0;
+    (node.children?.length ?? 0) === 0 &&
+    !(node.type === "Table" && node.props?.selectable === true);
   return empty ? undefined : node;
 }
