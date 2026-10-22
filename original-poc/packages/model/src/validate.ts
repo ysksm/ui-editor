@@ -1,6 +1,7 @@
 import { checkTemplate, extractExpressions } from "./binding.js";
 import { NODE_EVENTS, RESERVED_STATE_KEYS, SELECTION_PATH } from "./builtins.js";
 import { checkFieldFormat, checkFieldValue, isBlank, isRecord } from "./data.js";
+import { extractTransitions } from "./flow.js";
 import { entityMap, findField, nestParents } from "./er.js";
 import { formatPath, type Issue, type IssuePath, type Severity } from "./issues.js";
 import {
@@ -44,6 +45,7 @@ export function checkProject(project: Project): Issue[] {
   checkState(ctx);
   checkContainers(ctx);
   checkActions(ctx);
+  checkFlow(ctx);
   checkLayout(ctx);
   return issues;
 }
@@ -512,6 +514,37 @@ function checkArgs(
     if (def.required && given?.[key] === undefined) {
       ctx.warning(path, `${target} の必須のパラメータ "${key}" が渡されていません`);
     }
+  }
+}
+
+// ---- 遷移の警告（FR-FLOW-06） ----
+
+/**
+ * 作りかけで普通に起きるので、どれも警告にする。
+ * - どこからも遷移してこない画面（最初の画面は除く）
+ * - どこからも呼ばれないダイアログ
+ * - 仮の部品のままの遷移（D1 の案 b で、線を引いたときに置いた部品）
+ */
+function checkFlow(ctx: Ctx): void {
+  const { project } = ctx;
+  const transitions = extractTransitions(project);
+  const reached = new Set(transitions.map((t) => t.to));
+  const entry = project.entry ?? project.screens[0]?.id;
+  project.screens.forEach((s, i) => {
+    if (s.id !== entry && !reached.has(s.id))
+      ctx.warning(["screens", i], `画面「${s.name}」にはどこからも遷移してきません`);
+  });
+  project.dialogs.forEach((d, i) => {
+    if (!reached.has(d.id))
+      ctx.warning(["dialogs", i], `ダイアログ「${d.name}」はどこからも呼ばれていません`);
+  });
+  for (const t of transitions) {
+    if (!t.placeholder) continue;
+    const what = t.label ? `「${t.label}」` : `"${t.node}"`;
+    ctx.warning(
+      t.path,
+      `仮の部品${what}のままの遷移です（画面の中身を作るときに部品を決めてください）`,
+    );
   }
 }
 

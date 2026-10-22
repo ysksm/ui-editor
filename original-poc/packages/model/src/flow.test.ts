@@ -31,7 +31,7 @@ describe("extractTransitions", () => {
           "deviceDelete",
           "openDialog",
           "click",
-          true,
+          false,
           undefined,
         ],
         [
@@ -40,7 +40,7 @@ describe("extractTransitions", () => {
           "devices",
           "navigate",
           "click",
-          true,
+          false,
           { dialog: "deviceDelete", result: "ok" },
         ],
       ],
@@ -102,8 +102,11 @@ describe("addTransition / deleteTransition", () => {
         },
       ],
     });
-    // 必須のパラメータ（deviceId）が渡されていない警告だけ
-    expect(checkProject(p).map((i) => i.severity)).toEqual(["warning"]);
+    // エラーは無い。仮の部品のままの遷移・どこからも来ない画面・必須のパラメータは警告
+    expect(checkProject(p).filter((i) => i.severity === "error")).toEqual([]);
+    expect(checkProject(p).map((i) => i.message)).toContain(
+      "仮の部品「機器一覧へ」のままの遷移です（画面の中身を作るときに部品を決めてください）",
+    );
   });
 
   it("消すと空になった仮のボタンと仮の Box も消える。仮でない部品は残る", () => {

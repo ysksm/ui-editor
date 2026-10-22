@@ -56,7 +56,7 @@ describe("setTrigger", () => {
       },
     ]);
     expect(triggerKind(q, findTransition(q, next)!)).toBe("rowClick");
-    expect(checkProject(q)).toEqual([]);
+    expect(checkProject(q).filter((i) => i.severity === "error")).toEqual([]);
   });
 
   it("T2: 既にある表（仮でない）に移す", () => {

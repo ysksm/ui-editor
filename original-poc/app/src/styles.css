@@ -769,6 +769,9 @@ path.er-edge.selected {
   color: var(--danger);
   font-weight: 600;
 }
+.flow-node-issues.warning {
+  color: var(--warn);
+}
 .flow-node-meta {
   white-space: nowrap;
   display: flex;

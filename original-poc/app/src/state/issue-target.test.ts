@@ -22,5 +22,12 @@ describe("issueTarget", () => {
       selection: null,
     });
     expect(issueTarget(project, { path: ["state", "selection"] })).toBeUndefined();
+    // 遷移のアクションを指す問題は、その遷移を開く
+    expect(
+      issueTarget(project, { path: ["screens", 0, "root", "children", 3, "events", "click", 0] }),
+    ).toEqual({
+      view: "flow",
+      selection: { kind: "transition", key: "dashboard:toDevices:click:0" },
+    });
   });
 });

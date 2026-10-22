@@ -91,7 +91,12 @@ try {
     (await p.locator(".flow-edge-label.placeholder").count()) === 7,
   );
   const badge = await p.getByRole("button", { name: /^検証:/ }).innerText();
-  qa.check("検証の問題が 0 件", badge.trim() === "エラー 0・警告 0", badge);
+  // 遷移はまだ仮のボタンなので、「仮の部品のままの遷移」の警告が 7 件出るのが正しい
+  qa.check(
+    "検証のエラー 0 件・警告は仮の部品のままの遷移 7 件",
+    badge.trim() === "エラー 0・警告 7",
+    badge,
+  );
   await p.screenshot({ path: `${OUT_DIR}step1-flow.png` });
 
   // ---- 保存して中身を確かめる ----
@@ -105,10 +110,12 @@ try {
   const loaded = loadProject(readFileSync(savedPath, "utf8"));
   qa.check("保存したファイルを読み込める", loaded.success);
   if (loaded.success) {
+    const errors = loaded.issues.filter((i) => i.severity === "error");
+    const placeholders = loaded.issues.filter((i) => /仮の部品「.+」のままの遷移/.test(i.message));
     qa.check(
-      "保存したファイルの検証の問題が 0 件",
-      loaded.issues.length === 0,
-      loaded.issues.map(formatIssue).join("\n"),
+      "保存したファイル: エラー 0 件、警告は仮の部品のままの遷移 7 件だけ",
+      errors.length === 0 && placeholders.length === 7 && loaded.issues.length === 7,
+      errors.map(formatIssue).join("\n"),
     );
     const pairs = extractTransitions(loaded.project).map((t) => `${t.from}→${t.to}`);
     qa.check(
