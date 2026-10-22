@@ -719,3 +719,73 @@ path.er-edge.selected {
 .tree-open {
   font-size: 13px;
 }
+
+/* ---- フロー ---- */
+
+.flow-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.flow-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr 360px;
+  min-height: 0;
+}
+.flow-canvas {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.container-list {
+  border-right: 1px solid var(--line);
+  background: var(--paper);
+  overflow: auto;
+  padding: 8px;
+}
+.container-list h4 {
+  margin: 8px 4px 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.container-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.container-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  border: none;
+  padding: 4px 8px;
+}
+.container-dialog .container-name::before {
+  content: "◇ ";
+  color: var(--muted);
+}
+.entry-mark,
+.entry-note {
+  color: var(--ok);
+  margin-right: 4px;
+}
+.kind-badge {
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  vertical-align: 2px;
+}
+.kind-screen {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.kind-dialog {
+  background: #fdf1e1;
+  color: var(--warn);
+}
+.row-note {
+  margin: 4px 0 8px;
+}
