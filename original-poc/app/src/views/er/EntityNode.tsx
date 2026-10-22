@@ -20,7 +20,7 @@ export function EntityNode({ data, selected }: NodeProps<EntityFlowNode>) {
       </div>
       <ul className="er-node-fields">
         {entity.fields.map((f) => (
-          <li key={f.id} className={`er-field er-field-${f.type}`}>
+          <li key={f.id} className={`er-field er-type-${f.type}`}>
             <span className="er-field-id">
               {f.id === entity.primaryKey && <span className="pk">🔑</span>}
               {f.id}
