@@ -64,3 +64,37 @@ describe("フロービュー: 画面・ダイアログの一覧", () => {
     expect(store.getState().issues).toEqual([]);
   });
 });
+
+describe("フロービュー: 遷移", () => {
+  it("遷移を選ぶとパネルに出し、消すと仮の部品も消える", () => {
+    const store = renderFlow(loadExample());
+    act(() =>
+      store.getState().edit("準備", (d) => void d.screens.push({ id: "home", name: "ホーム" })),
+    );
+    act(() => {
+      store.getState().edit("遷移を追加", (d) => {
+        d.screens[3]!.root = {
+          id: "page",
+          type: "Box",
+          placeholder: true,
+          children: [
+            {
+              id: "btn1",
+              type: "Button",
+              placeholder: true,
+              props: { label: "機器一覧へ" },
+              events: { click: [{ type: "navigate", to: "devices" }] },
+            },
+          ],
+        };
+      });
+      store.getState().select({ kind: "transition", key: "home:btn1:click:0" });
+    });
+    const panel = screen.getByRole("complementary", { name: "遷移の編集" });
+    expect(panel.textContent).toContain("ホーム → 機器一覧");
+    expect(panel.textContent).toContain("仮の部品");
+    fireEvent.click(within(panel).getByRole("button", { name: "遷移を削除" }));
+    expect(store.getState().project.screens[3]!.root).toBeUndefined();
+    expect(store.getState().selection).toBeNull();
+  });
+});

@@ -12,6 +12,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useNodesState,
+  useReactFlow,
   type Connection,
   type EdgeTypes,
   type NodeTypes,
@@ -45,6 +46,7 @@ function ErCanvas() {
   const edit = useEditor((s) => s.edit);
   const select = useEditor((s) => s.select);
   const requestConfirm = useEditor((s) => s.requestConfirm);
+  const { fitView } = useReactFlow();
   const [pending, setPending] = useState<{ from: string; to: string } | null>(null);
 
   const graph = useMemo(() => erGraph(project, issues), [project, issues]);
@@ -117,7 +119,12 @@ function ErCanvas() {
           ＋ エンティティ
         </button>
         <button
-          onClick={() => edit("ER 図を整列", (d) => setErPositions(d, erAutoPositions(project)))}
+          onClick={() => {
+            if (edit("ER 図を整列", (d) => setErPositions(d, erAutoPositions(project))))
+              requestAnimationFrame(
+                () => void fitView({ padding: 0.2, maxZoom: 1, duration: 200 }),
+              );
+          }}
           disabled={project.entities.length === 0}
         >
           整列
