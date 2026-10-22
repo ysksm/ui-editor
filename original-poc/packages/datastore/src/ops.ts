@@ -181,6 +181,10 @@ function kebab(id: string): string {
   return id.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
+function pick(errors: Record<string, string>, keys: readonly string[]): Record<string, string> {
+  return Object.fromEntries(Object.entries(errors).filter(([k]) => keys.includes(k)));
+}
+
 // ---- 作成 ----
 
 /**
@@ -192,7 +196,14 @@ export function createRecord(
   data: Dataset,
   entityId: string,
   values: DataRecord,
-  options: { parent?: string | undefined } = {},
+  options: {
+    parent?: string | undefined;
+    /**
+     * false なら必須・型などを検証しない（エディタの表で空の行を足し、あとから埋めるとき）。
+     * 主キーの重複と入れ子の親は常に調べる。
+     */
+    validate?: boolean;
+  } = {},
 ): DataResult<{ record: DataRecord }> {
   const er = compileEr(schema);
   const entity = er.entities.get(entityId);
@@ -207,7 +218,8 @@ export function createRecord(
   for (const f of entity.fields) if (base[f.id] !== undefined) record[f.id] = base[f.id]!;
   for (const [k, v] of Object.entries(base)) if (!(k in record)) record[k] = v;
 
-  const fieldErrors = validateRecord(schema, data, entityId, record);
+  const allErrors = validateRecord(schema, data, entityId, record);
+  const fieldErrors = options.validate === false ? pick(allErrors, [entity.primaryKey]) : allErrors;
   if (Object.keys(fieldErrors).length > 0) return fail("入力に誤りがあります", fieldErrors);
   const id = record[entity.primaryKey] as string;
   const changes: DataChange[] = [{ kind: "create", entity: entityId, id, reason: "match" }];
@@ -270,6 +282,13 @@ export function updateRecords(
   entityId: string,
   match: Readonly<Record<string, JsonValue>>,
   set: Readonly<Record<string, JsonValue>>,
+  options: {
+    /**
+     * `all`（既定）はレコード全体を検証する。`changed` は変える項目だけ検証する
+     * （エディタの表で、ほかの項目がまだ空・誤りのままでも 1 項目ずつ直せるように）。
+     */
+    validate?: "all" | "changed";
+  } = {},
 ): DataResult {
   const er = compileEr(schema);
   const entity = er.entities.get(entityId);
@@ -287,9 +306,11 @@ export function updateRecords(
     if (entity.primaryKey in set && set[entity.primaryKey] !== id)
       return fail("主キーは変えられません", { [entity.primaryKey]: "主キーは変えられません" });
     const merged = { ...r, ...set };
-    const fieldErrors = validateRecord(schema, data, entityId, merged, {
+    const allErrors = validateRecord(schema, data, entityId, merged, {
       selfId: typeof id === "string" ? id : undefined,
     });
+    const fieldErrors =
+      options.validate === "changed" ? pick(allErrors, Object.keys(set)) : allErrors;
     if (Object.keys(fieldErrors).length > 0) return fail("入力に誤りがあります", fieldErrors);
     const fields = Object.keys(set).filter((k) => r[k] !== set[k]);
     if (fields.length === 0) continue;
