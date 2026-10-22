@@ -3,3 +3,4 @@ export { toRuntimeSchema, type RuntimeSchema } from "./emit/model.js";
 export type { GeneratedFile } from "./files.js";
 export { formatFile, PRETTIER_OPTIONS } from "./format.js";
 export { generate, GenerateError, type GenerateOptions } from "./generate.js";
+export { appNameOf } from "./names.js";

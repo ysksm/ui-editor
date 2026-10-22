@@ -75,3 +75,13 @@ export function literal(value: unknown): string {
   const entries = Object.entries(value).filter(([, v]) => v !== undefined);
   return `{ ${entries.map(([k, v]) => `${propKey(k)}: ${literal(v)}`).join(", ")} }`;
 }
+
+/** ファイル名からアプリ名（npm のパッケージ名に使える形）を作る。 */
+export function appNameOf(fileName: string | undefined): string {
+  const base = (fileName ?? "")
+    .replace(/\.poc\.json$|\.json$/i, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^[-._]+|[-._]+$/g, "");
+  return base || "poc-app";
+}

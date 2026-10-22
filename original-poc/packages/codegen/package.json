@@ -15,6 +15,9 @@
       "default": "./dist/node.js"
     }
   },
+  "bin": {
+    "poc-codegen": "./dist/cli.js"
+  },
   "files": [
     "dist"
   ],
@@ -22,6 +25,7 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "gen": "node dist/cli.js",
     "embed": "node scripts/embed-templates.mjs",
     "snapshots:update": "vitest run -u",
     "build:example": "pnpm run build && node scripts/build-example.mjs"
