@@ -117,14 +117,17 @@ export async function dragConnect(page, from, to) {
  * 空のプロジェクトから、フロービューで題材の画面・ダイアログと遷移（仮のボタン）を作る。
  * 人が行う操作の数を返す。
  */
-export async function buildDeviceFlow(page) {
+export async function buildDeviceFlow(page, { fresh = true } = {}) {
   let ops = 0;
-  await page.getByRole("button", { name: "新規", exact: true }).click();
+  if (fresh) {
+    await page.getByRole("button", { name: "新規", exact: true }).click();
+    ops++;
+  }
   await page
     .getByRole("navigation", { name: "ビュー" })
     .getByRole("button", { name: "フロー" })
     .click();
-  ops += 2;
+  ops++;
   for (const c of DEVICE_CONTAINERS) {
     await page.getByRole("button", { name: `＋ ${c.kind}` }).click();
     await commit(page, `${c.kind}の名前`, c.name);
@@ -143,4 +146,14 @@ export async function buildDeviceFlow(page) {
   ops++;
   await page.waitForTimeout(400);
   return ops;
+}
+
+/** 選択肢の文言が prefix で始まるものを選ぶ（値が分からないとき）。 */
+export async function selectByText(select, prefix) {
+  const value = await select.evaluate(
+    (el, p) => [...el.options].find((o) => o.textContent.startsWith(p))?.value,
+    prefix,
+  );
+  if (value === undefined) throw new Error(`「${prefix}」の選択肢がありません`);
+  await select.selectOption(value);
 }
