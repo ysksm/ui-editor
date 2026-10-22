@@ -770,6 +770,7 @@ path.er-edge.selected {
   font-weight: 600;
 }
 .flow-node-meta {
+  white-space: nowrap;
   display: flex;
   gap: 6px;
   align-items: center;
@@ -869,6 +870,7 @@ path.flow-edge.selected {
   margin-right: 4px;
 }
 .kind-badge {
+  white-space: nowrap;
   font-size: 11px;
   border-radius: 4px;
   padding: 1px 6px;
