@@ -2,17 +2,18 @@
 
 オリジナル PoC のプロジェクトファイル（唯一の正）のスキーマ poc-0。設計は [architecture.md](../../docs/architecture.md) の 3・4 章。
 
-| export                                                                | 内容                                                          |
-| --------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `Project` などの型、`ProjectSchema` などの zod スキーマ               | スキーマ本体（`src/schema.ts`）                               |
-| `validateShape`                                                       | 形（zod）の検証。問題は場所（`path`）付き、メッセージは日本語 |
-| `validateProject` / `checkProject`                                    | 形 ＋ 参照・整合性の検証（重大度付き）                        |
-| `loadProject` / `serializeProject` / `migrate` / `createEmptyProject` | 読み込み（移行 → 検証）と決定的な書き出し                     |
-| `Issue` / `formatIssue` / `formatPath`                                | 検証の問題（`error` / `warning`）                             |
-| `walkData` / `checkFieldValue` / `checkFieldFormat`                   | 入れ子のデータをたどる・値を調べる（poc-datastore でも使う）  |
-| `containers` / `walkNodes` / `walkActions`                            | 画面・ダイアログ・ノード・アクションをたどる                  |
-| `entityMap` / `nestParents` / `rootEntities`                          | ER を引く                                                     |
-| `extractExpressions` / `checkTemplate` など                           | `{{ }}` の補助                                                |
+| export                                                                                                                                          | 内容                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `Project` などの型、`ProjectSchema` などの zod スキーマ                                                                                         | スキーマ本体（`src/schema.ts`）                               |
+| `validateShape`                                                                                                                                 | 形（zod）の検証。問題は場所（`path`）付き、メッセージは日本語 |
+| `validateProject` / `checkProject`                                                                                                              | 形 ＋ 参照・整合性の検証（重大度付き）                        |
+| `loadProject` / `serializeProject` / `migrate` / `createEmptyProject`                                                                           | 読み込み（移行 → 検証）と決定的な書き出し                     |
+| `Issue` / `formatIssue` / `formatPath`                                                                                                          | 検証の問題（`error` / `warning`）                             |
+| `walkData` / `checkFieldValue` / `checkFieldFormat`                                                                                             | 入れ子のデータをたどる・値を調べる（poc-datastore でも使う）  |
+| `containers` / `walkNodes` / `walkActions`                                                                                                      | 画面・ダイアログ・ノード・アクションをたどる                  |
+| `entityMap` / `nestParents` / `rootEntities`                                                                                                    | ER を引く                                                     |
+| `extractExpressions` / `checkTemplate` など                                                                                                     | `{{ }}` の補助                                                |
+| `addEntity` / `renameEntityId` / `deleteEntity` / `addField` / `updateField` / `renameField` / `deleteField` / `moveField` / `addRelation` など | ER の編集操作（`src/ops/er.ts`）                              |
 
 ## 形の検証
 
@@ -42,3 +43,18 @@
 - `loadProject(text)`: JSON を読み、`migrate` → 形 → 参照の順に検証する。JSON の構文エラーは `ProjectParseError` を投げる。対応していない `schemaVersion` は読み込まない。
 - `serializeProject(project)`: キーを固定の順（`schemaVersion`・`id`・`type`・`name` … を先頭、`root` / `children` / `data` / `layout` を末尾、ほかはアルファベット順）に並べ、`undefined` を除いて `JSON.stringify(v, null, 2)` で書き出す。データのレコードはエンティティのフィールド順（入れ子の中も）、配置は id 順・整数。配列の順序は変えない。
 - `migrate(raw)`: `MIGRATIONS`（前の版 → 次の版の関数）を今の版になるまで順に通す。互換が崩れる変更をしたら、ここに移行関数とテストを足す（architecture.md 4.11）。
+
+## 編集操作（`src/ops/`）
+
+エディタの変更はすべて `(draft: Project, …) => …` の関数で行う（immer のレシピとして使う。テストは immer の `produce` で行う）。前提を満たさない呼び出しは Error を投げ、エディタは先に `…Problem` 関数で理由を確かめて画面に出す。
+
+| 操作                                                     | 内容                                                                                                                                                                                                                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `addEntity` / `updateEntity` / `deleteEntity`            | エンティティの追加（主キー `id` だけを持つ）・名前と表示用フィールド・削除（それを指す ref / children のフィールドと値、入れ子のデータも消す）                                                                                                                     |
+| `renameEntityId`                                         | id を変え、フィールドの `entity`・`data` のキー・画面とパラメータ・表・ボタンの `requires`・アクションの `entity`・`layout.er` を書き換える。式の中は書き換えない（検証で警告）                                                                                    |
+| `addField` / `updateField` / `deleteField` / `moveField` | 属性の追加・変更（型を変えたら使わないキーを消し、入れ子でなくなったらデータも消す）・削除（値も消す。主キーは不可）・並べ替え                                                                                                                                     |
+| `renameField`                                            | id を変え、主キー・表示用フィールド・データのキー（入れ子の中も）・アクションの `values` / `match` / `set`・フォームの `setDraft` を書き換える                                                                                                                     |
+| `addRelation`                                            | `one-to-many` / `one-to-one` は親に `children`（`alarms` のような複数形）、`many-to-one` は子に `ref`（`deviceId`）を足す。入れ子にすると子の `data` 直下のレコードは消える（`relationDataLoss` で件数を示す）。入れ子の親は 1 つ・循環しない（`relationProblem`） |
+| `setEntityPosition` / `setErPositions`                   | ER 図の配置（`layout.er`）                                                                                                                                                                                                                                         |
+
+id は人が読める連番（`Entity1`、`field1`）。重なれば `alarms2` のように番号を付ける（`src/ops/ids.ts`）。

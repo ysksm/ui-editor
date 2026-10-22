@@ -51,8 +51,8 @@ export interface EditorState {
   confirm: ConfirmRequest | null;
   issuesOpen: boolean;
 
-  /** 編集操作を適用する（Undo できる）。 */
-  edit: (label: string, recipe: Recipe) => void;
+  /** 編集操作を適用する（Undo できる）。操作が Error を投げたら何も変えずに通知に出し、false を返す。 */
+  edit: (label: string, recipe: Recipe) => boolean;
   undo: () => void;
   redo: () => void;
   /** プロジェクトを入れ替える（新規・開く）。履歴は消す。 */
@@ -63,6 +63,8 @@ export interface EditorState {
   setNotice: (notice: Notice | null) => void;
   /** 未保存の変更があれば確かめてから実行する。 */
   confirmDiscard: (text: string, okLabel: string, onOk: () => void) => void;
+  /** 確かめてから実行する（削除など）。 */
+  requestConfirm: (text: string, okLabel: string, onOk: () => void) => void;
   closeConfirm: () => void;
   toggleIssues: (open?: boolean) => void;
 }
@@ -92,9 +94,18 @@ export function createEditorStore(initial: InitialState): EditorStore {
 
     edit: (label, recipe) => {
       const { project, history } = get();
-      const r = applyEdit(project, history, label, recipe);
-      if (!r) return;
+      let r: ReturnType<typeof applyEdit>;
+      try {
+        r = applyEdit(project, history, label, recipe);
+      } catch (e) {
+        set({
+          notice: { kind: "error", text: `${label}できませんでした: ${(e as Error).message}` },
+        });
+        return false;
+      }
+      if (!r) return true;
       set({ project: r.project, history: r.history, issues: checkProject(r.project), dirty: true });
+      return true;
     },
     undo: () => {
       const { project, history } = get();
@@ -126,6 +137,7 @@ export function createEditorStore(initial: InitialState): EditorStore {
       if (!get().dirty) onOk();
       else set({ confirm: { text, okLabel, onOk } });
     },
+    requestConfirm: (text, okLabel, onOk) => set({ confirm: { text, okLabel, onOk } }),
     closeConfirm: () => set({ confirm: null }),
     toggleIssues: (open) => set((s) => ({ issuesOpen: open ?? !s.issuesOpen })),
   }));
