@@ -967,3 +967,197 @@ path.flow-edge.selected {
   border: none;
   padding: 3px 6px;
 }
+
+/* ---- プレビュー ---- */
+
+.body.with-preview {
+  grid-template-columns: 88px 1fr 440px;
+}
+.preview-toggle[aria-pressed="true"] {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+.preview-pane {
+  border-left: 1px solid var(--line);
+  background: #e9edf3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.preview-toolbar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 6px 8px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.preview-toolbar .close {
+  margin-left: auto;
+  font-size: 16px;
+}
+.preview-device {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  margin: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 10%);
+  min-height: 0;
+}
+.preview-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(15 23 42 / 30%);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.preview-dialog {
+  background: var(--paper);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgb(15 23 42 / 30%);
+  width: 100%;
+  max-height: 100%;
+  overflow: auto;
+}
+.pv-frame-title {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
+.pv-frame-body {
+  padding: 12px;
+}
+.pv-box {
+  display: flex;
+}
+.pv-text {
+  margin: 0;
+}
+h2.pv-text {
+  font-size: 17px;
+}
+.pv-text-caption {
+  color: var(--muted);
+}
+.pv-button {
+  align-self: flex-start;
+}
+.pv-button-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.pv-button-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.pv-placeholder {
+  outline: 1.5px dashed var(--warn);
+  outline-offset: 2px;
+}
+.pv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pv-field span:first-child {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pv-check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pv-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+.pv-binding-error {
+  color: var(--danger);
+  margin-left: 4px;
+  cursor: help;
+}
+.pv-table-wrap {
+  overflow: auto;
+}
+.pv-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+.pv-table th,
+.pv-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 4px 6px;
+  text-align: left;
+}
+.pv-table tbody tr {
+  cursor: pointer;
+}
+.pv-table tbody tr:hover {
+  background: var(--soft);
+}
+.pv-table tr.selected {
+  background: var(--accent-soft);
+}
+.pv-empty {
+  color: var(--muted);
+  text-align: center;
+}
+.preview-log {
+  max-height: 30%;
+  overflow: auto;
+  margin: 0 10px 10px;
+  padding: 6px 10px 6px 28px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.preview-log .log-error {
+  color: var(--danger);
+}
+
+/* フロー図での強調（FR-RUN-05） */
+.flow-node.visited {
+  border-color: var(--ok);
+}
+.flow-node.current {
+  border-color: var(--ok);
+  box-shadow: 0 0 0 4px rgb(15 138 107 / 25%);
+}
+.current-mark {
+  color: var(--ok);
+}
+path.flow-edge.visited {
+  stroke: var(--ok);
+  stroke-width: 2.5;
+}
+path.flow-edge.last {
+  stroke-width: 3.5;
+}
+
+/* プレビューを開いているときは、フロー図を広く取る（一覧は図と同じ内容なので隠す） */
+.body.with-preview {
+  grid-template-columns: 88px 1fr 400px;
+}
+.body.with-preview .flow-body {
+  grid-template-columns: 1fr 300px;
+}
+.body.with-preview .container-list {
+  display: none;
+}
+.body.with-preview .er-body {
+  grid-template-columns: 1fr 340px;
+}

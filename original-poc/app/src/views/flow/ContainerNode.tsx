@@ -7,11 +7,24 @@ export type ContainerFlowNode = Node<FlowNodeData, "container">;
 export function ContainerNode({ data, selected }: NodeProps<ContainerFlowNode>) {
   return (
     <div
-      className={`flow-node flow-node-${data.kind}${selected ? " selected" : ""}`}
+      className={[
+        "flow-node",
+        `flow-node-${data.kind}`,
+        selected ? "selected" : "",
+        data.current ? "current" : "",
+        data.visited ? "visited" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-container={data.id}
     >
       <Handle type="target" position={Position.Left} />
       <div className="flow-node-head">
+        {data.current && (
+          <span className="current-mark" title="プレビューで今いる場所">
+            ●
+          </span>
+        )}
         {data.entry && (
           <span className="entry-mark" title="最初の画面">
             ▶

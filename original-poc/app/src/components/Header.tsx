@@ -13,6 +13,8 @@ export function Header() {
   const redo = useEditor((s) => s.redo);
   const issues = useEditor((s) => s.issues);
   const toggleIssues = useEditor((s) => s.toggleIssues);
+  const previewOpen = useEditor((s) => s.previewOpen);
+  const togglePreview = useEditor((s) => s.togglePreview);
   const actions = useFileActions();
   const [draftName, setDraftName] = useState(name);
   useEffect(() => setDraftName(name), [name]);
@@ -68,6 +70,9 @@ export function Header() {
           </span>
         )}
       </span>
+      <button className="preview-toggle" aria-pressed={previewOpen} onClick={() => togglePreview()}>
+        ▶ プレビュー
+      </button>
       <button
         className={`issues-badge ${errors ? "has-errors" : warnings ? "has-warnings" : ""}`}
         onClick={() => toggleIssues()}

@@ -1,4 +1,5 @@
 import { checkProject, type Issue, type Project } from "@ui-editor/poc-model";
+import { start, type RuntimeState } from "@ui-editor/poc-runtime";
 import { createContext, useContext } from "react";
 import { createStore, useStore, type StoreApi } from "zustand";
 import type { FileHandle } from "./files";
@@ -52,6 +53,10 @@ export interface EditorState {
   notice: Notice | null;
   confirm: ConfirmRequest | null;
   issuesOpen: boolean;
+  /** プレビューの区画を開いているか。 */
+  previewOpen: boolean;
+  /** プレビューの実行状態（開いていない・まだ始めていないなら null）。 */
+  runtime: RuntimeState | null;
 
   /** 編集操作を適用する（Undo できる）。操作が Error を投げたら何も変えずに通知に出し、false を返す。 */
   edit: (label: string, recipe: Recipe) => boolean;
@@ -69,6 +74,12 @@ export interface EditorState {
   requestConfirm: (text: string, okLabel: string, onOk: () => void) => void;
   closeConfirm: () => void;
   toggleIssues: (open?: boolean) => void;
+  /** プレビューを開閉する。開くときにまだ始めていなければ最初の画面から始める。 */
+  togglePreview: (open?: boolean) => void;
+  /** プレビューの状態を置き換える（イベントの実行結果）。 */
+  setRuntime: (runtime: RuntimeState) => void;
+  /** 最初の画面からやり直す。 */
+  restartPreview: () => void;
 }
 
 export type EditorStore = StoreApi<EditorState>;
@@ -93,6 +104,8 @@ export function createEditorStore(initial: InitialState): EditorStore {
     notice: initial.notice ?? null,
     confirm: null,
     issuesOpen: false,
+    previewOpen: false,
+    runtime: null,
 
     edit: (label, recipe) => {
       const { project, history } = get();
@@ -130,6 +143,7 @@ export function createEditorStore(initial: InitialState): EditorStore {
         dirty: options.dirty ?? false,
         selection: null,
         confirm: null,
+        runtime: get().previewOpen ? start(project) : null,
       }),
     markSaved: (file) => set({ file, dirty: false }),
     setView: (view) => set({ view }),
@@ -142,6 +156,15 @@ export function createEditorStore(initial: InitialState): EditorStore {
     requestConfirm: (text, okLabel, onOk) => set({ confirm: { text, okLabel, onOk } }),
     closeConfirm: () => set({ confirm: null }),
     toggleIssues: (open) => set((s) => ({ issuesOpen: open ?? !s.issuesOpen })),
+    togglePreview: (open) => {
+      const next = open ?? !get().previewOpen;
+      set({
+        previewOpen: next,
+        runtime: next ? (get().runtime ?? start(get().project)) : get().runtime,
+      });
+    },
+    setRuntime: (runtime) => set({ runtime }),
+    restartPreview: () => set({ runtime: start(get().project) }),
   }));
 }
 
