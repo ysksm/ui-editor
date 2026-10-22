@@ -286,6 +286,18 @@ importers:
         specifier: ^9.0.21
         version: 9.0.21
 
+  original-poc/packages/runtime:
+    dependencies:
+      '@ui-editor/poc-datastore':
+        specifier: workspace:*
+        version: link:../datastore
+      '@ui-editor/poc-model':
+        specifier: workspace:*
+        version: link:../model
+      '@ui-editor/runtime':
+        specifier: workspace:*
+        version: link:../../../packages/runtime
+
   original-poc/packages/seed:
     dependencies:
       '@faker-js/faker':
