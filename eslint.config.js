@@ -17,6 +17,8 @@ export default tseslint.config(
       "packages/codegen/out/**",
       "original-poc/packages/codegen/snapshots/**",
       "original-poc/packages/codegen/out/**",
+      // QA の出力（書き出したコードを展開したもの）
+      "original-poc/app/qa/out/**",
     ],
   },
   js.configs.recommended,
