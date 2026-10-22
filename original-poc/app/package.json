@@ -12,7 +12,8 @@
     "qa:step1": "node qa/step1.mjs",
     "qa:step3": "node qa/step3.mjs",
     "qa:step2": "node qa/step2.mjs",
-    "qa:step4": "node qa/step4.mjs"
+    "qa:step4": "node qa/step4.mjs",
+    "qa:step5": "node qa/step5.mjs"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.1.1",
