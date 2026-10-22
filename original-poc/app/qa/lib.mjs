@@ -34,7 +34,10 @@ export async function ensurePreview() {
   throw new Error(`${URL_BASE} が起動しません（先に pnpm --filter @ui-editor/poc-app build）`);
 }
 
-/** ブラウザを開き、ページのエラーを集める。File System Access API は消してダウンロードの経路を使う。 */
+/**
+ * ブラウザを開き、ページのエラーを集める。File System Access API は消して、
+ * 保存・コードの書き出しはダウンロード、開くはファイル選択の経路を使う。
+ */
 export async function openEditor() {
   mkdirSync(OUT_DIR, { recursive: true });
   const browser = await chromium.launch({
@@ -46,7 +49,9 @@ export async function openEditor() {
     acceptDownloads: true,
   });
   const page = await context.newPage();
-  await page.addInitScript("delete window.showSaveFilePicker; delete window.showOpenFilePicker;");
+  await page.addInitScript(
+    "delete window.showSaveFilePicker; delete window.showOpenFilePicker; delete window.showDirectoryPicker;",
+  );
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));

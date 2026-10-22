@@ -204,7 +204,13 @@ function ScreenEditor({
           )}
         </section>
         {selectedNode && findNode(c.root, selectedNode) ? (
-          <NodePanel project={project} container={c} node={findNode(c.root, selectedNode)!} />
+          <NodePanel
+            // 部品を選び直したら入力欄を作り直す（前の部品の値が残らないように）
+            key={selectedNode}
+            project={project}
+            container={c}
+            node={findNode(c.root, selectedNode)!}
+          />
         ) : (
           <section className="node-panel muted small" aria-label="部品の編集">
             中身の木で部品を選ぶと、ここで文言・バインディング・イベントを編集できます。

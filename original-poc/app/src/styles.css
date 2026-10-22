@@ -1058,6 +1058,7 @@ h2.pv-text {
 }
 .pv-button {
   align-self: flex-start;
+  white-space: nowrap;
 }
 .pv-button-primary {
   background: var(--accent);
