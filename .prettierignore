@@ -8,3 +8,6 @@ packages/codegen/out
 # Tauri（Rust）のビルド出力
 **/src-tauri/target
 **/src-tauri/gen
+# オリジナル PoC: 要求仕様（手で書いた HTML）と、決定的な書き出しの出力
+original-poc/docs/*.html
+original-poc/examples/*.poc.json
