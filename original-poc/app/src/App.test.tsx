@@ -29,7 +29,7 @@ describe("App", () => {
       "true",
     );
     fireEvent.click(within(nav).getByRole("button", { name: "データ" }));
-    expect(screen.getByText("機器（Device）: 5 件")).toBeTruthy();
+    expect(screen.getByRole("table", { name: "機器 のレコード" })).toBeTruthy();
   });
 
   it("プロジェクト名を変えると Undo / Redo できる（ショートカットも）", () => {

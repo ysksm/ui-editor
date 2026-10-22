@@ -275,6 +275,45 @@ describe("updateRecords", () => {
     expect(none.changes).toEqual([]);
   });
 
+  it("validate: changed なら変える項目だけ検証する（ほかの項目が空でも直せる）", () => {
+    const data = sample();
+    const blank = ok(createRecord(schema, data, "Device", {}, { validate: false }));
+    expect(blank.record).toEqual({
+      id: "dev-003",
+      name: "",
+      status: "online",
+      alarms: [],
+      settings: null,
+    });
+    expect(
+      createRecord(schema, data, "Device", { id: "dev-001" }, { validate: false }),
+    ).toMatchObject({
+      ok: false,
+      fieldErrors: { id: '主キー "dev-001" は既にあります' },
+    });
+    const match = { id: "dev-003" };
+    expect(updateRecords(schema, blank.data, "Device", match, { status: "offline" }).ok).toBe(
+      false,
+    );
+    const r = ok(
+      updateRecords(
+        schema,
+        blank.data,
+        "Device",
+        match,
+        { status: "offline" },
+        { validate: "changed" },
+      ),
+    );
+    expect(findRecord(schema, r.data, "Device", "dev-003")?.record.status).toBe("offline");
+    expect(
+      updateRecords(schema, blank.data, "Device", match, { status: "x" }, { validate: "changed" }),
+    ).toMatchObject({
+      ok: false,
+      fieldErrors: { status: "online / offline のどれかにしてください" },
+    });
+  });
+
   it("主キー・children・定義に無い項目・不正な値は変えられない", () => {
     const data = sample();
     expect(updateRecords(schema, data, "Device", { id: "dev-001" }, { id: "dev-9" }).ok).toBe(

@@ -525,3 +525,197 @@ path.er-edge.selected {
   gap: 2px;
   padding: 8px 10px;
 }
+
+/* ---- データ ---- */
+
+.data-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+.data-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 0;
+}
+.entity-tree {
+  border-right: 1px solid var(--line);
+  background: var(--paper);
+  overflow: auto;
+  padding: 8px 4px;
+}
+.entity-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.entity-tree button {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  border: none;
+  gap: 4px;
+  padding: 4px 8px;
+}
+.entity-tree .count {
+  margin-left: auto;
+  color: var(--muted);
+}
+.data-main {
+  overflow: auto;
+  padding: 12px 16px;
+  min-width: 0;
+}
+.data-main.wide {
+  grid-column: 1 / -1;
+}
+.data-main h3 {
+  margin: 0 0 8px;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.record-table {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.record-table th,
+.record-table td {
+  border: 1px solid var(--line);
+  padding: 2px 4px;
+  text-align: left;
+  vertical-align: top;
+  background: var(--paper);
+}
+.record-table th {
+  background: var(--soft);
+  white-space: nowrap;
+  font-weight: 600;
+}
+.record-table tr.highlight td {
+  background: var(--accent-soft);
+}
+.record-table input:not([type="checkbox"]),
+.record-table select {
+  width: 140px;
+  border-color: transparent;
+  background: transparent;
+}
+.record-table input:not([type="checkbox"]):focus,
+.record-table select:focus {
+  border-color: var(--accent);
+  background: var(--paper);
+}
+.record-table .required {
+  color: var(--danger);
+}
+.cell-error,
+.cell-error input,
+.record-table .cell-error {
+  outline: 2px solid var(--danger);
+  outline-offset: -2px;
+}
+.cell-warning,
+.cell-warning input {
+  outline: 2px solid var(--warn);
+  outline-offset: -2px;
+}
+.pager {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.nested-tree ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 18px;
+}
+.nested-tree > section > ul {
+  padding-left: 0;
+}
+.nested-tree h4 {
+  margin: 0 0 4px;
+}
+.nested-tree summary,
+.nested-tree .tree-leaf {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 1px 0;
+}
+.nested-tree .tree-leaf {
+  padding-left: 14px;
+}
+.tree-open {
+  color: var(--accent);
+  font-weight: 600;
+}
+.tree-values {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 640px;
+}
+.tree-field-name {
+  color: var(--er);
+  font-size: 12px;
+}
+.json-toolbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.json-view pre {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  overflow: auto;
+  max-height: 70vh;
+}
+.seed-dialog table {
+  margin: 8px 0 12px;
+}
+.seed-dialog th {
+  text-align: left;
+  padding-right: 12px;
+  font-weight: 500;
+}
+.seed-dialog input {
+  width: 90px;
+}
+.nested-tree summary {
+  cursor: pointer;
+  list-style: none;
+}
+.nested-tree summary::-webkit-details-marker {
+  display: none;
+}
+.nested-tree summary::before {
+  content: "▸";
+  color: var(--muted);
+  width: 12px;
+  display: inline-block;
+}
+.nested-tree details[open] > summary::before {
+  content: "▾";
+}
+.tree-open {
+  font-size: 13px;
+}
