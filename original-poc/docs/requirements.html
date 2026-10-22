@@ -1,0 +1,1139 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Original PoC 要求仕様</title>
+    <style>
+      :root {
+        --bg: #f4f6f9;
+        --paper: #ffffff;
+        --ink: #1b2330;
+        --muted: #5b6676;
+        --line: #d8dde5;
+        --soft: #f3f5f8;
+        --accent: #2f5bd3;
+        --accent-soft: #e6ecfb;
+        --flow: #0f8a6b;
+        --flow-soft: #e3f4ee;
+        --er: #9333ea;
+        --er-soft: #f3e8fd;
+        --warn: #b45309;
+        --warn-soft: #fdf1e1;
+        --code-bg: #f4f6fa;
+        --code-ink: #243042;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0d1117;
+          --paper: #161b22;
+          --ink: #e6edf3;
+          --muted: #9aa6b4;
+          --line: #2d3540;
+          --soft: #1d242d;
+          --accent: #7ea2ff;
+          --accent-soft: #1d2a47;
+          --flow: #4fd1a8;
+          --flow-soft: #133029;
+          --er: #c084fc;
+          --er-soft: #2b1d3d;
+          --warn: #f5b454;
+          --warn-soft: #3a2a12;
+          --code-bg: #0f141a;
+          --code-ink: #d6dee8;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0d1117;
+        --paper: #161b22;
+        --ink: #e6edf3;
+        --muted: #9aa6b4;
+        --line: #2d3540;
+        --soft: #1d242d;
+        --accent: #7ea2ff;
+        --accent-soft: #1d2a47;
+        --flow: #4fd1a8;
+        --flow-soft: #133029;
+        --er: #c084fc;
+        --er-soft: #2b1d3d;
+        --warn: #f5b454;
+        --warn-soft: #3a2a12;
+        --code-bg: #0f141a;
+        --code-ink: #d6dee8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 16px;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+        line-height: 1.75;
+        font-size: 15px;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+        font-size: 0.88em;
+      }
+      :not(pre) > code {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        line-height: 1.55;
+      }
+      a {
+        color: var(--accent);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 32px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 16px 80px;
+      }
+      nav.toc {
+        position: sticky;
+        top: 16px;
+        align-self: start;
+        font-size: 13px;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+      }
+      nav.toc ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      nav.toc li a {
+        display: block;
+        padding: 4px 10px;
+        border-left: 2px solid var(--line);
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc li a:hover {
+        color: var(--ink);
+        border-left-color: var(--accent);
+      }
+      nav.toc .toc-title {
+        font-weight: 700;
+        color: var(--ink);
+        margin: 0 0 8px 10px;
+      }
+      main {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 40px 48px 56px;
+        min-width: 0;
+      }
+      @media (max-width: 860px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        nav.toc {
+          position: static;
+          max-height: none;
+        }
+        main {
+          padding: 24px 18px 40px;
+        }
+      }
+
+      header.cover {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 20px;
+        margin-bottom: 8px;
+      }
+      header.cover .eyebrow {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        font-size: 12px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 6px 0 8px;
+        line-height: 1.35;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      h2 {
+        font-size: 21px;
+        margin: 48px 0 12px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+      h2 .num {
+        color: var(--accent);
+        margin-right: 8px;
+      }
+      h3 {
+        font-size: 16px;
+        margin: 28px 0 8px;
+      }
+      p {
+        margin: 8px 0;
+      }
+      .lead {
+        font-size: 16px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 7px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: var(--soft);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      td.id {
+        font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+        font-size: 12.5px;
+        white-space: nowrap;
+        color: var(--muted);
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--accent);
+        background: var(--accent-soft);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin: 16px 0;
+      }
+      .callout.warn {
+        border-left-color: var(--warn);
+        background: var(--warn-soft);
+      }
+      .callout .label {
+        font-weight: 700;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .tag {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 1px 8px;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+        white-space: nowrap;
+      }
+      .tag.must {
+        color: var(--accent);
+      }
+      .tag.should {
+        color: var(--flow);
+      }
+      .tag.could {
+        color: var(--muted);
+      }
+      .tag.flow {
+        color: var(--flow);
+      }
+      .tag.er {
+        color: var(--er);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+        margin: 14px 0;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 16px;
+        background: var(--paper);
+      }
+      .card h4 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .card.flow {
+        border-top: 4px solid var(--flow);
+      }
+      .card.er {
+        border-top: 4px solid var(--er);
+      }
+      .card ul {
+        margin: 4px 0 0;
+        padding-left: 18px;
+      }
+
+      .step {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        margin: 14px 0;
+        overflow: hidden;
+      }
+      .step > .step-head {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        background: var(--soft);
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--line);
+        flex-wrap: wrap;
+      }
+      .step .step-no {
+        font-weight: 800;
+        color: var(--accent);
+        font-size: 14px;
+      }
+      .step .step-title {
+        font-weight: 700;
+      }
+      .step > .step-body {
+        padding: 8px 16px 12px;
+      }
+      .step-body ul {
+        margin: 4px 0;
+        padding-left: 20px;
+      }
+
+      figure {
+        margin: 18px 0;
+      }
+      figure svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      figcaption {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 6px;
+        text-align: center;
+      }
+      .diagram text {
+        fill: var(--ink);
+        font-size: 13px;
+        font-family: inherit;
+      }
+      .diagram .sub {
+        fill: var(--muted);
+        font-size: 11.5px;
+      }
+      .diagram .box {
+        fill: var(--paper);
+        stroke: var(--line);
+        stroke-width: 1.5;
+      }
+      .diagram .box-flow {
+        fill: var(--flow-soft);
+        stroke: var(--flow);
+        stroke-width: 1.5;
+      }
+      .diagram .box-er {
+        fill: var(--er-soft);
+        stroke: var(--er);
+        stroke-width: 1.5;
+      }
+      .diagram .box-core {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+      .diagram .edge {
+        stroke: var(--muted);
+        stroke-width: 1.5;
+        fill: none;
+      }
+      .diagram .edge.dash {
+        stroke-dasharray: 5 4;
+      }
+      .diagram .arrow {
+        fill: var(--muted);
+      }
+
+      ul.check {
+        list-style: none;
+        padding-left: 0;
+      }
+      ul.check li::before {
+        content: "☐";
+        margin-right: 8px;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="toc" aria-label="目次">
+        <p class="toc-title">目次</p>
+        <ol>
+          <li><a href="#overview">1. 概要と目的</a></li>
+          <li><a href="#interpret">2. 要望の整理と用語の解釈</a></li>
+          <li><a href="#position">3. 既存資産との関係</a></li>
+          <li><a href="#concept">4. 全体コンセプト</a></li>
+          <li><a href="#decisions">5. 主要な設計判断</a></li>
+          <li><a href="#model">6. データモデル案</a></li>
+          <li><a href="#triggers">7. 遷移とアクション</a></li>
+          <li><a href="#fr">8. 機能要求</a></li>
+          <li><a href="#nfr">9. 非機能要求</a></li>
+          <li><a href="#steps">10. ステップ計画</a></li>
+          <li><a href="#tech">11. 技術構成案</a></li>
+          <li><a href="#out">12. スコープ外</a></li>
+          <li><a href="#questions">13. 確認したいこと</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header class="cover">
+          <div class="eyebrow">PROPOSAL · ORIGINAL POC</div>
+          <h1>画面遷移と ER 図から動くアプリを組み立てる<br />オリジナル UI エディタ 要求仕様（案）</h1>
+          <div class="meta">2026-10-23 ・ 対象: <code>original-poc/</code> ・ 版: draft 0.1</div>
+        </header>
+
+        <!-- 1 -->
+        <h2 id="overview"><span class="num">1</span>概要と目的</h2>
+        <p class="lead">
+          Plasmic のように「ビジュアルに定義したものが、そのまま動くアプリになる」ツールを、既存ライブラリのエディタに乗らない<strong>オリジナル実装</strong>として段階的に作る。最初の関心は見た目の作り込みではなく、<strong>画面の構成・画面同士の関係・データの関係</strong>を定義して実際に動かすことにある。
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h4>画面とダイアログの関係</h4>
+            画面一覧、画面間の遷移、ダイアログの呼び出し元を定義して、図で見られるようにする。
+          </div>
+          <div class="card">
+            <h4>何で遷移するか</h4>
+            ボタン、表の行クリック、選択してからボタン、といった<strong>トリガー</strong>を遷移ごとに定義する。
+          </div>
+          <div class="card">
+            <h4>データ操作</h4>
+            追加・更新・削除（CRUD）のアクションでサンプルデータを書き換えながら、プレビューで動かす。
+          </div>
+          <div class="card">
+            <h4>ER 図とサンプルデータ</h4>
+            エンティティとリレーションを定義し、そこから整合したサンプルデータと画面のひな形を作る。
+          </div>
+        </div>
+        <p>
+          作り始める入口は 2 つ用意する。<span class="tag flow">フロー先行</span> 画面と遷移から考えるパターンと、<span class="tag er">ER 先行</span> データ構造から考えて画面を生成するパターン。どちらから始めても、最後は同じ 1 つのプロジェクト JSON にまとまる。
+        </p>
+
+        <!-- 2 -->
+        <h2 id="interpret"><span class="num">2</span>要望の整理と用語の解釈</h2>
+        <p>いただいた要望を、要求として扱える単位に分けた。音声入力と思われる表記は、次のように解釈した（<a href="#questions">13 章</a>で確認したい）。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>原文の表記</th>
+                <th>この文書での解釈</th>
+                <th>根拠</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>クラウド操作</td>
+                <td><strong>CRUD 操作</strong>（作成・参照・更新・削除）</td>
+                <td>直前に「追加、削除、更新」とあり、続けて「その中のデータの更新」とあるため</td>
+              </tr>
+              <tr>
+                <td>カスケード構造のデータ</td>
+                <td>
+                  <strong>入れ子（階層）構造の JSON</strong>。次の 2 通りがありうる<br />
+                  (A) プロジェクト定義が「プロジェクト → 画面 → 部品」の木構造<br />
+                  (B) サンプルデータを「機器 → その機器のアラーム」のように親子で入れ子に持つ
+                </td>
+                <td>「実際には JSON として保存」とあるため。(A) は前提として採用し、(B) は <a href="#d2">判断 D2</a> で扱う</td>
+              </tr>
+              <tr>
+                <td>AppSummise</td>
+                <td>Appsmith</td>
+                <td>Retool と並べて挙げられていたため</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>要望の分解</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>要望</th>
+                <th>対応する章</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>R1</td><td>画面の一覧を作り、画面同士の関係を定義・表示したい</td><td>7, 8（FR-FLOW）</td></tr>
+              <tr><td>R2</td><td>ダイアログを作り、どこから呼び出すかを定義したい</td><td>7, 8（FR-FLOW）</td></tr>
+              <tr><td>R3</td><td>遷移が「何によって」起きるかを定義したい（ボタン／行クリック／選択＋ボタン）</td><td>7</td></tr>
+              <tr><td>R4</td><td>定義した遷移を実際にクリックして辿りたい</td><td>8（FR-RUN）</td></tr>
+              <tr><td>R5</td><td>データの追加・削除・更新のアクションを定義・実行したい</td><td>7, 8（FR-DATA）</td></tr>
+              <tr><td>R6</td><td>ER 図を作り、データの関係とサンプルデータを作りたい</td><td>6, 8（FR-ER）</td></tr>
+              <tr><td>R7</td><td>フロー先行と ER 先行の 2 つの作り方に対応したい</td><td>4, 8（FR-GEN）</td></tr>
+              <tr><td>R8</td><td>内部は入れ子構造のデータとして持ち、JSON で保存したい</td><td>5, 6</td></tr>
+              <tr><td>R9</td><td>ステップバイステップで作りたい</td><td>10</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 3 -->
+        <h2 id="position"><span class="num">3</span>既存資産との関係</h2>
+        <p>
+          このリポジトリには P0〜P6 の検証成果がある。オリジナル PoC はそれらを置き換えるものではなく、<strong>得た知見を土台に、自前で一貫した道具を作る</strong>位置づけにする。
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>既存</th>
+                <th>そのまま生かすもの</th>
+                <th>オリジナル PoC で新しく足すもの</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>packages/schema</code>（スキーマ v0）</td>
+                <td>
+                  <code>screens</code> / <code>dialogs</code> / <code>params</code>、<code>{{ }}</code> バインディング、アクション（<code>navigate</code> / <code>openDialog</code> / <code>closeDialog</code> / <code>setState</code> / <code>updateData</code>）、2 段階の検証、決定的な書き出し
+                </td>
+                <td>ER（<code>entities</code> / <code>relations</code>）、宣言的な遷移（<code>transitions</code>）、選択状態、<code>createRecord</code> / <code>deleteRecord</code>、画面の役割（一覧・詳細など）</td>
+              </tr>
+              <tr>
+                <td><code>apps/flow</code>（P5 遷移図）</td>
+                <td>React Flow による画面・ダイアログのノード表示、遷移の追加・削除の操作感</td>
+                <td>画面の中身がまだ無い状態でも遷移を引けること（<a href="#d1">判断 D1</a>）</td>
+              </tr>
+              <tr>
+                <td><code>apps/runtime-preview</code>（P4）</td>
+                <td>プロジェクトファイルを解釈して動かす方式</td>
+                <td>CRUD とリレーションを考慮したデータストア</td>
+              </tr>
+              <tr>
+                <td>Puck / Craft.js（P2・P3）</td>
+                <td>画面内のレイアウト編集の知見</td>
+                <td>後半のステップで、必要な範囲だけ自前で作る</td>
+              </tr>
+              <tr>
+                <td>題材「機器の設定＆モニタリング」</td>
+                <td>Device / DeviceSettings / Metric / Alarm と既存の画面構成を、検証用の題材としてそのまま使う</td>
+                <td>ER として書き直したもの</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="label">方針</span>
+          スキーマは v0 を拡張した <code>poc-0</code> として <code>original-poc/</code> 内に新しく持つ。v0 と互換を保つことは必須にしないが、<strong>v0 形式への書き出し</strong>はできるようにして、既存の codegen / runtime-preview / flow でも開けるようにする（Should）。
+        </div>
+
+        <!-- 4 -->
+        <h2 id="concept"><span class="num">4</span>全体コンセプト</h2>
+        <p>
+          すべての編集画面は、<strong>1 つのプロジェクト JSON</strong> を別の角度から見て編集するビューにする。フロー図・ER 図・画面エディタ・プレビューは同じデータを共有し、どこで編集しても他のビューに反映される。
+        </p>
+        <figure>
+          <svg class="diagram" viewBox="0 0 860 360" role="img" aria-label="フロー先行と ER 先行の 2 つの入口が、1 つのプロジェクト JSON にまとまり、4 つのビューから編集・実行される図">
+            <defs>
+              <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" class="arrow" />
+              </marker>
+            </defs>
+            <!-- entries -->
+            <rect x="20" y="40" width="200" height="110" rx="10" class="box-flow" />
+            <text x="120" y="70" text-anchor="middle" font-weight="700">入口 A：フロー先行</text>
+            <text x="120" y="96" text-anchor="middle" class="sub">画面・ダイアログを並べる</text>
+            <text x="120" y="116" text-anchor="middle" class="sub">遷移とトリガーを引く</text>
+            <text x="120" y="136" text-anchor="middle" class="sub">後からデータを結びつける</text>
+
+            <rect x="20" y="210" width="200" height="110" rx="10" class="box-er" />
+            <text x="120" y="240" text-anchor="middle" font-weight="700">入口 B：ER 先行</text>
+            <text x="120" y="266" text-anchor="middle" class="sub">エンティティ・リレーション</text>
+            <text x="120" y="286" text-anchor="middle" class="sub">サンプルデータを生成</text>
+            <text x="120" y="306" text-anchor="middle" class="sub">画面と遷移のひな形を生成</text>
+
+            <!-- core -->
+            <rect x="310" y="90" width="230" height="180" rx="12" class="box-core" />
+            <text x="425" y="122" text-anchor="middle" font-weight="700">プロジェクト JSON</text>
+            <text x="425" y="148" text-anchor="middle" class="sub">entities / relations</text>
+            <text x="425" y="168" text-anchor="middle" class="sub">data（サンプルデータ）</text>
+            <text x="425" y="188" text-anchor="middle" class="sub">screens / dialogs</text>
+            <text x="425" y="208" text-anchor="middle" class="sub">transitions</text>
+            <text x="425" y="228" text-anchor="middle" class="sub">state</text>
+            <text x="425" y="254" text-anchor="middle" class="sub">唯一の正（Single Source of Truth）</text>
+
+            <!-- views -->
+            <rect x="630" y="20" width="210" height="58" rx="10" class="box" />
+            <text x="735" y="45" text-anchor="middle" font-weight="700">フロー図ビュー</text>
+            <text x="735" y="65" text-anchor="middle" class="sub">画面・ダイアログ・遷移</text>
+            <rect x="630" y="104" width="210" height="58" rx="10" class="box" />
+            <text x="735" y="129" text-anchor="middle" font-weight="700">ER 図ビュー</text>
+            <text x="735" y="149" text-anchor="middle" class="sub">エンティティ・関係・データ</text>
+            <rect x="630" y="188" width="210" height="58" rx="10" class="box" />
+            <text x="735" y="213" text-anchor="middle" font-weight="700">画面エディタ</text>
+            <text x="735" y="233" text-anchor="middle" class="sub">部品・バインディング</text>
+            <rect x="630" y="272" width="210" height="58" rx="10" class="box" />
+            <text x="735" y="297" text-anchor="middle" font-weight="700">プレビュー（実行）</text>
+            <text x="735" y="317" text-anchor="middle" class="sub">クリックで遷移・CRUD</text>
+
+            <path d="M220,95 C265,95 265,150 308,150" class="edge" marker-end="url(#arr)" />
+            <path d="M220,265 C265,265 265,210 308,210" class="edge" marker-end="url(#arr)" />
+            <path d="M540,150 C590,150 590,49 628,49" class="edge dash" marker-end="url(#arr)" marker-start="url(#arr)" />
+            <path d="M540,165 C585,165 585,133 628,133" class="edge dash" marker-end="url(#arr)" marker-start="url(#arr)" />
+            <path d="M540,195 C585,195 585,217 628,217" class="edge dash" marker-end="url(#arr)" marker-start="url(#arr)" />
+            <path d="M540,220 C590,220 590,301 628,301" class="edge dash" marker-end="url(#arr)" marker-start="url(#arr)" />
+          </svg>
+          <figcaption>図 1. 2 つの入口と、1 つのプロジェクト JSON を共有する 4 つのビュー</figcaption>
+        </figure>
+
+        <div class="cards">
+          <div class="card flow">
+            <h4>入口 A：フロー先行</h4>
+            <ul>
+              <li>画面・ダイアログを名前だけで作り、図に並べる</li>
+              <li>画面同士を線でつなぎ、トリガー（ボタン／行クリックなど）を選ぶ</li>
+              <li>この時点で、ワイヤーフレームのプレビューで遷移を辿れる</li>
+              <li>後から画面に「どのエンティティを扱うか」を結びつける</li>
+            </ul>
+          </div>
+          <div class="card er">
+            <h4>入口 B：ER 先行</h4>
+            <ul>
+              <li>エンティティ・属性・リレーションを ER 図で定義する</li>
+              <li>リレーションを守ったサンプルデータを生成する</li>
+              <li>エンティティごとに「一覧・詳細・編集ダイアログ・削除確認」と、その間の遷移を生成する</li>
+              <li>生成されたものは入口 A のフロー図にそのまま現れ、手で直せる</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 5 -->
+        <h2 id="decisions"><span class="num">5</span>主要な設計判断（推奨案）</h2>
+        <p>実装を始める前に決めておきたい 3 点。それぞれ推奨案を置き、<a href="#questions">13 章</a>で確認する。</p>
+
+        <h3 id="d1">D1. 遷移の正をどこに置くか</h3>
+        <p>
+          v0 では、遷移は<strong>画面内の部品のイベントに書いたアクション</strong>（<code>navigate.to</code>）から導いている。フロー先行では画面の中身がまだ無いので、この方式だと遷移を引けない。
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>案</th>
+                <th>内容</th>
+                <th>利点</th>
+                <th>欠点</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>(a) 推奨</strong><br />宣言的な遷移</td>
+                <td>トップレベルの <code>transitions</code> に「from・to・トリガー・渡す値」を持つ。トリガーが参照する部品は後から結びつける（未結合を許す）</td>
+                <td>中身が無い画面でも遷移を定義できる。遷移図をファイルから静的に作れる。未結合・不整合を検証で指摘できる</td>
+                <td>部品側のイベントと遷移の 2 か所に情報が分かれるので、対応を保つ仕組みが要る</td>
+              </tr>
+              <tr>
+                <td>(b) 仮の部品を生成</td>
+                <td>遷移を引くと、遷移元の画面に仮のボタンを自動で置き、そのイベントに <code>navigate</code> を書く</td>
+                <td>v0 の構造のまま</td>
+                <td>画面設計前から部品が増えて散らかる。トリガーの種類を後から変えにくい</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          (a) を採る場合、部品のイベントには「遷移 id を実行する」アクション（<code>{ type: "transition", id: "..." }</code>）だけを書き、遷移の中身は <code>transitions</code> に一元化する。プレビューは、部品が未結合の遷移を画面下部の「未結合の遷移」ボタンとして出し、フロー先行の段階でも辿れるようにする。
+        </p>
+
+        <h3 id="d2">D2. サンプルデータを入れ子で持つか、フラットに持つか</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>案</th>
+                <th>保存形式</th>
+                <th>利点</th>
+                <th>欠点</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>(a) 推奨</strong><br />フラットを正、入れ子は派生</td>
+                <td>エンティティごとの配列（<code>data.Device[]</code>, <code>data.Alarm[]</code>）を外部キーでつなぐ</td>
+                <td>ER 図とそのまま対応する。多対多や複数の親を持つデータも表せる。CRUD が単純</td>
+                <td>入れ子で見たいときは変換が要る（ビューと書き出しで対応）</td>
+              </tr>
+              <tr>
+                <td>(b) 入れ子を正</td>
+                <td><code>Device[].alarms[]</code> のように親の中に子を持つ</td>
+                <td>人が読みやすい。親を消すと子も消える（カスケード削除）が自然に表せる</td>
+                <td>多対多・複数の親で破綻する。同じデータが複数箇所に出ると更新がずれる</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          (a) を採っても、リレーションに <code>onDelete: "cascade"</code> を持たせればカスケード削除は表現できる。ER 図ビューとデータ編集画面には「親から子をたどる入れ子表示」を用意し、JSON 書き出しにも入れ子形式を選べるようにする。
+        </p>
+
+        <h3 id="d3">D3. 画面の中身の表現</h3>
+        <p>
+          画面の中身は v0 と同じ<strong>ノードの木</strong>（<code>type</code> / <code>props</code> / <code>children</code> / <code>events</code>）で持つ。ただし初期のステップでは自由なレイアウト編集はせず、画面に<strong>役割（<code>kind</code>）</strong>を持たせ、役割ごとのテンプレートから中身を作る（一覧 = 表＋操作ボタン、詳細 = 項目の並び、フォーム = 入力欄＋保存）。自由編集はステップ 6 以降に回す。
+        </p>
+
+        <!-- 6 -->
+        <h2 id="model"><span class="num">6</span>データモデル案（<code>poc-0</code>）</h2>
+        <p>題材「機器の設定＆モニタリング」で書いた例。キー名は仮のもの。</p>
+<pre>{
+  "schemaVersion": "poc-0",
+  "name": "機器の設定＆モニタリング",
+  "entry": "devices",
+
+  "entities": [
+    {
+      "id": "Device", "name": "機器", "primaryKey": "id", "displayField": "name",
+      "fields": [
+        { "id": "id",       "type": "id" },
+        { "id": "name",     "type": "string", "required": true },
+        { "id": "model",    "type": "string" },
+        { "id": "status",   "type": "enum", "values": ["online", "offline", "warning"] },
+        { "id": "ipAddress","type": "string", "format": "ipv4" }
+      ]
+    },
+    {
+      "id": "Alarm", "name": "アラーム", "primaryKey": "id", "displayField": "message",
+      "fields": [
+        { "id": "id",           "type": "id" },
+        { "id": "deviceId",     "type": "ref", "entity": "Device" },
+        { "id": "level",        "type": "enum", "values": ["info", "warn", "error"] },
+        { "id": "message",      "type": "string" },
+        { "id": "acknowledged", "type": "boolean", "default": false }
+      ]
+    }
+  ],
+
+  "relations": [
+    { "id": "deviceAlarms", "from": "Alarm.deviceId", "to": "Device.id",
+      "cardinality": "many-to-one", "onDelete": "cascade" }
+  ],
+
+  "data": {
+    "Device": [ { "id": "dev-001", "name": "ルータ A", "status": "online", "...": "..." } ],
+    "Alarm":  [ { "id": "alm-001", "deviceId": "dev-001", "level": "warn", "...": "..." } ]
+  },
+
+  "state": {
+    "selection": { "Device": null }
+  },
+
+  "screens": [
+    { "id": "devices", "name": "機器一覧", "kind": "list", "entity": "Device", "path": "/devices",
+      "root": { "id": "page", "type": "Box", "children": ["..."] } },
+    { "id": "deviceDetail", "name": "機器詳細", "kind": "detail", "entity": "Device",
+      "path": "/devices/:deviceId", "params": { "deviceId": { "type": "string" } } }
+  ],
+
+  "dialogs": [
+    { "id": "deviceEdit",    "name": "機器の編集", "kind": "form",    "entity": "Device" },
+    { "id": "deviceDelete",  "name": "削除の確認", "kind": "confirm", "entity": "Device" }
+  ],
+
+  "transitions": [
+    { "id": "t1", "from": "devices", "to": "deviceDetail",
+      "trigger": { "type": "rowClick", "node": "deviceTable" },
+      "params": { "deviceId": "{{ event.row.id }}" } },
+    { "id": "t2", "from": "devices", "to": "deviceEdit",
+      "trigger": { "type": "click", "node": "editButton", "requires": "selection.Device" },
+      "params": { "deviceId": "{{ state.selection.Device.id }}" } }
+  ]
+}</pre>
+        <h3>モデルの要点</h3>
+        <ul>
+          <li><strong>entities / relations</strong>：ER 図の正。フィールドの型は <code>id / string / number / boolean / date / enum / ref</code> から始め、<code>ref</code> がリレーションの外部キーになる。</li>
+          <li><strong>data</strong>：エンティティ id → レコードの配列（D2 の案 a）。<code>{{ data.Device }}</code> で参照する。</li>
+          <li><strong>state.selection</strong>：エンティティごとの「いま選ばれているレコード」。表で行を選ぶと入り、「選択してからボタン」の遷移で使う。</li>
+          <li><strong>screens / dialogs</strong>：v0 と同じ形に <code>kind</code>（役割）と <code>entity</code>（扱うエンティティ）を足す。<code>root</code> は省略可（中身の無い画面を許す）。</li>
+          <li><strong>transitions</strong>：D1 の案 a。<code>trigger.node</code> は省略可（未結合）。</li>
+          <li>保存は JSON（木構造）。キー順を固定した決定的な書き出しで、差分が読みやすいようにする（v0 と同じ方針）。</li>
+        </ul>
+
+        <!-- 7 -->
+        <h2 id="triggers"><span class="num">7</span>遷移とアクション</h2>
+        <h3>遷移のトリガー（何によって遷移するか）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>パターン</th>
+                <th>トリガー</th>
+                <th>遷移先に渡す値</th>
+                <th>例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>T1 単純遷移</td>
+                <td>ボタンなどの <code>click</code></td>
+                <td>固定値、または無し</td>
+                <td>ダッシュボード →「機器一覧へ」→ 機器一覧</td>
+              </tr>
+              <tr>
+                <td>T2 行クリック遷移</td>
+                <td>表の <code>rowClick</code></td>
+                <td>クリックした行（<code>event.row</code>）の値</td>
+                <td>機器一覧の行 → その機器の詳細</td>
+              </tr>
+              <tr>
+                <td>T3 選択＋ボタン遷移</td>
+                <td>表で行を選ぶ（<code>rowSelect</code> → <code>state.selection</code>）→ ボタンの <code>click</code></td>
+                <td>選択中のレコード（<code>state.selection.X</code>）。未選択ならボタンを無効にする（<code>requires</code>）</td>
+                <td>機器を選んで「編集」→ 編集ダイアログ</td>
+              </tr>
+              <tr>
+                <td>T4 ダイアログ呼び出し</td>
+                <td>T1〜T3 のどれかで、遷移先がダイアログ</td>
+                <td>同上</td>
+                <td>機器詳細の「削除」→ 削除確認ダイアログ</td>
+              </tr>
+              <tr>
+                <td>T5 画面表示時</td>
+                <td>画面の <code>mount</code></td>
+                <td>—</td>
+                <td>条件を満たさなければ別画面へ（Could）</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          遷移には<strong>付随アクション</strong>を持たせられる。たとえば「削除確認で OK → <code>deleteRecord</code> → ダイアログを閉じる → 一覧へ戻る」は、遷移 1 本の前後に並んだアクション列として表す。
+        </p>
+
+        <h3>アクション一覧</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>種類</th>
+                <th>アクション</th>
+                <th>内容</th>
+                <th>v0 との関係</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td rowspan="5">遷移</td><td><code>transition</code></td><td>遷移 id を実行する（D1 の案 a）</td><td>新規</td></tr>
+              <tr><td><code>navigate</code></td><td>画面遷移</td><td>v0 と同じ</td></tr>
+              <tr><td><code>back</code></td><td>前の画面に戻る</td><td>新規</td></tr>
+              <tr><td><code>openDialog</code></td><td>ダイアログを開く</td><td>v0 と同じ</td></tr>
+              <tr><td><code>closeDialog</code></td><td>ダイアログを閉じる。結果（OK / キャンセル）を返し、呼び出し元で分岐できる</td><td>結果の受け渡しを追加</td></tr>
+              <tr><td rowspan="2">状態</td><td><code>setState</code></td><td><code>state</code> のパスに値を入れる</td><td>v0 と同じ</td></tr>
+              <tr><td><code>select</code></td><td>エンティティの選択状態を変える</td><td>新規（<code>setState</code> の糖衣）</td></tr>
+              <tr><td rowspan="3">データ（CRUD）</td><td><code>createRecord</code></td><td>エンティティにレコードを追加。id を自動採番し、必須項目と ref の存在を検査</td><td>新規</td></tr>
+              <tr><td><code>updateRecord</code></td><td>条件に合うレコードの項目を更新</td><td>v0 の <code>updateData</code> を拡張</td></tr>
+              <tr><td><code>deleteRecord</code></td><td>レコードを削除。リレーションの <code>onDelete</code>（cascade / restrict / setNull）に従う</td><td>新規</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 8 -->
+        <h2 id="fr"><span class="num">8</span>機能要求</h2>
+        <p class="muted">優先度: <span class="tag must">Must</span> PoC で必ず作る / <span class="tag should">Should</span> できれば作る / <span class="tag could">Could</span> 余裕があれば。「段階」は <a href="#steps">10 章</a>のステップ番号。</p>
+
+        <h3>8.1 プロジェクトと保存（FR-PRJ）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th><th>優先度</th><th>段階</th></tr></thead>
+            <tbody>
+              <tr><td class="id">FR-PRJ-01</td><td>プロジェクトを JSON ファイルとして新規作成・読み込み・保存できる</td><td><span class="tag must">Must</span></td><td>0</td></tr>
+              <tr><td class="id">FR-PRJ-02</td><td>読み込み時・編集時に、形（スキーマ）と参照（存在しない画面・エンティティなど）を検証し、場所付きで表示する</td><td><span class="tag must">Must</span></td><td>0</td></tr>
+              <tr><td class="id">FR-PRJ-03</td><td>同じ内容なら同じテキストになる決定的な書き出し</td><td><span class="tag must">Must</span></td><td>0</td></tr>
+              <tr><td class="id">FR-PRJ-04</td><td>編集の取り消し・やり直し（Undo / Redo）</td><td><span class="tag should">Should</span></td><td>1</td></tr>
+              <tr><td class="id">FR-PRJ-05</td><td>ブラウザ内への自動保存（閉じても作業が消えない）</td><td><span class="tag should">Should</span></td><td>1</td></tr>
+              <tr><td class="id">FR-PRJ-06</td><td>v0 形式への書き出し（既存の flow / runtime-preview / codegen で開ける）</td><td><span class="tag should">Should</span></td><td>4</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.2 画面一覧とフロー図（FR-FLOW）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th><th>優先度</th><th>段階</th></tr></thead>
+            <tbody>
+              <tr><td class="id">FR-FLOW-01</td><td>画面とダイアログを一覧で作成・名前変更・削除できる（中身は空でよい）</td><td><span class="tag must">Must</span></td><td>1</td></tr>
+              <tr><td class="id">FR-FLOW-02</td><td>画面・ダイアログをノードとしてフロー図に表示し、ドラッグで配置できる。配置はプロジェクトと別ファイル、または別キーに保存する</td><td><span class="tag must">Must</span></td><td>1</td></tr>
+              <tr><td class="id">FR-FLOW-03</td><td>ノード同士をドラッグでつなぐと遷移が作られる。遷移先がダイアログなら「呼び出し」として破線で区別する</td><td><span class="tag must">Must</span></td><td>1</td></tr>
+              <tr><td class="id">FR-FLOW-04</td><td>遷移を選ぶと、トリガー（T1〜T4）・渡す値・付随アクションをパネルで編集できる</td><td><span class="tag must">Must</span></td><td>2</td></tr>
+              <tr><td class="id">FR-FLOW-05</td><td>ダイアログごとに「どこから呼ばれているか」の一覧を見られる。画面ごとに入ってくる遷移と出ていく遷移を見られる</td><td><span class="tag must">Must</span></td><td>2</td></tr>
+              <tr><td class="id">FR-FLOW-06</td><td>どこからも遷移してこない画面、部品と結びついていない遷移を警告する</td><td><span class="tag should">Should</span></td><td>2</td></tr>
+              <tr><td class="id">FR-FLOW-07</td><td>自動レイアウト（左 → 右）</td><td><span class="tag should">Should</span></td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.3 プレビュー実行（FR-RUN）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th><th>優先度</th><th>段階</th></tr></thead>
+            <tbody>
+              <tr><td class="id">FR-RUN-01</td><td>エントリー画面から始めて、遷移をクリックで辿れる。中身の無い画面では、出ていく遷移をボタンとして並べたワイヤーフレームを表示する</td><td><span class="tag must">Must</span></td><td>2</td></tr>
+              <tr><td class="id">FR-RUN-02</td><td>ダイアログを画面の上に重ねて表示し、閉じると呼び出し元に戻る</td><td><span class="tag must">Must</span></td><td>2</td></tr>
+              <tr><td class="id">FR-RUN-03</td><td>表にサンプルデータを表示し、行クリック・行選択＋ボタンの遷移が動く</td><td><span class="tag must">Must</span></td><td>4</td></tr>
+              <tr><td class="id">FR-RUN-04</td><td>CRUD アクションでデータが変わり、他の画面にも反映される。プレビューのデータはリセットできる（元のサンプルデータは書き換えない）</td><td><span class="tag must">Must</span></td><td>4</td></tr>
+              <tr><td class="id">FR-RUN-05</td><td>フロー図上で、プレビュー中の現在の画面と、たどった経路を強調表示する</td><td><span class="tag should">Should</span></td><td>2</td></tr>
+              <tr><td class="id">FR-RUN-06</td><td>実行したアクションとデータの変化をログで見られる</td><td><span class="tag should">Should</span></td><td>4</td></tr>
+              <tr><td class="id">FR-RUN-07</td><td>プレビューで変えたデータを、新しいサンプルデータとして保存できる</td><td><span class="tag could">Could</span></td><td>4</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.4 ER 図とサンプルデータ（FR-ER）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th><th>優先度</th><th>段階</th></tr></thead>
+            <tbody>
+              <tr><td class="id">FR-ER-01</td><td>エンティティと属性（名前・型・必須・既定値・列挙値）を作成・編集・削除できる</td><td><span class="tag must">Must</span></td><td>3</td></tr>
+              <tr><td class="id">FR-ER-02</td><td>エンティティ同士をつないでリレーション（1対多 / 多対1 / 1対1）を作り、外部キーの属性を自動で追加する</td><td><span class="tag must">Must</span></td><td>3</td></tr>
+              <tr><td class="id">FR-ER-03</td><td>ER 図として表示し、カーディナリティを線の端の記号（IE 記法など）で示す</td><td><span class="tag must">Must</span></td><td>3</td></tr>
+              <tr><td class="id">FR-ER-04</td><td>エンティティごとの件数を指定してサンプルデータを生成する。外部キーは実在する親を指し、列挙値・型・書式に合った値にする。シードを固定すれば毎回同じデータになる</td><td><span class="tag must">Must</span></td><td>3</td></tr>
+              <tr><td class="id">FR-ER-05</td><td>サンプルデータを表形式で手で編集できる。外部キーは親の表示名で選べる</td><td><span class="tag must">Must</span></td><td>3</td></tr>
+              <tr><td class="id">FR-ER-06</td><td>親から子をたどる入れ子表示と、入れ子形式の JSON 書き出し（D2）</td><td><span class="tag should">Should</span></td><td>3</td></tr>
+              <tr><td class="id">FR-ER-07</td><td>多対多（中間エンティティを自動で作る）</td><td><span class="tag could">Could</span></td><td>3</td></tr>
+              <tr><td class="id">FR-ER-08</td><td>エンティティや属性の変更・削除時に、それを参照している画面・遷移・データを示し、影響を確認してから実行する</td><td><span class="tag should">Should</span></td><td>5</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.5 データ操作（FR-DATA）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th><th>優先度</th><th>段階</th></tr></thead>
+            <tbody>
+              <tr><td class="id">FR-DATA-01</td><td><code>createRecord</code> / <code>updateRecord</code> / <code>deleteRecord</code> をボタンや遷移に設定できる</td><td><span class="tag must">Must</span></td><td>4</td></tr>
+              <tr><td class="id">FR-DATA-02</td><td>削除時にリレーションの <code>onDelete</code>（cascade / restrict / setNull）を守る。restrict のときはエラーを表示する</td><td><span class="tag must">Must</span></td><td>4</td></tr>
+              <tr><td class="id">FR-DATA-03</td><td>フォーム画面・ダイアログの入力を下書き（<code>state</code>）に保持し、保存で反映、キャンセルで破棄する</td><td><span class="tag must">Must</span></td><td>4</td></tr>
+              <tr><td class="id">FR-DATA-04</td><td>保存前に、ER の定義（必須・型・列挙値）で入力を検証し、エラーを項目の横に表示する</td><td><span class="tag should">Should</span></td><td>4</td></tr>
+              <tr><td class="id">FR-DATA-05</td><td>一覧の検索・絞り込み・並び替え</td><td><span class="tag could">Could</span></td><td>5</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.6 ER からの画面生成（FR-GEN）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th><th>優先度</th><th>段階</th></tr></thead>
+            <tbody>
+              <tr><td class="id">FR-GEN-01</td><td>エンティティを選び、一覧・詳細・作成／編集フォーム・削除確認のうち必要なものを選んで生成する</td><td><span class="tag must">Must</span></td><td>5</td></tr>
+              <tr><td class="id">FR-GEN-02</td><td>生成した画面の間の遷移（一覧の行 → 詳細、選択＋編集 → フォーム、削除 → 確認 → 一覧）も生成する</td><td><span class="tag must">Must</span></td><td>5</td></tr>
+              <tr><td class="id">FR-GEN-03</td><td>1対多のリレーションがあれば、親の詳細画面に子の一覧（例: 機器詳細にアラーム一覧）を入れる</td><td><span class="tag should">Should</span></td><td>5</td></tr>
+              <tr><td class="id">FR-GEN-04</td><td>フロー先行で作った「エンティティ未設定の画面」に、後からエンティティと役割を設定して中身を生成できる</td><td><span class="tag must">Must</span></td><td>5</td></tr>
+              <tr><td class="id">FR-GEN-05</td><td>再生成するとき、手で直した部分を上書きする前に差分を示す</td><td><span class="tag could">Could</span></td><td>5</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.7 画面の中身の編集（FR-UI）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th><th>優先度</th><th>段階</th></tr></thead>
+            <tbody>
+              <tr><td class="id">FR-UI-01</td><td>画面の部品（表・ボタン・テキスト・入力欄など）の追加・並べ替え・削除</td><td><span class="tag should">Should</span></td><td>6</td></tr>
+              <tr><td class="id">FR-UI-02</td><td>部品の props にデータやエンティティの属性をバインドできる（候補を補完）</td><td><span class="tag should">Should</span></td><td>6</td></tr>
+              <tr><td class="id">FR-UI-03</td><td>部品を選び、未結合の遷移をトリガーとして結びつけられる（D1）</td><td><span class="tag must">Must</span></td><td>6</td></tr>
+              <tr><td class="id">FR-UI-04</td><td>React などのソースコードの書き出し（<code>packages/codegen</code> を活用）</td><td><span class="tag could">Could</span></td><td>6</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 9 -->
+        <h2 id="nfr"><span class="num">9</span>非機能要求</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>要求</th></tr></thead>
+            <tbody>
+              <tr><td class="id">NFR-01</td><td>ブラウザだけで動く（サーバー不要）。Chrome / Edge の最新版を対象にする。ファイルの上書き保存は File System Access API、無ければダウンロード</td></tr>
+              <tr><td class="id">NFR-02</td><td>プロジェクト JSON は人が読んで git で差分を見られること。配置情報など見た目だけの情報は分けて保存する</td></tr>
+              <tr><td class="id">NFR-03</td><td>スキーマにバージョンを持たせ、変わったときは移行関数で古いファイルを読めるようにする</td></tr>
+              <tr><td class="id">NFR-04</td><td>画面 50・エンティティ 30・レコード 合計 5,000 件程度でも、編集とプレビューが体感で遅くならない</td></tr>
+              <tr><td class="id">NFR-05</td><td>スキーマ・検証・データストア（CRUD とカスケード）・サンプル生成はユーザーインターフェースから切り離したライブラリにし、単体テストを書く</td></tr>
+              <tr><td class="id">NFR-06</td><td><code>{{ }}</code> の式は PoC では JS として評価する（信頼できるファイルだけを開く前提）。外部に公開する段階で安全な式評価に置き換える</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 10 -->
+        <h2 id="steps"><span class="num">10</span>ステップ計画</h2>
+        <p>
+          各ステップは単体で動かして確認できる大きさにする。<span class="tag flow">フロー先行</span> の流れ（ステップ 1・2）と <span class="tag er">ER 先行</span> の流れ（ステップ 3）は独立しているので、順番は入れ替えられる。ステップ 4・5 で 2 つが合流する。
+        </p>
+
+        <div class="step">
+          <div class="step-head"><span class="step-no">STEP 0</span><span class="step-title">スキーマ <code>poc-0</code> と検証・保存</span></div>
+          <div class="step-body">
+            <ul>
+              <li>zod で 6 章のスキーマを書き、形と参照の検証、決定的な書き出し、JSON の読み書きを作る</li>
+              <li>題材「機器の設定＆モニタリング」を <code>poc-0</code> で書いたサンプルを用意する</li>
+            </ul>
+            <p><strong>完了条件</strong>：サンプルを読み込み → 書き出し → 再読み込みで内容が変わらない。存在しない画面への遷移などを、場所付きのエラーとして出せる。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-no">STEP 1</span><span class="step-title">画面一覧とフロー図</span><span class="tag flow">フロー先行</span></div>
+          <div class="step-body">
+            <ul>
+              <li>画面・ダイアログの一覧（作成・名前変更・削除）と、それをノードにしたフロー図</li>
+              <li>ノードをつないで遷移を作る（ダイアログ宛ては破線）。自動レイアウト、Undo / Redo、保存</li>
+            </ul>
+            <p><strong>完了条件</strong>：題材の 3 画面・2 ダイアログと遷移を、ゼロから 5 分程度で作って保存し、開き直せる。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-no">STEP 2</span><span class="step-title">トリガー定義とワイヤーフレームのプレビュー</span><span class="tag flow">フロー先行</span></div>
+          <div class="step-body">
+            <ul>
+              <li>遷移のパネルでトリガー（T1〜T4）、渡す値、付随アクションを設定する</li>
+              <li>ダイアログの呼び出し元一覧、画面ごとの入出力の遷移一覧、警告（到達不能・未結合）</li>
+              <li>中身の無い画面を「タイトル＋出ていく遷移のボタン」として表示するプレビューで、クリックして辿る。フロー図上で現在地を強調</li>
+            </ul>
+            <p><strong>完了条件</strong>：ダッシュボード → 機器一覧 → 機器詳細 → 削除確認ダイアログ → 一覧に戻る、をプレビューで辿れる。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-no">STEP 3</span><span class="step-title">ER 図とサンプルデータ</span><span class="tag er">ER 先行</span></div>
+          <div class="step-body">
+            <ul>
+              <li>エンティティ・属性・リレーションの編集と ER 図表示</li>
+              <li>件数とシードを指定したサンプルデータ生成。表形式での編集、入れ子表示</li>
+            </ul>
+            <p><strong>完了条件</strong>：Device / Alarm / Metric / DeviceSettings の ER を作り、機器 5 件・アラーム 20 件を、外部キーが壊れていない状態で生成できる。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-no">STEP 4</span><span class="step-title">データのバインドと CRUD の実行</span><span class="tag flow">合流</span><span class="tag er">合流</span></div>
+          <div class="step-body">
+            <ul>
+              <li>画面に役割（一覧・詳細・フォーム・確認）とエンティティを設定し、役割ごとのテンプレートで表示する</li>
+              <li>選択状態（<code>state.selection</code>）、行クリック・選択＋ボタンの遷移、CRUD アクション、カスケード削除をプレビューで実行する</li>
+              <li>データのリセット、アクションのログ、v0 形式への書き出し</li>
+            </ul>
+            <p><strong>完了条件</strong>：機器を選んで編集・保存すると一覧に反映される。機器を削除すると、その機器のアラームも消える（cascade）。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-no">STEP 5</span><span class="step-title">ER からの画面・遷移の生成</span><span class="tag er">ER 先行</span></div>
+          <div class="step-body">
+            <ul>
+              <li>エンティティから一覧・詳細・フォーム・削除確認と、その間の遷移を生成する。親の詳細に子の一覧を入れる</li>
+              <li>フロー先行で作った画面に、後からエンティティを設定して中身を生成する</li>
+              <li>ER の変更が画面・遷移・データに与える影響の表示</li>
+            </ul>
+            <p><strong>完了条件</strong>：空のプロジェクトから ER だけを作り、ボタン 1 つで「機器の一覧・詳細・編集・削除」が動くアプリになる。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-no">STEP 6</span><span class="step-title">画面の中身の編集とコード書き出し</span></div>
+          <div class="step-body">
+            <ul>
+              <li>部品の追加・並べ替え・props のバインディング、部品と未結合の遷移の結びつけ</li>
+              <li>React のソースコード書き出し（<code>packages/codegen</code> を拡張、または v0 経由）</li>
+            </ul>
+            <p><strong>完了条件</strong>：生成された機器詳細画面にボタンを足して新しい遷移に結びつけ、書き出したコードがプレビューと同じように動く。</p>
+          </div>
+        </div>
+
+        <!-- 11 -->
+        <h2 id="tech"><span class="num">11</span>技術構成案</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>領域</th><th>候補</th><th>理由</th></tr></thead>
+            <tbody>
+              <tr><td>言語・ビルド</td><td>TypeScript, React, Vite</td><td>既存のモノレポと同じ構成</td></tr>
+              <tr><td>フロー図・ER 図</td><td>React Flow（<code>@xyflow/react</code>）、dagre / elkjs で自動レイアウト</td><td><code>apps/flow</code> で使った実績がある。ER 図もノード＋エッジで描ける</td></tr>
+              <tr><td>スキーマ・検証</td><td>zod</td><td>v0 と同じ。JSON Schema も生成できる</td></tr>
+              <tr><td>状態管理</td><td>Zustand ＋ Immer（パッチで Undo / Redo）</td><td>1 つの JSON を複数のビューから編集するのに向く</td></tr>
+              <tr><td>サンプルデータ生成</td><td>@faker-js/faker（ja ロケール）、シード付き</td><td>型・書式に合った値を再現性ありで作れる</td></tr>
+              <tr><td>テスト</td><td>Vitest</td><td>既存と同じ</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>フォルダ構成案</h3>
+<pre>original-poc/
+├── docs/
+│   └── requirements.html   ← この文書
+├── packages/
+│   ├── model/      スキーマ poc-0・検証・読み書き・v0 への変換
+│   ├── store/      データストア（CRUD・リレーション・カスケード）
+│   └── seed/       ER からのサンプルデータ生成
+├── app/            エディタ（フロー図・ER 図・画面・プレビュー）
+└── examples/       題材「機器の設定＆モニタリング」の poc-0 版</pre>
+        <p class="muted">pnpm ワークスペースへの登録（<code>pnpm-workspace.yaml</code> に <code>original-poc/*</code> などを追加）はステップ 0 で行う。</p>
+
+        <!-- 12 -->
+        <h2 id="out"><span class="num">12</span>スコープ外（PoC ではやらないこと）</h2>
+        <ul>
+          <li>実際のバックエンド・データベースとの接続（データはプロジェクト JSON 内のサンプルデータのみ）</li>
+          <li>認証・権限・複数人での同時編集</li>
+          <li>ピクセル単位のデザイン編集（Figma のような自由配置）、テーマ・デザインシステム</li>
+          <li>レスポンシブ対応・アクセシビリティの作り込み（プレビュー画面側）</li>
+          <li>任意の JS を書けるスクリプト機能（式は <code>{{ }}</code> の範囲のみ）</li>
+        </ul>
+
+        <!-- 13 -->
+        <h2 id="questions"><span class="num">13</span>確認したいこと</h2>
+        <div class="callout warn">
+          <span class="label">次に進む前に</span>
+          下の項目は推奨案のまま進めても作業は始められる。違う場合だけ指摘してもらえれば、この文書を直してからステップ 0 に入る。
+        </div>
+        <ul class="check">
+          <li>「クラウド操作」は <strong>CRUD 操作</strong>の意味でよいか</li>
+          <li>「カスケード構造」は、プロジェクト定義の木構造（A）の意味か、サンプルデータを親子で入れ子に持つ（B）意味か。B の場合、<a href="#d2">D2</a> の「フラットを正、入れ子は派生」でよいか</li>
+          <li><a href="#d1">D1</a>：遷移を宣言的な <code>transitions</code> として持ち、部品とは後から結びつける方式でよいか</li>
+          <li>題材は既存の「機器の設定＆モニタリング」でよいか。別の題材（例: 受注管理など、多対多を含むもの）も用意したいか</li>
+          <li>最初に作るのはフロー先行（ステップ 1・2）からでよいか。ER 先行（ステップ 3）を先にしたいか</li>
+          <li>最終的に欲しいのは「動くプロトタイプ」までか、「書き出したコードを本番の土台にする」ところまでか（ステップ 6 の比重が変わる）</li>
+          <li>GitHub の issue に分けて進めるか（既存の P0〜P6 と同じ運用にするか）</li>
+        </ul>
+      </main>
+    </div>
+  </body>
+</html>
