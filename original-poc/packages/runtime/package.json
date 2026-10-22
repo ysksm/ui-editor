@@ -23,5 +23,8 @@
     "@ui-editor/poc-datastore": "workspace:*",
     "@ui-editor/poc-model": "workspace:*",
     "@ui-editor/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "immer": "^9.0.21"
   }
 }
