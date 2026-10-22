@@ -1,0 +1,26 @@
+:root {
+  --bg: #f5f6f8;
+  --paper: #ffffff;
+  --ink: #1d2330;
+  --muted: #667085;
+  --line: #d9dde4;
+  --soft: #eef1f5;
+  --accent: #2f5bd3;
+  --accent-soft: #e6ecfb;
+  --danger: #c2410c;
+  --danger-soft: #fdecdf;
+  --font:
+    "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--bg);
+}
