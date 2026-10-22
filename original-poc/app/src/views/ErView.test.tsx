@@ -77,8 +77,9 @@ describe("ER ビュー", () => {
     act(() => store.getState().select({ kind: "entity", id: "Alarm" }));
     fireEvent.click(within(panel()).getByRole("button", { name: "エンティティを削除" }));
     const dialog = screen.getByRole("alertdialog");
-    expect(dialog.textContent).toContain("データ 10 件と");
-    expect(dialog.textContent).toContain("Device.alarms");
+    expect(dialog.textContent).toContain("機器.alarms（入れ子）");
+    expect(dialog.textContent).toContain("アラームのデータ 10 件");
+    expect(dialog.textContent).toContain("（式。書き換わりません）");
     fireEvent.click(within(dialog).getByRole("button", { name: "削除する" }));
     expect(store.getState().project.entities.map((e) => e.id)).toEqual([
       "Device",
@@ -106,5 +107,25 @@ describe("ER ビュー", () => {
     fireEvent.click(within(panel()).getByRole("button", { name: "追加" }));
     const dialog = screen.getByRole("alertdialog");
     expect(dialog.textContent).toContain("Site のデータ 1 件は消えます");
+  });
+});
+
+describe("ER の変更の影響（FR-ER-08）", () => {
+  it("属性を消すときは参照を示して確かめる。id を変えるときは書き換わらない式を示す", () => {
+    const store = renderWith(loadExample());
+    act(() => store.getState().select({ kind: "entity", id: "Device" }));
+    fireEvent.click(within(panel()).getByRole("button", { name: "属性 model を削除" }));
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog.textContent).toContain("画面「機器一覧」の部品 table: {{ row.model }}");
+    fireEvent.click(within(dialog).getByRole("button", { name: "やめる" }));
+    expect(store.getState().project.entities[0]!.fields.some((f) => f.id === "model")).toBe(true);
+
+    commit("属性 model の id", "modelName");
+    const confirm = screen.getByRole("alertdialog");
+    expect(confirm.textContent).toContain("次の式は書き換わりません");
+    fireEvent.click(within(confirm).getByRole("button", { name: "変える" }));
+    expect(store.getState().project.entities[0]!.fields.some((f) => f.id === "modelName")).toBe(
+      true,
+    );
   });
 });
