@@ -153,33 +153,3 @@ ${entities.join("\n")}
 \`${appName}\` は poc-codegen で生成した。
 `;
 }
-
-/** 仮のトップ画面（画面・ダイアログの生成は OP6-4）。ストア・フック・部品が型どおりにつながることを確かめる。 */
-export function emitPlaceholderApp(project: Project): string {
-  const rows = project.entities.map(
-    (e) => `{ name: ${JSON.stringify(`${e.name}（${e.id}）`)}, count: data.${e.id}.length }`,
-  );
-  return `import { useDataView } from "./store/hooks";
-import { Box } from "./ui/Box";
-import { Table } from "./ui/Table";
-import { Text } from "./ui/Text";
-
-/** トップ画面（仮）。エンティティごとの件数を出す。 */
-export function App() {
-  const data = useDataView();
-  return (
-    <Box gap={12} style={{ padding: 24 }}>
-      <Text variant="title" text=${JSON.stringify(project.name)} />
-      <Table
-        rows={[${rows.join(", ")}]}
-        rowKey={(row) => row.name}
-        columns={[
-          { header: "エンティティ", value: (row) => row.name },
-          { header: "件数", value: (row) => row.count },
-        ]}
-      />
-    </Box>
-  );
-}
-`;
-}

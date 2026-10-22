@@ -278,16 +278,17 @@ v0 の `serializeProject` と同じ方針。キーを固定の順（`schemaVersi
 
 生成するアプリ（Vite + React + TS、react-router、Zustand、CSS Modules）:
 
-| ファイル                                           | 中身                                                                                                                                                                                            | 生成 / 固定   |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `src/model/types.ts`                               | エンティティの型、項目名の型、`Dataset`（入れ子）、`DataView`（式の `data`）、`UiState`、画面・ダイアログのパラメータの型                                                                       | 生成          |
-| `src/model/schema.ts`                              | ER（主キー・項目の型・必須・既定値・列挙値・範囲・参照先と `onDelete`・入れ子）                                                                                                                 | 生成          |
-| `src/model/data.ts`                                | サンプルデータ（入れ子のまま）と `state` の初期値                                                                                                                                               | 生成          |
-| `src/runtime/datastore.ts`                         | 入れ子のデータの検索・CRUD。poc-datastore と同じ規則（採番、必須・型・列挙値・範囲・参照先の検証、入れ子の親、子ごとの削除、`onDelete` の cascade / setNull / restrict）                        | 固定          |
-| `src/store/store.ts`・`hooks.ts`                   | Zustand のストア（data・state・選択・ダイアログの重なり・お知らせ）と、式のスコープを返すフック（`useDataView`・`useUiState`・`useRecord`）                                                     | 固定          |
-| `src/store/records.ts`                             | エンティティごとの型付きの CRUD（`createDevice(values)`、入れ子は `createAlarm(parentId, values)`、`updateDevice(match, set)`、`deleteDevice(match)`）。データの取得元を API に替えるときの境目 | 生成          |
-| `src/ui/*`                                         | 組み込みの部品（Box・Text・Button・TextInput・NumberInput・Checkbox・Select・Table・Dialog）                                                                                                    | 固定          |
-| `src/screens/*`・`src/dialogs/*`・`src/routes.tsx` | 画面・ダイアログ・ルート                                                                                                                                                                        | 生成（OP6-4） |
+| ファイル                                                                                                                         | 中身                                                                                                                                                                                            | 生成 / 固定 |
+| -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `src/model/types.ts`                                                                                                             | エンティティの型、項目名の型、`Dataset`（入れ子）、`DataView`（式の `data`）、`UiState`、画面・ダイアログのパラメータの型                                                                       | 生成        |
+| `src/model/schema.ts`                                                                                                            | ER（主キー・項目の型・必須・既定値・列挙値・範囲・参照先と `onDelete`・入れ子）                                                                                                                 | 生成        |
+| `src/model/data.ts`                                                                                                              | サンプルデータ（入れ子のまま）と `state` の初期値                                                                                                                                               | 生成        |
+| `src/runtime/datastore.ts`                                                                                                       | 入れ子のデータの検索・CRUD。poc-datastore と同じ規則（採番、必須・型・列挙値・範囲・参照先の検証、入れ子の親、子ごとの削除、`onDelete` の cascade / setNull / restrict）                        | 固定        |
+| `src/store/store.ts`・`hooks.ts`                                                                                                 | Zustand のストア（data・state・選択・ダイアログの重なり・お知らせ）と、式のスコープを返すフック（`useDataView`・`useUiState`・`useRecord`）                                                     | 固定        |
+| `src/store/records.ts`                                                                                                           | エンティティごとの型付きの CRUD（`createDevice(values)`、入れ子は `createAlarm(parentId, values)`、`updateDevice(match, set)`、`deleteDevice(match)`）。データの取得元を API に替えるときの境目 | 生成        |
+| `src/ui/*`                                                                                                                       | 組み込みの部品（Box・Text・Button・TextInput・NumberInput・Checkbox・Select・Table・Dialog）                                                                                                    | 固定        |
+| `src/screens/*`・`src/dialogs/*`（`DialogHost.tsx` を含む）・`src/App.tsx`（ルート）・`src/model/screens.ts`（パスとパラメータ） | 画面・ダイアログ・ルート                                                                                                                                                                        | 生成        |
+| `src/navigation.ts`・`src/Layout.tsx`・`src/store/form.ts`                                                                       | 画面の移動とパラメータ（`useNavigator`・`useScreenParams`）、画面の枠（お知らせ・画面・ダイアログ）、フォームの下書き（`useForm`）                                                              | 固定        |
 
 ER から型への規則（サンプルデータがそのまま型に合うこと）:
 
@@ -319,6 +320,12 @@ ER から型への規則（サンプルデータがそのまま型に合うこ�
 | 画面の `mount`                                     | 画面のコンポーネントを作ったあと 1 回（`useMount`）。navigate のたびに画面を作り直す（`location.key`）ので、同じ画面への遷移でも下書きと mount はやり直す                       |
 | 表の `rowSelect`                                   | 表に `entity` があれば先に選択を変え、そのあとアクション                                                                                                                        |
 | 失敗の表示（restrict の削除など）                  | ストアのお知らせ（画面の上に出す）。プレビューはログに出す                                                                                                                      |
+
+そのほかの決めごと:
+
+- 部品（ノード）は `src/ui/` の部品の JSX にし、props の `{{ }}` は TS の式、文字列との混在はテンプレート文字列（値は `text()` でプレビューと同じ文字列に）にする。部品が出さないイベント（例: TextInput の click）はプレビューでも起きないので書かない。
+- フォームでない画面・ダイアログの `setDraft` / `saveDraft` は、プレビューと同じく失敗（お知らせを出して後続を止める）にする。入れ子のエンティティの `createRecord` で親の指定が合わないものも、実行時にデータ操作のエラーになるように書く。
+- `repeat.as` に生成するコードの名前（`text`・`navigate` など）は使えない（生成時のエラー）。
 
 テスト: 題材の生成結果のスナップショット、同じ入力で同じ出力（決定的）、固定のデータ操作（`templates/src/runtime/datastore.ts`）を poc-datastore と同じ操作で比べるテスト。生成したアプリを別にインストールして `tsc && vite build` する確認（`pnpm --filter @ui-editor/poc-codegen build:example`。ネットワークを使うので `pnpm test` には入れない）。ステップ 6 の QA で、プレビューと同じ筋書きを生成アプリ（ポート 5181）に流す。
 

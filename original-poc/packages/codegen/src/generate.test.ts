@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 import { loadProject, serializeProject, type Project } from "@ui-editor/poc-model";
 import { describe, expect, it } from "vitest";
 import { generate, GenerateError } from "./generate.js";
-import { EXAMPLES, readProjectFile } from "./node.js";
+import { EXAMPLES } from "./node.js";
 
-const example = readProjectFile(EXAMPLES[0].file);
+const example = EXAMPLES[0]!.load();
 const snapshots = fileURLToPath(new URL("../snapshots/device-monitor/", import.meta.url));
 
 function walk(dir: string): string[] {

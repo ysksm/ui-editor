@@ -1,18 +1,32 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { formatIssue, loadProject, type Project } from "@ui-editor/poc-model";
+import { formatIssue, generateScreens, loadProject, type Project } from "@ui-editor/poc-model";
 import type { GeneratedFile } from "./files.js";
 
 /** Node だけで使うもの（ファイルの読み書き）。ブラウザからは `@ui-editor/poc-codegen` を使う。 */
 
-/** 題材（original-poc/examples）。 */
-export const EXAMPLES = [
-  {
-    name: "device-monitor",
-    file: fileURLToPath(new URL("../../../examples/device-monitor.poc.json", import.meta.url)),
-  },
-] as const;
+const EXAMPLE_FILE = fileURLToPath(
+  new URL("../../../examples/device-monitor.poc.json", import.meta.url),
+);
+
+/**
+ * 生成を確かめる題材。
+ * - device-monitor: original-poc/examples の題材（手で組んだ画面）
+ * - device-monitor-generated: 題材の ER とデータから、ER からの生成（generateScreens）で全エンティティの画面を作ったもの
+ */
+export const EXAMPLES: readonly { name: string; load: () => Project }[] = [
+  { name: "device-monitor", load: () => readProjectFile(EXAMPLE_FILE) },
+  { name: "device-monitor-generated", load: () => generatedExample(readProjectFile(EXAMPLE_FILE)) },
+];
+
+/** ER からの生成で、全エンティティ（親から順）の一覧・詳細・フォーム・削除の確認を作る。 */
+export function generatedExample(base: Project): Project {
+  const project: Project = { ...structuredClone(base), entry: undefined, screens: [], dialogs: [] };
+  delete project.layout;
+  for (const e of base.entities) generateScreens(project, e.id);
+  return project;
+}
 
 /** プロジェクトファイルを読む（形・参照のエラーがあれば例外）。 */
 export function readProjectFile(path: string): Project {

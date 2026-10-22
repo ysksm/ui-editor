@@ -20,8 +20,8 @@ export interface TableProps<Row> {
   selectedKey?: unknown;
   className?: string;
   style?: CSSProperties;
-  onRowClick?: (event: { row: Row }) => void;
-  onRowSelect?: (event: { row: Row }) => void;
+  onRowClick?: (event: { row: Row }, index: number) => void;
+  onRowSelect?: (event: { row: Row }, index: number) => void;
 }
 
 /** 表。行を押すと onRowClick、選ぶ欄で onRowSelect（値は `event.row`）。 */
@@ -66,7 +66,7 @@ export function Table<Row>({
               <tr
                 key={String(key)}
                 className={cx(selected && styles.selected)}
-                onClick={() => onRowClick?.({ row })}
+                onClick={() => onRowClick?.({ row }, index)}
               >
                 {selectable && (
                   <td onClick={(e) => e.stopPropagation()}>
@@ -74,7 +74,7 @@ export function Table<Row>({
                       type="radio"
                       aria-label={`${String(key)} を選ぶ`}
                       checked={selected}
-                      onChange={() => onRowSelect?.({ row })}
+                      onChange={() => onRowSelect?.({ row }, index)}
                     />
                   </td>
                 )}
