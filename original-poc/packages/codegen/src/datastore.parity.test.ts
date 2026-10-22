@@ -3,14 +3,14 @@ import type { DataRecord, Entity, Project } from "@ui-editor/poc-model";
 import { describe, expect, it } from "vitest";
 import * as gen from "../templates/src/runtime/datastore.js";
 import { toRuntimeSchema } from "./emit/model.js";
-import { EXAMPLES, readProjectFile } from "./node.js";
+import { EXAMPLES } from "./node.js";
 
 /**
  * 生成アプリに入れるデータ操作（templates/src/runtime/datastore.ts）が、
  * プレビュー（poc-datastore）と同じ結果になることを確かめる。
  */
 
-const example = readProjectFile(EXAMPLES[0].file);
+const example = EXAMPLES[0]!.load();
 
 /** 参照（ref）の onDelete を確かめるための ER。 */
 const refEntities: Entity[] = [

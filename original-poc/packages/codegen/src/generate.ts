@@ -1,10 +1,12 @@
 import { checkProject, formatIssue, type Project } from "@ui-editor/poc-model";
-import { emitAppFiles, emitPlaceholderApp } from "./emit/app.js";
+import { emitAppFiles } from "./emit/app.js";
+import { ContainerError, emitContainer, type ContainerInfo } from "./emit/container.js";
 import { emitData, emitSchema, emitTypes } from "./emit/model.js";
 import { emitRecords } from "./emit/records.js";
+import { emitApp, emitDialogHost, emitScreensModel, screenPaths } from "./emit/routes.js";
 import { FileSet, type GeneratedFile } from "./files.js";
 import { formatFile } from "./format.js";
-import { RESERVED_ENTITY_IDS } from "./names.js";
+import { NameTable, pascalCase, RESERVED_ENTITY_IDS } from "./names.js";
 import { TEMPLATES } from "./templates.generated.js";
 
 export interface GenerateOptions {
@@ -51,7 +53,39 @@ export async function generate(
   files.add("src/model/schema.ts", emitSchema(project));
   files.add("src/model/data.ts", emitData(project));
   files.add("src/store/records.ts", emitRecords(project));
-  files.add("src/App.tsx", emitPlaceholderApp(project));
+
+  // 画面・ダイアログ・ルート
+  const names = new NameTable(["App", "Layout", "DialogHost"]);
+  const screens: ContainerInfo[] = project.screens.map((container) => ({
+    kind: "screen",
+    container,
+    component: names.take(`${pascalCase(container.id)}Screen`),
+  }));
+  const dialogs: ContainerInfo[] = project.dialogs.map((container) => ({
+    kind: "dialog",
+    container,
+    component: names.take(`${pascalCase(container.id)}Dialog`),
+  }));
+  const problems: string[] = [];
+  const emitted = [...screens, ...dialogs].map((info) => {
+    try {
+      const out = emitContainer(project, info);
+      files.add(out.path, out.source);
+      return { ...info, usesParams: out.usesParams };
+    } catch (e) {
+      if (!(e instanceof ContainerError)) throw e;
+      problems.push(...e.problems);
+      return { ...info, usesParams: false };
+    }
+  });
+  if (problems.length > 0) throw new GenerateError("生成できない式・部品があります", problems);
+  const paths = screenPaths(project);
+  files.add("src/model/screens.ts", emitScreensModel(project, paths));
+  files.add("src/App.tsx", emitApp(project, screens, paths));
+  files.add(
+    "src/dialogs/DialogHost.tsx",
+    emitDialogHost(emitted.filter((d) => d.kind === "dialog")),
+  );
 
   return Promise.all(
     files

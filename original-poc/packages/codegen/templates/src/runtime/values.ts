@@ -8,7 +8,7 @@ export function text(value: unknown): string {
 }
 
 /** 値があるか（undefined・null・false・空文字でない）。Button の requires の判定に使う。 */
-export function present(value: unknown): boolean {
+export function present<T>(value: T): value is Exclude<T, undefined | null | false | ""> {
   return value !== undefined && value !== null && value !== false && value !== "";
 }
 
