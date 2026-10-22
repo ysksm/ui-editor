@@ -4,6 +4,7 @@ import { Header } from "./components/Header";
 import { IssuesPanel } from "./components/IssuesPanel";
 import { NoticeBar } from "./components/NoticeBar";
 import { ViewNav } from "./components/ViewNav";
+import { PreviewPane } from "./preview/PreviewPane";
 import { fileActions } from "./state/file-actions";
 import { useEditor, useEditorStore, type ViewId } from "./state/store";
 import { DataView } from "./views/DataView";
@@ -20,17 +21,19 @@ const VIEW_COMPONENTS: Record<ViewId, () => React.JSX.Element> = {
 
 export function App() {
   const view = useEditor((s) => s.view);
+  const previewOpen = useEditor((s) => s.previewOpen);
   useShortcuts();
   const View = VIEW_COMPONENTS[view];
   return (
     <div className="app">
       <Header />
       <NoticeBar />
-      <div className="body">
+      <div className={previewOpen ? "body with-preview" : "body"}>
         <ViewNav />
         <main className="main" key={view}>
           <View />
         </main>
+        {previewOpen && <PreviewPane />}
       </div>
       <IssuesPanel />
       <ConfirmDialog />

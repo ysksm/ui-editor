@@ -23,11 +23,18 @@ export interface FlowNodeData extends Record<string, unknown> {
   /** 検証の問題の件数（エラー・警告）。 */
   errors: number;
   warnings: number;
+  /** プレビューで今いる画面・ダイアログ。 */
+  current?: boolean;
+  /** プレビューでたどった画面・ダイアログ。 */
+  visited?: boolean;
 }
 
 export interface FlowEdgeData extends Record<string, unknown> {
   transition: Transition;
   label: string;
+  /** プレビューでたどった遷移（last は最後にたどったもの）。 */
+  visited?: boolean;
+  last?: boolean;
 }
 
 export interface FlowGraph {

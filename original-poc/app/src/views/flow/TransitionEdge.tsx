@@ -28,6 +28,8 @@ export function TransitionEdge(props: EdgeProps<TransitionFlowEdge>) {
     "flow-edge",
     t.kind === "openDialog" ? "flow-edge-dialog" : "flow-edge-navigate",
     t.onClose ? "flow-edge-onclose" : "",
+    data.visited ? "visited" : "",
+    data.last ? "last" : "",
     selected ? "selected" : "",
   ]
     .filter(Boolean)

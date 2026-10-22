@@ -226,6 +226,9 @@ importers:
       '@ui-editor/poc-model':
         specifier: workspace:*
         version: link:../packages/model
+      '@ui-editor/poc-runtime':
+        specifier: workspace:*
+        version: link:../packages/runtime
       '@ui-editor/poc-seed':
         specifier: workspace:*
         version: link:../packages/seed

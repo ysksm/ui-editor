@@ -18,6 +18,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { currentFrame } from "@ui-editor/poc-runtime";
 import { useEffect, useMemo } from "react";
 import { useEditor } from "../state/store";
 import { ContainerList } from "./flow/ContainerList";
@@ -52,16 +53,32 @@ function FlowEditor() {
   const transition = selectedTransition ? findTransition(project, selectedTransition) : undefined;
 
   const graph = useMemo(() => flowGraph(project, issues), [project, issues]);
+  // プレビュー中なら、今いる画面とたどった遷移を強調する（FR-RUN-05）
+  const runtime = useEditor((s) => (s.previewOpen ? s.runtime : null));
+  const highlight = useMemo(() => {
+    if (!runtime) return undefined;
+    return {
+      current: currentFrame(runtime)?.container,
+      visited: new Set([
+        ...runtime.trail.flatMap((t) => [t.from, t.to]),
+        ...runtime.history.map((f) => f.container),
+      ]),
+      keys: new Set(runtime.trail.map((t) => t.key)),
+      last: runtime.trail.at(-1)?.key,
+    };
+  }, [runtime]);
   const derivedNodes = useMemo<ContainerFlowNode[]>(
     () =>
       graph.nodes.map((n) => ({
         id: n.id,
         type: "container",
         position: n.position,
-        data: n.data,
+        data: highlight
+          ? { ...n.data, current: n.id === highlight.current, visited: highlight.visited.has(n.id) }
+          : n.data,
         selected: n.id === selectedContainer,
       })),
-    [graph, selectedContainer],
+    [graph, selectedContainer, highlight],
   );
   // ドラッグ中の位置はローカルに持ち、ドラッグ終了でプロジェクトに書く（履歴は 1 回だけ）
   const [nodes, setNodes, onNodesChange] = useNodesState<ContainerFlowNode>(derivedNodes);
@@ -73,11 +90,13 @@ function FlowEditor() {
         type: "transition",
         source: e.source,
         target: e.target,
-        data: e.data,
+        data: highlight
+          ? { ...e.data, visited: highlight.keys.has(e.id), last: e.id === highlight.last }
+          : e.data,
         selected: e.id === selectedTransition,
         markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
       })),
-    [graph, selectedTransition],
+    [graph, selectedTransition, highlight],
   );
 
   const add = (kind: "screen" | "dialog") => {
