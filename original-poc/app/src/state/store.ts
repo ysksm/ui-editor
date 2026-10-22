@@ -21,6 +21,8 @@ export type Selection =
   | { kind: "container"; id: string }
   /** フロー図の遷移（key は extractTransitions が導くもの。編集のたびに選び直す）。 */
   | { kind: "transition"; key: string }
+  /** 画面ビューで選んだ部品。 */
+  | { kind: "node"; container: string; node: string }
   | null;
 
 export interface FileInfo {

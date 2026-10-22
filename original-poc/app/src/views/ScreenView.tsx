@@ -1,10 +1,15 @@
 import { listRecords } from "@ui-editor/poc-datastore";
 import {
+  addNode,
   applyTemplate,
+  BUILTIN_NODE_TYPES,
   findContainer,
+  findNode,
+  parentOf,
   KIND_LABELS,
   KINDS,
   replacedNodes,
+  type BuiltinNodeType,
   type ContainerRef,
   type Kind,
   type Node,
@@ -16,10 +21,11 @@ import { describeAction } from "../components/actions/describe";
 import { FrameView } from "../preview/PreviewPane";
 import { useEditor } from "../state/store";
 import { ContainerList } from "./flow/ContainerList";
+import { NodePanel } from "./screen/NodePanel";
 
 /**
  * 画面ビュー（D3・FR-GEN-04）: 画面・ダイアログに役割とエンティティを設定してテンプレートを当てる。
- * 中身（ノードの木）とその画面だけのプレビューを見る。部品の編集はステップ 6。
+ * 中身（ノードの木）の部品を選んで編集し（FR-UI-01・02）、その画面だけのプレビューで確かめる。
  */
 export function ScreenView() {
   const project = useEditor((s) => s.project);
@@ -27,14 +33,22 @@ export function ScreenView() {
   const selectedId =
     selection?.kind === "container"
       ? selection.id
-      : (project.screens[0]?.id ?? project.dialogs[0]?.id);
+      : selection?.kind === "node"
+        ? selection.container
+        : (project.screens[0]?.id ?? project.dialogs[0]?.id);
+  const selectedNode = selection?.kind === "node" ? selection.node : undefined;
   const ref = selectedId ? findContainer(project, selectedId) : undefined;
   return (
     <div className="screen-view">
       <div className="screen-body">
         <ContainerList project={project} selected={ref?.container.id} />
         {ref ? (
-          <ScreenEditor key={ref.container.id} project={project} info={ref} />
+          <ScreenEditor
+            key={ref.container.id}
+            project={project}
+            info={ref}
+            selectedNode={selectedNode}
+          />
         ) : (
           <p className="placeholder muted">
             フロービューで画面・ダイアログを作ると、ここで中身を作れます。
@@ -45,8 +59,17 @@ export function ScreenView() {
   );
 }
 
-function ScreenEditor({ project, info }: { project: Project; info: ContainerRef }) {
+function ScreenEditor({
+  project,
+  info,
+  selectedNode,
+}: {
+  project: Project;
+  info: ContainerRef;
+  selectedNode: string | undefined;
+}) {
   const edit = useEditor((s) => s.edit);
+  const select = useEditor((s) => s.select);
   const requestConfirm = useEditor((s) => s.requestConfirm);
   const c = info.container;
   const [kind, setKind] = useState<Kind | "">(c.kind ?? "");
@@ -131,10 +154,48 @@ function ScreenEditor({ project, info }: { project: Project; info: ContainerRef 
       </section>
       <div className="screen-columns">
         <section className="node-outline" aria-label="中身">
-          <h4>中身（ノードの木）</h4>
+          <h4>
+            中身（ノードの木）
+            <select
+              aria-label="部品を追加"
+              value=""
+              onChange={(e) => {
+                const type = e.target.value as BuiltinNodeType;
+                if (!type) return;
+                // 選んだ Box の中、Box 以外を選んでいればその後ろ、何も選んでいなければ root の末尾へ
+                const sel = selectedNode ? findNode(c.root, selectedNode) : undefined;
+                const parent =
+                  sel?.type === "Box" ? sel : sel ? parentOf(c.root, sel.id) : undefined;
+                const index =
+                  sel && sel.type !== "Box" && parent
+                    ? parent.children!.findIndex((n) => n.id === sel.id) + 1
+                    : undefined;
+                let id = "";
+                if (
+                  edit(
+                    `${type} を追加`,
+                    (d) => void (id = addNode(d, c.id, type, { parent: parent?.id, index })),
+                  )
+                )
+                  select({ kind: "node", container: c.id, node: id });
+              }}
+            >
+              <option value="">＋ 部品を追加…</option>
+              {BUILTIN_NODE_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </h4>
           {c.root ? (
             <ul>
-              <Outline project={project} node={c.root} />
+              <Outline
+                project={project}
+                node={c.root}
+                selected={selectedNode}
+                onSelect={(node) => select({ kind: "node", container: c.id, node })}
+              />
             </ul>
           ) : (
             <p className="muted small">
@@ -142,6 +203,13 @@ function ScreenEditor({ project, info }: { project: Project; info: ContainerRef 
             </p>
           )}
         </section>
+        {selectedNode && findNode(c.root, selectedNode) ? (
+          <NodePanel project={project} container={c} node={findNode(c.root, selectedNode)!} />
+        ) : (
+          <section className="node-panel muted small" aria-label="部品の編集">
+            中身の木で部品を選ぶと、ここで文言・バインディング・イベントを編集できます。
+          </section>
+        )}
         <SamplePreview project={project} info={info} />
       </div>
     </div>
@@ -158,10 +226,27 @@ function summary(node: Node): string {
   return typeof s === "string" ? s : "";
 }
 
-function Outline({ project, node }: { project: Project; node: Node }) {
+function Outline({
+  project,
+  node,
+  selected,
+  onSelect,
+}: {
+  project: Project;
+  node: Node;
+  selected: string | undefined;
+  onSelect: (id: string) => void;
+}) {
   return (
     <li>
-      <div className={`outline-row${node.placeholder ? " placeholder" : ""}`}>
+      <div
+        className={`outline-row${node.placeholder ? " placeholder" : ""}${selected === node.id ? " selected" : ""}`}
+        role="button"
+        tabIndex={0}
+        aria-pressed={selected === node.id}
+        onClick={() => onSelect(node.id)}
+        onKeyDown={(e) => e.key === "Enter" && onSelect(node.id)}
+      >
         <code className="outline-type">{node.type}</code>
         <span className="outline-id">{node.id}</span>
         <span className="outline-summary">{summary(node)}</span>
@@ -175,7 +260,13 @@ function Outline({ project, node }: { project: Project; node: Node }) {
       {node.children?.length ? (
         <ul>
           {node.children.map((c) => (
-            <Outline key={c.id} project={project} node={c} />
+            <Outline
+              key={c.id}
+              project={project}
+              node={c}
+              selected={selected}
+              onSelect={onSelect}
+            />
           ))}
         </ul>
       ) : null}
