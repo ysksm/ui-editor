@@ -300,6 +300,10 @@ importers:
       '@ui-editor/runtime':
         specifier: workspace:*
         version: link:../../../packages/runtime
+    devDependencies:
+      immer:
+        specifier: ^9.0.21
+        version: 9.0.21
 
   original-poc/packages/seed:
     dependencies:
