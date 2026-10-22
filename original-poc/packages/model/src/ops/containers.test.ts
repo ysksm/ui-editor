@@ -33,7 +33,7 @@ describe("画面・ダイアログの編集操作", () => {
     ]);
     expect(p.dialogs[1]).toEqual({ id: "dialog1", name: "ダイアログ1" });
     expect(p.layout?.flow?.dialog1).toEqual({ x: 1, y: 3 });
-    expect(checkProject(p)).toEqual([]);
+    expect(checkProject(p).filter((i) => i.severity === "error")).toEqual([]);
   });
 
   it("id は画面とダイアログで共通の名前空間", () => {
@@ -67,7 +67,11 @@ describe("画面・ダイアログの編集操作", () => {
   });
 
   it("消すと、そこへの遷移と、空になった仮の部品も消える", () => {
-    const base = smallProject();
+    // 削除の確認を開くボタンを仮の部品にしておく
+    const base = apply(
+      smallProject(),
+      (d) => void (d.screens[1]!.root!.children![0]!.placeholder = true),
+    );
     expect(countTransitionsTo(base, "deviceDelete")).toBe(1);
     expect(countTransitionsTo(base, "devices")).toBe(1);
     const p = apply(base, (d) => deleteContainer(d, "deviceDelete"));

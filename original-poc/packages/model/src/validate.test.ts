@@ -38,7 +38,7 @@ describe("validateProject", () => {
       const a = firstAction(page(p, 0).children![0]!, "rowClick");
       if (a.type === "navigate") a.to = "deviceDetial";
     });
-    expect(issues).toEqual([
+    expect(issues.filter((i) => i.severity === "error")).toEqual([
       {
         severity: "error",
         path: ["screens", 0, "root", "children", 0, "events", "rowClick", 0, "to"],
@@ -368,5 +368,38 @@ describe("配置情報", () => {
       issue("warning", ["layout", "flow", "gone"], /"gone" がありません/),
       issue("warning", ["layout", "er", "Gone"], /"Gone" がありません/),
     ]);
+  });
+});
+
+describe("遷移の警告（FR-FLOW-06）", () => {
+  it("どこからも遷移してこない画面・呼ばれないダイアログ・仮の部品のままの遷移", () => {
+    const issues = check((p) => {
+      p.screens.push({ id: "orphan", name: "孤立" });
+      p.dialogs.push({ id: "unused", name: "未使用" });
+      p.screens[1]!.root!.children![0]!.placeholder = true;
+    });
+    expect(issues).toEqual([
+      issue("warning", ["screens", 2], "画面「孤立」にはどこからも遷移してきません"),
+      issue("warning", ["dialogs", 1], "ダイアログ「未使用」はどこからも呼ばれていません"),
+      issue(
+        "warning",
+        ["screens", 1, "root", "children", 0, "events", "click", 0],
+        /仮の部品「削除の確認へ」のまま/,
+      ),
+      issue(
+        "warning",
+        ["screens", 1, "root", "children", 0, "events", "click", 0, "onClose", "ok", 0],
+        /仮の部品「削除の確認へ」のまま/,
+      ),
+    ]);
+  });
+
+  it("最初の画面は遷移してこなくてもよい", () => {
+    const issues = check((p) => {
+      // 詳細へ来る行クリックを外し、詳細を最初の画面にする
+      delete page(p, 0).children![0]!.events;
+      p.entry = "deviceDetail";
+    });
+    expect(issues).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-import type { Issue, Project } from "@ui-editor/poc-model";
+import { extractTransitions, type Issue, type Project } from "@ui-editor/poc-model";
 import type { Selection, ViewId } from "./store";
 
 /** 検証の問題の場所（path）から、開くビューと選ぶものを決める。 */
@@ -17,6 +17,10 @@ export function issueTarget(
     return { view: "data", selection: { kind: "data", entity: a } };
   }
   if ((head === "screens" || head === "dialogs") && typeof a === "number") {
+    // 遷移のアクションを指す問題（仮の部品のままの遷移など）は、その遷移を開く
+    const key = issue.path.join("/");
+    const t = extractTransitions(project).find((x) => x.path.join("/") === key);
+    if (t) return { view: "flow", selection: { kind: "transition", key: t.key } };
     const container = (head === "screens" ? project.screens : project.dialogs)[a];
     return { view: "flow", selection: container ? { kind: "container", id: container.id } : null };
   }

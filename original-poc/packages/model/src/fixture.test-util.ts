@@ -96,7 +96,6 @@ export function smallProject(): Project {
             {
               id: "btn1",
               type: "Button",
-              placeholder: true,
               props: { label: "削除の確認へ" },
               events: {
                 click: [

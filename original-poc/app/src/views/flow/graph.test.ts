@@ -7,12 +7,14 @@ describe("flowGraph", () => {
 
   it("画面・ダイアログをノード、遷移を線にする（最初の画面・仮の部品の数）", () => {
     const g = flowGraph(project, []);
-    expect(g.nodes.map((n) => [n.id, n.data.kind, n.data.entry, n.data.outgoing])).toEqual([
-      ["dashboard", "screen", true, 1],
-      ["devices", "screen", false, 3],
-      ["deviceDetail", "screen", false, 2],
-      ["deviceEdit", "dialog", false, 0],
-      ["deviceDelete", "dialog", false, 1],
+    expect(
+      g.nodes.map((n) => [n.id, n.data.kind, n.data.entry, n.data.outgoing, n.data.warnings]),
+    ).toEqual([
+      ["dashboard", "screen", true, 1, 0],
+      ["devices", "screen", false, 3, 0],
+      ["deviceDetail", "screen", false, 2, 0],
+      ["deviceEdit", "dialog", false, 0, 0],
+      ["deviceDelete", "dialog", false, 1, 0],
     ]);
     expect(g.edges.map((e) => [e.source, e.target, e.data.label])).toEqual([
       ["dashboard", "devices", "機器一覧へ"],

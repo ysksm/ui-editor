@@ -61,7 +61,10 @@ describe("フロービュー: 画面・ダイアログの一覧", () => {
     const p = store.getState().project;
     expect(p.screens.map((s) => s.id)).toEqual(["dashboard", "devices"]);
     expect(p.screens[1]!.root!.children![2]!.events).toBeUndefined();
-    expect(store.getState().issues).toEqual([]);
+    // 詳細から開いていた削除の確認は、どこからも呼ばれなくなる（警告）
+    expect(store.getState().issues.map((i) => [i.severity, i.message])).toEqual([
+      ["warning", "ダイアログ「削除の確認」はどこからも呼ばれていません"],
+    ]);
   });
 });
 

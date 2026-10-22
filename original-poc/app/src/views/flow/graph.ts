@@ -20,7 +20,9 @@ export interface FlowNodeData extends Record<string, unknown> {
   /** 出ていく遷移のうち仮の部品のままのもの。 */
   placeholders: number;
   outgoing: number;
-  issueCount: number;
+  /** 検証の問題の件数（エラー・警告）。 */
+  errors: number;
+  warnings: number;
 }
 
 export interface FlowEdgeData extends Record<string, unknown> {
@@ -51,12 +53,16 @@ export function flowGraph(project: Project, issues: readonly Issue[]): FlowGraph
   const transitions = extractTransitions(project);
   const entry = project.entry ?? project.screens[0]?.id;
   const ids = new Set(refs.map((r) => r.container.id));
-  const issueCounts = new Map<string, number>();
+  const issueCounts = new Map<string, { errors: number; warnings: number }>();
   for (const i of issues) {
     const [head, index] = i.path;
     if ((head === "screens" || head === "dialogs") && typeof index === "number") {
       const c = (head === "screens" ? project.screens : project.dialogs)[index];
-      if (c) issueCounts.set(c.id, (issueCounts.get(c.id) ?? 0) + 1);
+      if (!c) continue;
+      const n = issueCounts.get(c.id) ?? { errors: 0, warnings: 0 };
+      if (i.severity === "error") n.errors++;
+      else n.warnings++;
+      issueCounts.set(c.id, n);
     }
   }
   const edges: FlowGraph["edges"] = transitions
@@ -84,7 +90,8 @@ export function flowGraph(project: Project, issues: readonly Issue[]): FlowGraph
           entry: r.container.id === entry,
           placeholders: out.filter((t) => t.placeholder).length,
           outgoing: out.length,
-          issueCount: issueCounts.get(r.container.id) ?? 0,
+          errors: issueCounts.get(r.container.id)?.errors ?? 0,
+          warnings: issueCounts.get(r.container.id)?.warnings ?? 0,
         },
       };
     }),

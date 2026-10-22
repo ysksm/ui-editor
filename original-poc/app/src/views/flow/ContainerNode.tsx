@@ -18,7 +18,20 @@ export function ContainerNode({ data, selected }: NodeProps<ContainerFlowNode>) 
           </span>
         )}
         <strong>{data.name}</strong>
-        {data.issueCount > 0 && <span className="flow-node-issues">⚠ {data.issueCount}</span>}
+        {data.errors > 0 ? (
+          <span className="flow-node-issues" title="検証のエラー">
+            ⚠ {data.errors}
+          </span>
+        ) : (
+          data.warnings > 0 && (
+            <span
+              className="flow-node-issues warning"
+              title="検証の警告（到達できない・仮の部品のままなど）"
+            >
+              ⚠ {data.warnings}
+            </span>
+          )
+        )}
       </div>
       <div className="flow-node-meta">
         <span className={`kind-badge kind-${data.kind}`}>
