@@ -77,3 +77,70 @@ export async function commit(page, label, value) {
   await input.fill(value);
   await input.press("Enter");
 }
+
+/** 題材の 3 画面・2 ダイアログ（ステップ 1・2 の QA で使う）。 */
+export const DEVICE_CONTAINERS = [
+  { kind: "画面", id: "dashboard", name: "ダッシュボード" },
+  { kind: "画面", id: "devices", name: "機器一覧" },
+  { kind: "画面", id: "deviceDetail", name: "機器詳細" },
+  { kind: "ダイアログ", id: "deviceEdit", name: "機器の編集" },
+  { kind: "ダイアログ", id: "deviceDelete", name: "削除の確認" },
+];
+
+/** 題材の遷移 7 本。 */
+export const DEVICE_TRANSITIONS = [
+  ["dashboard", "devices"],
+  ["devices", "deviceEdit"],
+  ["devices", "dashboard"],
+  ["devices", "deviceDetail"],
+  ["deviceDetail", "deviceDelete"],
+  ["deviceDetail", "devices"],
+  ["deviceDelete", "devices"],
+];
+
+/** フロー図で、ノードの右の点から別のノードの左の点へドラッグする。 */
+export async function dragConnect(page, from, to) {
+  const a = await page
+    .locator(`.react-flow__node[data-id=${from}] .react-flow__handle-right`)
+    .boundingBox();
+  const b = await page
+    .locator(`.react-flow__node[data-id=${to}] .react-flow__handle-left`)
+    .boundingBox();
+  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+  await page.mouse.down();
+  await page.mouse.move((a.x + b.x) / 2, (a.y + b.y) / 2 + 40, { steps: 8 });
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 6 });
+  await page.mouse.up();
+}
+
+/**
+ * 空のプロジェクトから、フロービューで題材の画面・ダイアログと遷移（仮のボタン）を作る。
+ * 人が行う操作の数を返す。
+ */
+export async function buildDeviceFlow(page) {
+  let ops = 0;
+  await page.getByRole("button", { name: "新規", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "ビュー" })
+    .getByRole("button", { name: "フロー" })
+    .click();
+  ops += 2;
+  for (const c of DEVICE_CONTAINERS) {
+    await page.getByRole("button", { name: `＋ ${c.kind}` }).click();
+    await commit(page, `${c.kind}の名前`, c.name);
+    await commit(page, `${c.kind}の id`, c.id);
+    ops += 3;
+  }
+  await page.getByRole("button", { name: "整列" }).click();
+  ops++;
+  await page.waitForTimeout(400);
+  for (const [from, to] of DEVICE_TRANSITIONS) {
+    await dragConnect(page, from, to);
+    await page.waitForTimeout(80);
+    ops++;
+  }
+  await page.getByRole("button", { name: "整列" }).click();
+  ops++;
+  await page.waitForTimeout(400);
+  return ops;
+}
