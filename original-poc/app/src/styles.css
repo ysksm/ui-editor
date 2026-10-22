@@ -254,6 +254,9 @@ code {
   place-items: center;
   z-index: 100;
 }
+.modal p {
+  white-space: pre-wrap;
+}
 .modal {
   background: var(--paper);
   border-radius: 10px;

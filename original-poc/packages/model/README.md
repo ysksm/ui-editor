@@ -68,6 +68,7 @@
 | `updateNodeProps`                                                                   | ノードの props の書き換え（ボタンの文言など）                                                                                                                                                                                                                                   |
 | `applyTemplate` / `templateConflicts` / `recordParamName`（`src/ops/templates.ts`） | 役割（一覧・詳細・フォーム・確認）とエンティティから中身を作る。ランタイムが使う ref パラメータも足し、仮の部品は残す（下の「テンプレート」）                                                                                                                                   |
 | `generateScreens` / `findGenerated`（`src/ops/generate.ts`）                        | ER からの画面・遷移の生成（下の「生成」）                                                                                                                                                                                                                                       |
+| `findReferences` / `describeReferences`（`src/references.ts`）                      | ER の変更の影響: エンティティ・属性を参照している ER・画面・パラメータ・部品・アクション・式・データ（式は id を変えても書き換わらないので `expression: true`）（FR-ER-08）                                                                                                     |
 
 id は人が読める連番（`Entity1`、`field1`）。重なれば `alarms2` のように番号を付ける（`src/ops/ids.ts`）。
 

@@ -4,6 +4,8 @@ import {
   CARDINALITIES,
   deleteEntity,
   deleteField,
+  describeReferences,
+  findReferences,
   entityIdProblem,
   fieldIdProblem,
   FIELD_TYPES,
@@ -16,7 +18,6 @@ import {
   renameField,
   updateEntity,
   updateField,
-  walkData,
   type Entity,
   type Field,
   type FieldType,
@@ -64,19 +65,9 @@ export function EntityPanel({
   const id = entity.id;
 
   const remove = () => {
-    const refs = project.entities.flatMap((e) =>
-      e.id === id ? [] : e.fields.filter((f) => f.entity === id).map((f) => `${e.id}.${f.id}`),
-    );
-    let records = 0;
-    walkData(project, ({ entity: e }) => void (e.id === id && records++));
-    const detail = [
-      records > 0 ? `データ ${records} 件` : "",
-      refs.length > 0 ? `それを指すフィールド（${refs.join("、")}）` : "",
-    ]
-      .filter(Boolean)
-      .join("と");
+    const refs = describeReferences(findReferences(project, { entity: id }));
     requestConfirm(
-      `エンティティ「${entity.name}」を削除しますか？${detail ? `${detail}も消えます。` : ""}`,
+      `エンティティ「${entity.name}」を削除しますか？${refs ? `\n次の参照に影響します（それを指すフィールドとデータは消え、画面・アクション・式は残るので検証で指摘されます）:\n${refs}` : ""}`,
       "削除する",
       () => {
         if (edit("エンティティを削除", (d) => deleteEntity(d, id))) select(null);
@@ -105,8 +96,11 @@ export function EntityPanel({
           value={id}
           validate={(v) => entityIdProblem(project, v, id)}
           onCommit={(v) => {
-            if (edit("エンティティの id を変更", (d) => renameEntityId(d, id, v)))
-              select({ kind: "entity", id: v });
+            const run = () => {
+              if (edit("エンティティの id を変更", (d) => renameEntityId(d, id, v)))
+                select({ kind: "entity", id: v });
+            };
+            confirmExpressions(project, { entity: id }, requestConfirm, `id を ${v} に変える`, run);
           }}
         />
       </label>
@@ -184,6 +178,7 @@ function FieldRow({
 }) {
   const edit = useEditor((s) => s.edit);
   const select = useEditor((s) => s.select);
+  const requestConfirm = useEditor((s) => s.requestConfirm);
   const isPk = f.id === entity.primaryKey;
   const update = (label: string, patch: Partial<Omit<Field, "id">>) =>
     edit(label, (d) => updateField(d, entity.id, f.id, patch));
@@ -204,8 +199,17 @@ function FieldRow({
           value={f.id}
           validate={(v) => fieldIdProblem(entity, v, f.id)}
           onCommit={(v) => {
-            if (edit("属性の id を変更", (d) => renameField(d, entity.id, f.id, v)))
-              select({ kind: "entity", id: entity.id, field: v });
+            const run = () => {
+              if (edit("属性の id を変更", (d) => renameField(d, entity.id, f.id, v)))
+                select({ kind: "entity", id: entity.id, field: v });
+            };
+            confirmExpressions(
+              project,
+              { entity: entity.id, field: f.id },
+              requestConfirm,
+              `id を ${v} に変える`,
+              run,
+            );
           }}
         />
         <CommitInput
@@ -261,7 +265,19 @@ function FieldRow({
             <button
               className="link"
               aria-label={`属性 ${f.id} を削除`}
-              onClick={() => edit("属性を削除", (d) => deleteField(d, entity.id, f.id))}
+              onClick={() => {
+                const run = () => edit("属性を削除", (d) => deleteField(d, entity.id, f.id));
+                const refs = describeReferences(
+                  findReferences(project, { entity: entity.id, field: f.id }),
+                );
+                if (refs)
+                  requestConfirm(
+                    `属性 ${f.id} を削除しますか？次の参照に影響します:\n${refs}`,
+                    "削除する",
+                    run,
+                  );
+                else run();
+              }}
             >
               ×
             </button>
@@ -522,5 +538,28 @@ function ScreensFor({ project, entity }: { project: Project; entity: Entity }) {
         画面を生成（一覧・詳細・編集・削除）
       </button>
     </div>
+  );
+}
+
+/**
+ * id を変えるときの確認。構造の参照（フィールド・画面・アクションなど）は書き換えるが、
+ * 式の中の参照は書き換わらないので、あれば示して確かめる（FR-ER-08）。
+ */
+function confirmExpressions(
+  project: Project,
+  target: { entity: string; field?: string },
+  requestConfirm: (text: string, okLabel: string, onOk: () => void) => void,
+  what: string,
+  run: () => void,
+) {
+  const exprs = findReferences(project, target).filter((r) => r.expression);
+  if (exprs.length === 0) {
+    run();
+    return;
+  }
+  requestConfirm(
+    `${what}と、参照（フィールド・画面・アクションなど）は書き換えますが、次の式は書き換わりません（あとで直してください）:\n${describeReferences(exprs)}`,
+    "変える",
+    run,
   );
 }
