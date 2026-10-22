@@ -15,3 +15,4 @@ export * from "./flow.js";
 export * from "./ops/flow.js";
 export * from "./ops/nodes.js";
 export * from "./ops/templates.js";
+export * from "./ops/generate.js";

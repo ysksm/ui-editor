@@ -11,3 +11,5 @@ packages/codegen/out
 # オリジナル PoC: 要求仕様（手で書いた HTML）と、決定的な書き出しの出力
 original-poc/docs/*.html
 original-poc/examples/*.poc.json
+# QA スクリプトの出力（git にも入れない）
+original-poc/app/qa/out
