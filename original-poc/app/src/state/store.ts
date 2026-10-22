@@ -18,6 +18,8 @@ export type Selection =
   | { kind: "entity"; id: string; field?: string | undefined }
   | { kind: "data"; entity: string; id?: string | undefined }
   | { kind: "container"; id: string }
+  /** フロー図の遷移（key は extractTransitions が導くもの。編集のたびに選び直す）。 */
+  | { kind: "transition"; key: string }
   | null;
 
 export interface FileInfo {

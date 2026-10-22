@@ -60,5 +60,7 @@
 | `renameContainerId`                                      | id を変え、`navigate.to` / `openDialog.dialog`（onClose の中も）・`entry`・`layout.flow` を書き換える。画面とダイアログで名前空間は共通（`containerIdProblem`）                                                                                                    |
 | `setEntry` / `setFlowPosition` / `setFlowPositions`      | 最初の画面、フロー図の配置（`layout.flow`）                                                                                                                                                                                                                        |
 | `mapActionLists` / `pruneAll`                            | すべてのアクション列を書き換える補助、イベントが空になった仮の部品を消す補助                                                                                                                                                                                       |
+| `extractTransitions` / `findTransition`（`src/flow.ts`） | 遷移の抽出（ノードのイベントの navigate / openDialog、画面の mount、onClose の中）。`key` は `<遷移元>:<ノード>:<イベント>:<位置>` で、ファイルには保存しない                                                                                                      |
+| `addTransition` / `deleteTransition`                     | 線を引く = 遷移元の root の末尾に仮のボタン（`placeholder: true`）を置き、click に navigate / openDialog を書く（root が無ければ仮の Box）。消すと空になったイベントと仮の部品も消す                                                                               |
 
 id は人が読める連番（`Entity1`、`field1`）。重なれば `alarms2` のように番号を付ける（`src/ops/ids.ts`）。

@@ -738,6 +738,102 @@ path.er-edge.selected {
   min-width: 0;
   min-height: 0;
 }
+.flow-node {
+  width: 190px;
+  min-height: 70px;
+  background: var(--paper);
+  border: 1.5px solid #94a3b8;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+.flow-node-dialog {
+  border-style: dashed;
+  border-color: #d97706;
+  border-radius: 14px;
+  background: #fffaf2;
+}
+.flow-node.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(47 91 211 / 18%);
+}
+.flow-node-head {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  font-size: 13px;
+}
+.flow-node-issues {
+  margin-left: auto;
+  color: var(--danger);
+  font-weight: 600;
+}
+.flow-node-meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.placeholder-count {
+  font-size: 11px;
+  color: var(--warn);
+  border: 1px dashed var(--warn);
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 6px;
+}
+path.flow-edge {
+  stroke: #475569;
+  stroke-width: 1.5;
+}
+path.flow-edge-dialog {
+  stroke: #d97706;
+  stroke-dasharray: 7 4;
+}
+path.flow-edge-onclose {
+  stroke-dasharray: 2 4;
+}
+path.flow-edge.selected {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.flow-edge-label {
+  position: absolute;
+  font-size: 11px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 5px;
+  pointer-events: all;
+  cursor: pointer;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flow-edge-label.placeholder {
+  border-style: dashed;
+  color: var(--warn);
+}
+.flow-edge-label.selected {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.facts {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 4px 8px;
+  margin: 8px 0;
+}
+.facts dt {
+  color: var(--muted);
+}
+.facts dd {
+  margin: 0;
+  word-break: break-all;
+}
 .container-list {
   border-right: 1px solid var(--line);
   background: var(--paper);
