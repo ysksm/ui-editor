@@ -107,11 +107,12 @@ code {
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 8px 12px;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
-  flex-wrap: wrap;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 .brand {
   font-weight: 700;
@@ -119,7 +120,8 @@ code {
 }
 .project-name {
   font-weight: 600;
-  min-width: 220px;
+  width: 200px;
+  flex: none;
 }
 .toolbar {
   display: flex;
@@ -128,6 +130,9 @@ code {
 .file-name {
   margin-left: auto;
   color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dirty {
   color: var(--warn);
@@ -1160,4 +1165,104 @@ path.flow-edge.last {
 }
 .body.with-preview .er-body {
   grid-template-columns: 1fr 340px;
+}
+
+/* ---- 画面ビュー ---- */
+
+.screen-view {
+  height: 100%;
+}
+.screen-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: 100%;
+  min-height: 0;
+}
+.body.with-preview .screen-body {
+  grid-template-columns: 180px 1fr;
+}
+.screen-editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+}
+.screen-settings {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+.screen-settings h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.settings-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.param-chip {
+  margin-right: 6px;
+  background: var(--soft);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.screen-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 16px;
+  align-items: start;
+}
+.node-outline h4,
+.sample-preview h4 {
+  margin: 0 0 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.node-outline ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 16px;
+  border-left: 1px dashed var(--line);
+}
+.node-outline > ul {
+  padding-left: 0;
+  border-left: none;
+}
+.outline-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 1px 0;
+}
+.outline-row.placeholder .outline-id {
+  color: var(--warn);
+}
+.outline-type {
+  color: var(--accent);
+}
+.outline-id {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.outline-summary {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+.outline-event {
+  padding-left: 18px;
+}
+.sample-device {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 8%);
 }

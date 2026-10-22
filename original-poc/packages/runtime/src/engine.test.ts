@@ -7,7 +7,15 @@ import {
 } from "@ui-editor/poc-model";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { back, currentFrame, currentScreen, fireEvent, resetData, start } from "./engine.js";
+import {
+  back,
+  currentFrame,
+  currentScreen,
+  fireEvent,
+  resetData,
+  start,
+  startAt,
+} from "./engine.js";
 import { requiresSatisfied, scopeFor } from "./scope.js";
 import type { RuntimeState } from "./types.js";
 
@@ -304,5 +312,21 @@ describe("入れ子のエンティティを作るフォーム", () => {
     expect(rt.dialogs).toEqual([]);
     const alarms = rt.data.Device!.find((d) => d.id === "dev-004")!.alarms as DataRecord[];
     expect(alarms.at(-1)).toMatchObject({ id: "alm-011", message: "温度が高い", level: "warn" });
+  });
+});
+
+describe("startAt", () => {
+  it("指定した画面・ダイアログから始める（ダイアログは画面の履歴なしで開く）", () => {
+    const p = example();
+    const rt = startAt(p, "deviceEdit", { deviceId: "dev-002" });
+    expect(rt.history).toEqual([]);
+    expect(top(rt)).toMatchObject({
+      container: "deviceEdit",
+      kind: "dialog",
+      draft: { name: "コアスイッチ B" },
+    });
+    const detail = startAt(p, "deviceDetail", { deviceId: "dev-001" });
+    expect(scopeFor(p, detail, top(detail)).record).toMatchObject({ id: "dev-001" });
+    expect(startAt(p, "nowhere").log.at(-1)!.level).toBe("error");
   });
 });

@@ -54,14 +54,26 @@ export function PreviewPane() {
       </div>
       <div className="preview-device">
         {screen ? (
-          <FrameView project={project} runtime={runtime} frame={screen} active={top === screen} />
+          <FrameView
+            project={project}
+            runtime={runtime}
+            frame={screen}
+            active={top === screen}
+            onRuntime={setRuntime}
+          />
         ) : (
           <p className="muted">最初の画面がありません（フローで画面を作ってください）</p>
         )}
         {runtime.dialogs.map((d) => (
           <div className="preview-dialog-backdrop" key={d.id}>
             <div className="preview-dialog" role="dialog" aria-label={nameOf(project, d.container)}>
-              <FrameView project={project} runtime={runtime} frame={d} active={top === d} />
+              <FrameView
+                project={project}
+                runtime={runtime}
+                frame={d}
+                active={top === d}
+                onRuntime={setRuntime}
+              />
             </div>
           </div>
         ))}
@@ -71,18 +83,20 @@ export function PreviewPane() {
   );
 }
 
-function FrameView({
+/** 1 つの画面・ダイアログ（フレーム）を描く。部品を押すと fireEvent の結果を onRuntime に渡す。 */
+export function FrameView({
   project,
   runtime,
   frame,
   active,
+  onRuntime,
 }: {
   project: Project;
   runtime: RuntimeState;
   frame: Frame;
   active: boolean;
+  onRuntime: (runtime: RuntimeState) => void;
 }) {
-  const setRuntime = useEditor((s) => s.setRuntime);
   const ref = findContainer(project, frame.container);
   if (!ref) {
     return (
@@ -94,7 +108,7 @@ function FrameView({
   const fire: Fire = (node, event, payload, locals) => {
     // 古い（奥の）フレームは押せない
     if (!active) return;
-    setRuntime(fireEvent(project, runtime, { frameId: frame.id, node, event, payload, locals }));
+    onRuntime(fireEvent(project, runtime, { frameId: frame.id, node, event, payload, locals }));
   };
   const scope = scopeFor(project, runtime, frame);
   return (

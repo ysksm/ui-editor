@@ -56,6 +56,32 @@ export function start(project: Project): RuntimeState {
   return runMount(project, rt, frame.frame);
 }
 
+/**
+ * 指定した画面・ダイアログから始める（画面ビューの、その画面だけのプレビュー用）。
+ * ダイアログなら、画面の履歴を空にしてダイアログだけを開く。画面なら mount も実行する。
+ */
+export function startAt(
+  project: Project,
+  container: string,
+  params: Readonly<Record<string, unknown>> = {},
+): RuntimeState {
+  const ref = findContainer(project, container);
+  const rt: RuntimeState = {
+    data: project.data,
+    state: structuredClone(project.state),
+    selection: {},
+    history: [],
+    dialogs: [],
+    trail: [],
+    log: [],
+    seq: 1,
+  };
+  if (!ref) return addLog(rt, "error", `画面・ダイアログ "${container}" がありません`);
+  const created = newFrame(project, rt, container, params);
+  if (ref.kind === "dialog") return { ...created.rt, dialogs: [created.frame] };
+  return runMount(project, { ...created.rt, history: [created.frame] }, created.frame);
+}
+
 /** 今いちばん手前のフレーム（ダイアログが開いていればダイアログ）。 */
 export function currentFrame(rt: RuntimeState): Frame | undefined {
   return rt.dialogs.at(-1) ?? rt.history.at(-1);
