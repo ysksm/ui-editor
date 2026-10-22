@@ -313,11 +313,17 @@ function buildRoot(kind: Kind, ctx: Ctx): Node {
   }
 }
 
+/** 中身のうち、テンプレートで置き換わる（仮の部品でない）ノードの id（FR-GEN-05 の差分の表示）。 */
+export function replacedNodes(container: Container): string[] {
+  const ids: string[] = [];
+  if (container.root)
+    walkNodes(container.root, [], (node) => void (node.placeholder || ids.push(node.id)));
+  return ids;
+}
+
 /** 中身のうち、テンプレートで置き換わる（仮の部品でない）ノードの数。 */
 export function templateConflicts(container: Container): number {
-  let n = 0;
-  if (container.root) walkNodes(container.root, [], (node) => void (node.placeholder || n++));
-  return n;
+  return replacedNodes(container).length;
 }
 
 /**

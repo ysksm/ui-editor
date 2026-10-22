@@ -19,7 +19,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { currentFrame } from "@ui-editor/poc-runtime";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { GenerateDialog } from "../components/GenerateDialog";
 import { useEditor } from "../state/store";
 import { ContainerList } from "./flow/ContainerList";
 import { ContainerNode, type ContainerFlowNode } from "./flow/ContainerNode";
@@ -47,6 +48,7 @@ function FlowEditor() {
   const edit = useEditor((s) => s.edit);
   const select = useEditor((s) => s.select);
   const { fitView } = useReactFlow();
+  const [generating, setGenerating] = useState(false);
   const selectedContainer = selection?.kind === "container" ? selection.id : undefined;
   const selectedTransition = selection?.kind === "transition" ? selection.key : undefined;
   const ref = selectedContainer ? findContainer(project, selectedContainer) : undefined;
@@ -131,6 +133,9 @@ function FlowEditor() {
         >
           整列
         </button>
+        <button onClick={() => setGenerating(true)} disabled={project.entities.length === 0}>
+          ER から画面を生成…
+        </button>
         <span className="legend">
           <span>→ 画面遷移</span>
           <span>⇢ ダイアログの呼び出し（破線）</span>
@@ -183,6 +188,7 @@ function FlowEditor() {
           </aside>
         )}
       </div>
+      {generating && <GenerateDialog onClose={() => setGenerating(false)} />}
     </div>
   );
 }

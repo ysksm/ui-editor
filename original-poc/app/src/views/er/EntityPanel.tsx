@@ -25,7 +25,8 @@ import {
 } from "@ui-editor/poc-model";
 import { useState } from "react";
 import { CommitInput } from "../../components/form/CommitInput";
-import { useEditor } from "../../state/store";
+import { generateFor } from "../../components/generate";
+import { useEditor, useEditorStore } from "../../state/store";
 import { RELATION_KINDS } from "./RelationDialog";
 
 const TYPE_LABELS: Record<FieldType, string> = {
@@ -156,6 +157,9 @@ export function EntityPanel({
 
       <h4>関係</h4>
       <RelationForm project={project} from={id} />
+
+      <h4>画面</h4>
+      <ScreensFor project={project} entity={entity} />
 
       <hr />
       <button className="danger" onClick={remove}>
@@ -481,6 +485,42 @@ function RelationForm({ project, from }: { project: Project; from: string }) {
         追加
       </button>
       {problem && target && <p className="muted small">{problem}</p>}
+    </div>
+  );
+}
+
+/** このエンティティを扱う画面・ダイアログと、ボタン 1 つの生成（FR-GEN-01）。 */
+function ScreensFor({ project, entity }: { project: Project; entity: Entity }) {
+  const store = useEditorStore();
+  const select = useEditor((s) => s.select);
+  const setView = useEditor((s) => s.setView);
+  const used = [...project.screens, ...project.dialogs].filter((c) => c.entity === entity.id);
+  return (
+    <div className="screens-for">
+      {used.length > 0 && (
+        <ul className="transition-list">
+          {used.map((c) => (
+            <li key={c.id}>
+              <button
+                className="transition-item"
+                onClick={() => {
+                  setView("screen");
+                  select({ kind: "container", id: c.id });
+                }}
+              >
+                <span>{c.name}</span>
+                <span className="muted small">
+                  {c.id}
+                  {c.kind ? `・${c.kind}` : ""}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <button className="primary" onClick={() => generateFor(store, entity.id)}>
+        画面を生成（一覧・詳細・編集・削除）
+      </button>
     </div>
   );
 }
