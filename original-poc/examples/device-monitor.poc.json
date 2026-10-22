@@ -1,0 +1,1046 @@
+{
+  "schemaVersion": "poc-0",
+  "name": "機器の設定＆モニタリング",
+  "description": "#1 の題材を poc-0 で書いたもの。データは機器の下に設定・メトリクス・アラームを入れ子で持つ。",
+  "entry": "dashboard",
+  "entities": [
+    {
+      "id": "Device",
+      "name": "機器",
+      "primaryKey": "id",
+      "displayField": "name",
+      "fields": [
+        {
+          "id": "id",
+          "type": "id"
+        },
+        {
+          "id": "name",
+          "type": "string",
+          "name": "名前",
+          "required": true
+        },
+        {
+          "id": "model",
+          "type": "string",
+          "name": "型番"
+        },
+        {
+          "id": "status",
+          "type": "enum",
+          "name": "状態",
+          "default": "online",
+          "values": [
+            "online",
+            "offline",
+            "warning"
+          ]
+        },
+        {
+          "id": "ipAddress",
+          "type": "string",
+          "name": "IP アドレス",
+          "format": "ipv4"
+        },
+        {
+          "id": "firmware",
+          "type": "string",
+          "name": "ファームウェア"
+        },
+        {
+          "id": "settings",
+          "type": "children",
+          "name": "設定",
+          "entity": "DeviceSettings",
+          "cardinality": "one"
+        },
+        {
+          "id": "metrics",
+          "type": "children",
+          "name": "メトリクス",
+          "entity": "Metric"
+        },
+        {
+          "id": "alarms",
+          "type": "children",
+          "name": "アラーム",
+          "entity": "Alarm"
+        }
+      ]
+    },
+    {
+      "id": "DeviceSettings",
+      "name": "機器設定",
+      "primaryKey": "id",
+      "displayField": "ip",
+      "fields": [
+        {
+          "id": "id",
+          "type": "id"
+        },
+        {
+          "id": "dhcp",
+          "type": "boolean",
+          "name": "DHCP",
+          "default": false
+        },
+        {
+          "id": "ip",
+          "type": "string",
+          "name": "IP アドレス",
+          "format": "ipv4"
+        },
+        {
+          "id": "subnet",
+          "type": "string",
+          "name": "サブネットマスク",
+          "format": "ipv4"
+        },
+        {
+          "id": "gateway",
+          "type": "string",
+          "name": "ゲートウェイ",
+          "format": "ipv4"
+        },
+        {
+          "id": "temperatureMax",
+          "type": "number",
+          "name": "温度の上限（℃）",
+          "min": 0,
+          "max": 120
+        },
+        {
+          "id": "cpuMax",
+          "type": "number",
+          "name": "CPU 使用率の上限（%）",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "id": "pollingIntervalSec",
+          "type": "number",
+          "name": "ポーリング間隔（秒）",
+          "min": 5,
+          "max": 3600
+        }
+      ]
+    },
+    {
+      "id": "Metric",
+      "name": "メトリクス",
+      "primaryKey": "id",
+      "displayField": "timestamp",
+      "fields": [
+        {
+          "id": "id",
+          "type": "id"
+        },
+        {
+          "id": "timestamp",
+          "type": "date",
+          "name": "日時",
+          "required": true,
+          "format": "datetime"
+        },
+        {
+          "id": "temperature",
+          "type": "number",
+          "name": "温度（℃）"
+        },
+        {
+          "id": "cpu",
+          "type": "number",
+          "name": "CPU 使用率（%）",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "id": "trafficMbps",
+          "type": "number",
+          "name": "通信量（Mbps）",
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": "Alarm",
+      "name": "アラーム",
+      "primaryKey": "id",
+      "displayField": "message",
+      "fields": [
+        {
+          "id": "id",
+          "type": "id"
+        },
+        {
+          "id": "level",
+          "type": "enum",
+          "name": "レベル",
+          "required": true,
+          "values": [
+            "info",
+            "warn",
+            "error"
+          ]
+        },
+        {
+          "id": "message",
+          "type": "string",
+          "name": "内容",
+          "required": true
+        },
+        {
+          "id": "occurredAt",
+          "type": "date",
+          "name": "発生日時",
+          "format": "datetime"
+        },
+        {
+          "id": "acknowledged",
+          "type": "boolean",
+          "name": "確認済み",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "state": {},
+  "screens": [
+    {
+      "id": "dashboard",
+      "name": "ダッシュボード",
+      "path": "/",
+      "root": {
+        "id": "page",
+        "type": "Box",
+        "props": {
+          "direction": "column",
+          "gap": 16
+        },
+        "children": [
+          {
+            "id": "title",
+            "type": "Text",
+            "props": {
+              "text": "ダッシュボード",
+              "variant": "title"
+            }
+          },
+          {
+            "id": "alarmsTitle",
+            "type": "Text",
+            "props": {
+              "text": "未確認のアラーム"
+            }
+          },
+          {
+            "id": "alarms",
+            "type": "Table",
+            "props": {
+              "columns": [
+                {
+                  "header": "レベル",
+                  "value": "{{ row.level }}"
+                },
+                {
+                  "header": "内容",
+                  "value": "{{ row.message }}"
+                },
+                {
+                  "header": "発生日時",
+                  "value": "{{ row.occurredAt }}"
+                }
+              ],
+              "rows": "{{ data.Alarm.filter((a) => !a.acknowledged) }}"
+            }
+          },
+          {
+            "id": "toDevices",
+            "type": "Button",
+            "props": {
+              "label": "機器一覧へ"
+            },
+            "events": {
+              "click": [
+                {
+                  "type": "navigate",
+                  "to": "devices"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "devices",
+      "name": "機器一覧",
+      "kind": "list",
+      "entity": "Device",
+      "path": "/devices",
+      "root": {
+        "id": "page",
+        "type": "Box",
+        "props": {
+          "direction": "column",
+          "gap": 16
+        },
+        "children": [
+          {
+            "id": "title",
+            "type": "Text",
+            "props": {
+              "text": "機器一覧",
+              "variant": "title"
+            }
+          },
+          {
+            "id": "toolbar",
+            "type": "Box",
+            "props": {
+              "direction": "row",
+              "gap": 8
+            },
+            "children": [
+              {
+                "id": "edit",
+                "type": "Button",
+                "props": {
+                  "label": "編集",
+                  "requires": "selection.Device"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "openDialog",
+                      "dialog": "deviceEdit",
+                      "params": {
+                        "deviceId": "{{ state.selection.Device?.id }}"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "toDashboard",
+                "type": "Button",
+                "props": {
+                  "label": "ダッシュボードへ",
+                  "variant": "secondary"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "navigate",
+                      "to": "dashboard"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "table",
+            "type": "Table",
+            "props": {
+              "entity": "Device",
+              "columns": [
+                {
+                  "header": "名前",
+                  "value": "{{ row.name }}"
+                },
+                {
+                  "header": "型番",
+                  "value": "{{ row.model }}"
+                },
+                {
+                  "header": "状態",
+                  "value": "{{ row.status }}"
+                },
+                {
+                  "header": "IP アドレス",
+                  "value": "{{ row.ipAddress }}"
+                }
+              ],
+              "rows": "{{ data.Device }}",
+              "selectable": true
+            },
+            "events": {
+              "rowClick": [
+                {
+                  "type": "navigate",
+                  "to": "deviceDetail",
+                  "params": {
+                    "deviceId": "{{ event.row.id }}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "deviceDetail",
+      "name": "機器詳細",
+      "kind": "detail",
+      "entity": "Device",
+      "path": "/devices/:deviceId",
+      "params": {
+        "deviceId": {
+          "type": "ref",
+          "entity": "Device",
+          "required": true
+        }
+      },
+      "root": {
+        "id": "page",
+        "type": "Box",
+        "props": {
+          "direction": "column",
+          "gap": 16
+        },
+        "children": [
+          {
+            "id": "title",
+            "type": "Text",
+            "props": {
+              "text": "{{ record?.name }}",
+              "variant": "title"
+            }
+          },
+          {
+            "id": "model",
+            "type": "Text",
+            "props": {
+              "text": "型番: {{ record?.model }}"
+            }
+          },
+          {
+            "id": "status",
+            "type": "Text",
+            "props": {
+              "text": "状態: {{ record?.status }}"
+            }
+          },
+          {
+            "id": "ipAddress",
+            "type": "Text",
+            "props": {
+              "text": "IP アドレス: {{ record?.ipAddress }}"
+            }
+          },
+          {
+            "id": "alarmsTitle",
+            "type": "Text",
+            "props": {
+              "text": "アラーム"
+            }
+          },
+          {
+            "id": "alarms",
+            "type": "Table",
+            "props": {
+              "columns": [
+                {
+                  "header": "レベル",
+                  "value": "{{ row.level }}"
+                },
+                {
+                  "header": "内容",
+                  "value": "{{ row.message }}"
+                },
+                {
+                  "header": "確認済み",
+                  "value": "{{ row.acknowledged }}"
+                }
+              ],
+              "rows": "{{ record?.alarms ?? [] }}"
+            }
+          },
+          {
+            "id": "toolbar",
+            "type": "Box",
+            "props": {
+              "direction": "row",
+              "gap": 8
+            },
+            "children": [
+              {
+                "id": "delete",
+                "type": "Button",
+                "props": {
+                  "label": "削除",
+                  "variant": "danger"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "openDialog",
+                      "dialog": "deviceDelete",
+                      "params": {
+                        "deviceId": "{{ params.deviceId }}"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "back",
+                "type": "Button",
+                "props": {
+                  "label": "一覧へ戻る",
+                  "variant": "secondary"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "navigate",
+                      "to": "devices"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "dialogs": [
+    {
+      "id": "deviceEdit",
+      "name": "機器の編集",
+      "kind": "form",
+      "entity": "Device",
+      "params": {
+        "deviceId": {
+          "type": "ref",
+          "entity": "Device",
+          "required": true
+        }
+      },
+      "root": {
+        "id": "body",
+        "type": "Box",
+        "props": {
+          "direction": "column",
+          "gap": 12
+        },
+        "children": [
+          {
+            "id": "title",
+            "type": "Text",
+            "props": {
+              "text": "機器の編集",
+              "variant": "title"
+            }
+          },
+          {
+            "id": "name",
+            "type": "TextInput",
+            "props": {
+              "value": "{{ draft.name }}",
+              "error": "{{ errors.name }}",
+              "label": "名前"
+            },
+            "events": {
+              "change": [
+                {
+                  "type": "setDraft",
+                  "field": "name",
+                  "value": "{{ event.value }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "model",
+            "type": "TextInput",
+            "props": {
+              "value": "{{ draft.model }}",
+              "error": "{{ errors.model }}",
+              "label": "型番"
+            },
+            "events": {
+              "change": [
+                {
+                  "type": "setDraft",
+                  "field": "model",
+                  "value": "{{ event.value }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "status",
+            "type": "Select",
+            "props": {
+              "value": "{{ draft.status }}",
+              "error": "{{ errors.status }}",
+              "label": "状態",
+              "options": [
+                {
+                  "value": "online",
+                  "label": "online"
+                },
+                {
+                  "value": "offline",
+                  "label": "offline"
+                },
+                {
+                  "value": "warning",
+                  "label": "warning"
+                }
+              ]
+            },
+            "events": {
+              "change": [
+                {
+                  "type": "setDraft",
+                  "field": "status",
+                  "value": "{{ event.value }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "ipAddress",
+            "type": "TextInput",
+            "props": {
+              "value": "{{ draft.ipAddress }}",
+              "error": "{{ errors.ipAddress }}",
+              "label": "IP アドレス"
+            },
+            "events": {
+              "change": [
+                {
+                  "type": "setDraft",
+                  "field": "ipAddress",
+                  "value": "{{ event.value }}"
+                }
+              ]
+            }
+          },
+          {
+            "id": "actions",
+            "type": "Box",
+            "props": {
+              "direction": "row",
+              "gap": 8
+            },
+            "children": [
+              {
+                "id": "save",
+                "type": "Button",
+                "props": {
+                  "label": "保存",
+                  "variant": "primary"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "saveDraft"
+                    },
+                    {
+                      "type": "closeDialog",
+                      "result": "ok"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "cancel",
+                "type": "Button",
+                "props": {
+                  "label": "キャンセル",
+                  "variant": "secondary"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "closeDialog",
+                      "result": "cancel"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "deviceDelete",
+      "name": "削除の確認",
+      "kind": "confirm",
+      "entity": "Device",
+      "params": {
+        "deviceId": {
+          "type": "ref",
+          "entity": "Device",
+          "required": true
+        }
+      },
+      "root": {
+        "id": "body",
+        "type": "Box",
+        "props": {
+          "direction": "column",
+          "gap": 12
+        },
+        "children": [
+          {
+            "id": "message",
+            "type": "Text",
+            "props": {
+              "text": "「{{ record?.name }}」を削除しますか？設定・メトリクス・アラームも削除されます。"
+            }
+          },
+          {
+            "id": "actions",
+            "type": "Box",
+            "props": {
+              "direction": "row",
+              "gap": 8
+            },
+            "children": [
+              {
+                "id": "ok",
+                "type": "Button",
+                "props": {
+                  "label": "削除する",
+                  "variant": "danger"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "deleteRecord",
+                      "entity": "Device",
+                      "match": {
+                        "id": "{{ params.deviceId }}"
+                      }
+                    },
+                    {
+                      "type": "closeDialog",
+                      "result": "ok"
+                    },
+                    {
+                      "type": "navigate",
+                      "to": "devices"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "cancel",
+                "type": "Button",
+                "props": {
+                  "label": "キャンセル",
+                  "variant": "secondary"
+                },
+                "events": {
+                  "click": [
+                    {
+                      "type": "closeDialog",
+                      "result": "cancel"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "data": {
+    "Device": [
+      {
+        "id": "dev-001",
+        "name": "コアスイッチ A",
+        "model": "CS-9000",
+        "status": "online",
+        "ipAddress": "192.168.10.1",
+        "firmware": "4.2.1",
+        "settings": {
+          "id": "set-001",
+          "dhcp": false,
+          "ip": "192.168.10.1",
+          "subnet": "255.255.255.0",
+          "gateway": "192.168.10.254",
+          "temperatureMax": 70,
+          "cpuMax": 85,
+          "pollingIntervalSec": 30
+        },
+        "metrics": [
+          {
+            "id": "met-001",
+            "timestamp": "2026-09-27T08:58:00.000Z",
+            "temperature": 50.2,
+            "cpu": 39.8,
+            "trafficMbps": 870.7
+          },
+          {
+            "id": "met-002",
+            "timestamp": "2026-09-27T08:59:00.000Z",
+            "temperature": 49.6,
+            "cpu": 36.1,
+            "trafficMbps": 831.2
+          },
+          {
+            "id": "met-003",
+            "timestamp": "2026-09-27T09:00:00.000Z",
+            "temperature": 49,
+            "cpu": 32.2,
+            "trafficMbps": 790.5
+          }
+        ],
+        "alarms": [
+          {
+            "id": "alm-004",
+            "level": "info",
+            "message": "設定が保存されました",
+            "occurredAt": "2026-09-27T07:10:00.000Z",
+            "acknowledged": true
+          },
+          {
+            "id": "alm-008",
+            "level": "error",
+            "message": "ポート 24 のリンクがダウンしました",
+            "occurredAt": "2026-09-27T06:12:33.000Z",
+            "acknowledged": true
+          }
+        ]
+      },
+      {
+        "id": "dev-002",
+        "name": "コアスイッチ B",
+        "model": "CS-9000",
+        "status": "online",
+        "ipAddress": "192.168.10.2",
+        "firmware": "4.2.1",
+        "settings": {
+          "id": "set-002",
+          "dhcp": false,
+          "ip": "192.168.10.2",
+          "subnet": "255.255.255.0",
+          "gateway": "192.168.10.254",
+          "temperatureMax": 70,
+          "cpuMax": 85,
+          "pollingIntervalSec": 30
+        },
+        "metrics": [
+          {
+            "id": "met-004",
+            "timestamp": "2026-09-27T08:58:00.000Z",
+            "temperature": 48.2,
+            "cpu": 32.8,
+            "trafficMbps": 679.6
+          },
+          {
+            "id": "met-005",
+            "timestamp": "2026-09-27T08:59:00.000Z",
+            "temperature": 47.6,
+            "cpu": 29.1,
+            "trafficMbps": 648.8
+          },
+          {
+            "id": "met-006",
+            "timestamp": "2026-09-27T09:00:00.000Z",
+            "temperature": 47,
+            "cpu": 25.2,
+            "trafficMbps": 617
+          }
+        ],
+        "alarms": [
+          {
+            "id": "alm-005",
+            "level": "info",
+            "message": "ファームウェア 4.2.1 に更新されました",
+            "occurredAt": "2026-09-26T22:05:12.000Z",
+            "acknowledged": true
+          },
+          {
+            "id": "alm-009",
+            "level": "warn",
+            "message": "通信量が急増しています（950Mbps）",
+            "occurredAt": "2026-09-27T05:48:20.000Z",
+            "acknowledged": false
+          }
+        ]
+      },
+      {
+        "id": "dev-003",
+        "name": "エッジルーター 1F",
+        "model": "ER-450",
+        "status": "warning",
+        "ipAddress": "192.168.20.1",
+        "firmware": "2.8.0",
+        "settings": {
+          "id": "set-003",
+          "dhcp": false,
+          "ip": "192.168.20.1",
+          "subnet": "255.255.255.0",
+          "gateway": "192.168.20.254",
+          "temperatureMax": 65,
+          "cpuMax": 80,
+          "pollingIntervalSec": 60
+        },
+        "metrics": [
+          {
+            "id": "met-007",
+            "timestamp": "2026-09-27T08:58:00.000Z",
+            "temperature": 65.2,
+            "cpu": 76.8,
+            "trafficMbps": 223
+          },
+          {
+            "id": "met-008",
+            "timestamp": "2026-09-27T08:59:00.000Z",
+            "temperature": 64.6,
+            "cpu": 73.1,
+            "trafficMbps": 212.9
+          },
+          {
+            "id": "met-009",
+            "timestamp": "2026-09-27T09:00:00.000Z",
+            "temperature": 64,
+            "cpu": 69.2,
+            "trafficMbps": 202.5
+          }
+        ],
+        "alarms": [
+          {
+            "id": "alm-002",
+            "level": "warn",
+            "message": "温度が閾値に近づいています（63.8℃ / 65℃）",
+            "occurredAt": "2026-09-27T08:55:03.000Z",
+            "acknowledged": false
+          },
+          {
+            "id": "alm-003",
+            "level": "warn",
+            "message": "CPU 使用率が 80% を超えました",
+            "occurredAt": "2026-09-27T08:31:47.000Z",
+            "acknowledged": false
+          }
+        ]
+      },
+      {
+        "id": "dev-004",
+        "name": "無線 AP 2F",
+        "model": "AP-300",
+        "status": "offline",
+        "ipAddress": "192.168.30.12",
+        "firmware": "1.9.5",
+        "settings": {
+          "id": "set-004",
+          "dhcp": true,
+          "ip": "192.168.30.12",
+          "subnet": "255.255.255.0",
+          "gateway": "192.168.30.254",
+          "temperatureMax": 60,
+          "cpuMax": 90,
+          "pollingIntervalSec": 120
+        },
+        "metrics": [
+          {
+            "id": "met-010",
+            "timestamp": "2026-09-27T08:40:00.000Z",
+            "temperature": 41.7,
+            "cpu": 10.3,
+            "trafficMbps": 35.7
+          },
+          {
+            "id": "met-011",
+            "timestamp": "2026-09-27T08:41:00.000Z",
+            "temperature": 41.1,
+            "cpu": 14.3,
+            "trafficMbps": 34
+          },
+          {
+            "id": "met-012",
+            "timestamp": "2026-09-27T08:42:00.000Z",
+            "temperature": 40.5,
+            "cpu": 17.7,
+            "trafficMbps": 32.4
+          }
+        ],
+        "alarms": [
+          {
+            "id": "alm-001",
+            "level": "error",
+            "message": "機器との通信が途絶しました",
+            "occurredAt": "2026-09-27T08:42:10.000Z",
+            "acknowledged": false
+          },
+          {
+            "id": "alm-006",
+            "level": "warn",
+            "message": "応答時間が遅延しています（1200ms）",
+            "occurredAt": "2026-09-27T08:39:55.000Z",
+            "acknowledged": false
+          }
+        ]
+      },
+      {
+        "id": "dev-005",
+        "name": "環境センサー サーバー室",
+        "model": "ENV-10",
+        "status": "online",
+        "ipAddress": "192.168.40.5",
+        "firmware": "0.9.3",
+        "settings": {
+          "id": "set-005",
+          "dhcp": true,
+          "ip": "192.168.40.5",
+          "subnet": "255.255.255.0",
+          "gateway": "192.168.40.254",
+          "temperatureMax": 35,
+          "cpuMax": 95,
+          "pollingIntervalSec": 300
+        },
+        "metrics": [
+          {
+            "id": "met-013",
+            "timestamp": "2026-09-27T08:58:00.000Z",
+            "temperature": 26.2,
+            "cpu": 9.8,
+            "trafficMbps": 0.4
+          },
+          {
+            "id": "met-014",
+            "timestamp": "2026-09-27T08:59:00.000Z",
+            "temperature": 25.6,
+            "cpu": 6.1,
+            "trafficMbps": 0.4
+          },
+          {
+            "id": "met-015",
+            "timestamp": "2026-09-27T09:00:00.000Z",
+            "temperature": 25,
+            "cpu": 2.2,
+            "trafficMbps": 0.4
+          }
+        ],
+        "alarms": [
+          {
+            "id": "alm-007",
+            "level": "info",
+            "message": "ポーリング間隔が 300 秒に変更されました",
+            "occurredAt": "2026-09-26T18:20:00.000Z",
+            "acknowledged": true
+          },
+          {
+            "id": "alm-010",
+            "level": "error",
+            "message": "センサー値の読み取りに失敗しました",
+            "occurredAt": "2026-09-26T15:02:41.000Z",
+            "acknowledged": true
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -2,11 +2,17 @@
 
 オリジナル PoC のプロジェクトファイル（唯一の正）のスキーマ poc-0。設計は [architecture.md](../../docs/architecture.md) の 3・4 章。
 
-| export                                                  | 内容                                                          |
-| ------------------------------------------------------- | ------------------------------------------------------------- |
-| `Project` などの型、`ProjectSchema` などの zod スキーマ | スキーマ本体（`src/schema.ts`）                               |
-| `validateShape`                                         | 形（zod）の検証。問題は場所（`path`）付き、メッセージは日本語 |
-| `Issue` / `formatIssue` / `formatPath`                  | 検証の問題（`error` / `warning`）                             |
+| export                                                                | 内容                                                          |
+| --------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `Project` などの型、`ProjectSchema` などの zod スキーマ               | スキーマ本体（`src/schema.ts`）                               |
+| `validateShape`                                                       | 形（zod）の検証。問題は場所（`path`）付き、メッセージは日本語 |
+| `validateProject` / `checkProject`                                    | 形 ＋ 参照・整合性の検証（重大度付き）                        |
+| `loadProject` / `serializeProject` / `migrate` / `createEmptyProject` | 読み込み（移行 → 検証）と決定的な書き出し                     |
+| `Issue` / `formatIssue` / `formatPath`                                | 検証の問題（`error` / `warning`）                             |
+| `walkData` / `checkFieldValue` / `checkFieldFormat`                   | 入れ子のデータをたどる・値を調べる（poc-datastore でも使う）  |
+| `containers` / `walkNodes` / `walkActions`                            | 画面・ダイアログ・ノード・アクションをたどる                  |
+| `entityMap` / `nestParents` / `rootEntities`                          | ER を引く                                                     |
+| `extractExpressions` / `checkTemplate` など                           | `{{ }}` の補助                                                |
 
 ## 形の検証
 
@@ -30,3 +36,9 @@
 | 式               | 式の中の `data.<X>` / `selection.<X>` のエンティティが無い（警告。id を変えたときの取り残し）                                                                         |
 
 `onClose` の中のアクションは、`openDialog` を書いた画面・ダイアログで実行されるものとして検証する。
+
+## 読み書き
+
+- `loadProject(text)`: JSON を読み、`migrate` → 形 → 参照の順に検証する。JSON の構文エラーは `ProjectParseError` を投げる。対応していない `schemaVersion` は読み込まない。
+- `serializeProject(project)`: キーを固定の順（`schemaVersion`・`id`・`type`・`name` … を先頭、`root` / `children` / `data` / `layout` を末尾、ほかはアルファベット順）に並べ、`undefined` を除いて `JSON.stringify(v, null, 2)` で書き出す。データのレコードはエンティティのフィールド順（入れ子の中も）、配置は id 順・整数。配列の順序は変えない。
+- `migrate(raw)`: `MIGRATIONS`（前の版 → 次の版の関数）を今の版になるまで順に通す。互換が崩れる変更をしたら、ここに移行関数とテストを足す（architecture.md 4.11）。
