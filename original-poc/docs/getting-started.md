@@ -93,4 +93,6 @@ node original-poc/packages/codegen/dist/cli.js my-app.poc.json --out ../my-app
 | 「コードを書き出す」でエラー                            | お知らせに出た場所（例: `画面 deviceDetail / page / title / props: …`）の式や部品を直す。ヘッダーの「エラー」の件数を 0 にする |
 | 書き出したアプリの `pnpm build` で型エラー              | 式が null を考えていないことが多い。`record.name` → `record?.name` のように直す                                                |
 
+1 手ずつの操作（スクリーンショット付き）は [使い方の手順](user-guide.md)。
+
 詳しくは [エディタの README](../app/README.md)（ビューごとの操作）、[アーキテクチャ](architecture.md)、[コード生成の README](../packages/codegen/README.md)。
