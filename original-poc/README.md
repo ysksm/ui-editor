@@ -3,7 +3,7 @@
 画面遷移と ER 図から動くアプリを組み立てる、オリジナル実装の UI エディタ（PoC）。既存ライブラリのエディタに乗らず、P0〜P6 の知見を土台に自前で作る。
 
 - **はじめかた: [docs/getting-started.md](docs/getting-started.md)**（起動・題材・自分のアプリを作る・コードの書き出し）
-- **使い方の手順: [docs/user-guide.md](docs/user-guide.md)**（空からアプリを作って書き出すまでを、スクリーンショット付きで 1 手ずつ）
+- **使い方の手順: [docs/user-guide.html](docs/user-guide.html)**（空からアプリを作って書き出すまでを、スクリーンショット付きで 1 手ずつ）
 - 要求仕様: [docs/requirements.html](docs/requirements.html)（ブラウザで開く）。13 章「確認したいこと」の結果は [アーキテクチャ](docs/architecture.md) の 1 章にある。
 - アーキテクチャ: [docs/architecture.md](docs/architecture.md)（パッケージ構成・スキーマ poc-0・設計判断・作業計画）
 
