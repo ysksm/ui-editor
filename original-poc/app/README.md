@@ -81,7 +81,7 @@ pnpm --filter @ui-editor/poc-app dev               # http://localhost:5180/
 
 ## 手順書のスクリーンショット
 
-`scripts/guide-shots.mjs` は、[使い方の手順](../docs/user-guide.md) と同じ操作をして `docs/images/guide/` にスクリーンショットを撮る。画面が変わったら撮り直す（`vite preview` か `dev` がポート 5180 で動いていればそれを使う）。
+`scripts/guide-shots.mjs` は、[使い方の手順](../docs/user-guide.html) と同じ操作をして `docs/images/guide/` にスクリーンショットを撮る。画面が変わったら撮り直す（`vite preview` か `dev` がポート 5180 で動いていればそれを使う）。
 
 ```sh
 pnpm --filter @ui-editor/poc-app guide:shots

@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Original PoC 使い方の手順</title>
+    <style>
+      :root {
+        --bg: #f4f6f9;
+        --paper: #ffffff;
+        --ink: #1b2330;
+        --muted: #5b6676;
+        --line: #d8dde5;
+        --soft: #f3f5f8;
+        --accent: #2f5bd3;
+        --accent-soft: #e6ecfb;
+        --flow: #0f8a6b;
+        --flow-soft: #e3f4ee;
+        --er: #9333ea;
+        --er-soft: #f3e8fd;
+        --warn: #b45309;
+        --warn-soft: #fdf1e1;
+        --code-bg: #f4f6fa;
+        --code-ink: #243042;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0d1117;
+          --paper: #161b22;
+          --ink: #e6edf3;
+          --muted: #9aa6b4;
+          --line: #2d3540;
+          --soft: #1d242d;
+          --accent: #7ea2ff;
+          --accent-soft: #1d2a47;
+          --flow: #4fd1a8;
+          --flow-soft: #133029;
+          --er: #c084fc;
+          --er-soft: #2b1d3d;
+          --warn: #f5b454;
+          --warn-soft: #3a2a12;
+          --code-bg: #0f141a;
+          --code-ink: #d6dee8;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0d1117;
+        --paper: #161b22;
+        --ink: #e6edf3;
+        --muted: #9aa6b4;
+        --line: #2d3540;
+        --soft: #1d242d;
+        --accent: #7ea2ff;
+        --accent-soft: #1d2a47;
+        --flow: #4fd1a8;
+        --flow-soft: #133029;
+        --er: #c084fc;
+        --er-soft: #2b1d3d;
+        --warn: #f5b454;
+        --warn-soft: #3a2a12;
+        --code-bg: #0f141a;
+        --code-ink: #d6dee8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 16px;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+        line-height: 1.75;
+        font-size: 15px;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+        font-size: 0.88em;
+      }
+      :not(pre) > code {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        line-height: 1.55;
+      }
+      a {
+        color: var(--accent);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 32px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 16px 80px;
+      }
+      nav.toc {
+        position: sticky;
+        top: 16px;
+        align-self: start;
+        font-size: 13px;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+      }
+      nav.toc ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      nav.toc li a {
+        display: block;
+        padding: 4px 10px;
+        border-left: 2px solid var(--line);
+        color: var(--muted);
+        text-decoration: none;
+      }
+      nav.toc li a:hover {
+        color: var(--ink);
+        border-left-color: var(--accent);
+      }
+      nav.toc .toc-title {
+        font-weight: 700;
+        color: var(--ink);
+        margin: 0 0 8px 10px;
+      }
+      main {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 40px 48px 56px;
+        min-width: 0;
+      }
+      @media (max-width: 860px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        nav.toc {
+          position: static;
+          max-height: none;
+        }
+        main {
+          padding: 24px 18px 40px;
+        }
+      }
+
+      header.cover {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 20px;
+        margin-bottom: 8px;
+      }
+      header.cover .eyebrow {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        font-size: 12px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 6px 0 8px;
+        line-height: 1.35;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      h2 {
+        font-size: 21px;
+        margin: 48px 0 12px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+      h2 .num {
+        color: var(--accent);
+        margin-right: 8px;
+      }
+      h3 {
+        font-size: 16px;
+        margin: 28px 0 8px;
+      }
+      p {
+        margin: 8px 0;
+      }
+      .lead {
+        font-size: 16px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 14px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 7px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: var(--soft);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      td.id {
+        font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+        font-size: 12.5px;
+        white-space: nowrap;
+        color: var(--muted);
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--accent);
+        background: var(--accent-soft);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin: 16px 0;
+      }
+      .callout.warn {
+        border-left-color: var(--warn);
+        background: var(--warn-soft);
+      }
+      .callout .label {
+        font-weight: 700;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .tag {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 1px 8px;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+        white-space: nowrap;
+      }
+      .tag.must {
+        color: var(--accent);
+      }
+      .tag.should {
+        color: var(--flow);
+      }
+      .tag.could {
+        color: var(--muted);
+      }
+      .tag.flow {
+        color: var(--flow);
+      }
+      .tag.er {
+        color: var(--er);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+        margin: 14px 0;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 16px;
+        background: var(--paper);
+      }
+      .card h4 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .card.flow {
+        border-top: 4px solid var(--flow);
+      }
+      .card.er {
+        border-top: 4px solid var(--er);
+      }
+      .card ul {
+        margin: 4px 0 0;
+        padding-left: 18px;
+      }
+
+      .step {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        margin: 14px 0;
+        overflow: hidden;
+      }
+      .step > .step-head {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        background: var(--soft);
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--line);
+        flex-wrap: wrap;
+      }
+      .step .step-no {
+        font-weight: 800;
+        color: var(--accent);
+        font-size: 14px;
+      }
+      .step .step-title {
+        font-weight: 700;
+      }
+      .step > .step-body {
+        padding: 8px 16px 12px;
+      }
+      .step-body ul {
+        margin: 4px 0;
+        padding-left: 20px;
+      }
+
+      figure {
+        margin: 18px 0;
+      }
+      figure svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      figcaption {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 6px;
+        text-align: center;
+      }
+      .diagram text {
+        fill: var(--ink);
+        font-size: 13px;
+        font-family: inherit;
+      }
+      .diagram .sub {
+        fill: var(--muted);
+        font-size: 11.5px;
+      }
+      .diagram .box {
+        fill: var(--paper);
+        stroke: var(--line);
+        stroke-width: 1.5;
+      }
+      .diagram .box-flow {
+        fill: var(--flow-soft);
+        stroke: var(--flow);
+        stroke-width: 1.5;
+      }
+      .diagram .box-er {
+        fill: var(--er-soft);
+        stroke: var(--er);
+        stroke-width: 1.5;
+      }
+      .diagram .box-core {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+      .diagram .edge {
+        stroke: var(--muted);
+        stroke-width: 1.5;
+        fill: none;
+      }
+      .diagram .edge.dash {
+        stroke-dasharray: 5 4;
+      }
+      .diagram .arrow {
+        fill: var(--muted);
+      }
+
+      ul.check {
+        list-style: none;
+        padding-left: 0;
+      }
+      ul.check li::before {
+        content: "☐";
+        margin-right: 8px;
+        color: var(--accent);
+      }
+      /* ---- 使い方の手順 ---- */
+      .shot {
+        margin: 16px 0 22px;
+      }
+      .shot a {
+        display: block;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--soft);
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .pipeline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin: 12px 0;
+        padding: 0;
+        list-style: none;
+      }
+      .pipeline li {
+        border: 1px solid var(--line);
+        background: var(--soft);
+        border-radius: 999px;
+        padding: 2px 12px;
+        font-size: 13.5px;
+        white-space: nowrap;
+      }
+      .pipeline li a {
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .pipeline li + li::before {
+        content: "→";
+        color: var(--muted);
+        margin: 0 8px 0 -2px;
+      }
+      kbd {
+        font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+        font-size: 0.85em;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 0 5px;
+        background: var(--paper);
+      }
+      .ui {
+        font-weight: 700;
+      }
+      ol.steps {
+        padding-left: 22px;
+      }
+      ol.steps > li {
+        margin: 4px 0;
+      }
+      ol.steps ul {
+        margin: 2px 0;
+        padding-left: 20px;
+      }
+    </style>
+
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="toc" aria-label="目次">
+        <p class="toc-title">目次</p>
+        <ol>
+          <li><a href="#view">0. 画面の見方</a></li>
+          <li><a href="#new">1. 新しいプロジェクト</a></li>
+          <li><a href="#er">2. ER: データの形</a></li>
+          <li><a href="#data">3. データ: サンプルデータ</a></li>
+          <li><a href="#generate">4. 画面を生成</a></li>
+          <li><a href="#flow">5. フロー: 遷移</a></li>
+          <li><a href="#screen">6. 画面: 中身を直す</a></li>
+          <li><a href="#preview">7. プレビュー</a></li>
+          <li><a href="#save">8. 保存・開く</a></li>
+          <li><a href="#export">9. コードを書き出す</a></li>
+          <li><a href="#trouble">10. 困ったとき</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <header class="cover">
+          <div class="eyebrow">ORIGINAL POC</div>
+          <h1>使い方の手順</h1>
+          <p class="lead">
+            空のプロジェクトから「機器と、機器ごとのアラームを管理するアプリ」を作り、コードとして書き出すまでを
+            1 手ずつ説明します。かかる時間はおよそ 15 分です。
+          </p>
+          <p class="meta">
+            準備と起動は <a href="getting-started.md">はじめかた</a> を先に読んでください（<code>pnpm --filter @ui-editor/poc-app dev</code>
+            → <a href="http://localhost:5180/">http://localhost:5180/</a>）。
+          </p>
+          <ol class="pipeline" aria-label="流れ">
+            <li><a href="#er">ER（データの形）</a></li>
+            <li><a href="#data">データ（サンプル）</a></li>
+            <li><a href="#generate">画面を生成</a></li>
+            <li><a href="#flow">フロー（遷移）</a></li>
+            <li><a href="#screen">画面（中身）</a></li>
+            <li><a href="#preview">プレビュー</a></li>
+            <li><a href="#export">保存・書き出し</a></li>
+          </ol>
+        </header>
+
+        <!-- 0 -->
+        <h2 id="view"><span class="num">0</span>画面の見方</h2>
+        <p>起動すると題材（機器の設定＆モニタリング）が開きます。下の図はフロービューとプレビューを並べたところです。</p>
+        <figure class="shot">
+          <a href="images/guide/01-overview.png"><img src="images/guide/01-overview.png" alt="エディタの全体。左にビューの切り替え、中央にフロー図、右にプレビュー" loading="lazy" /></a>
+          <figcaption>エディタの全体（画像を押すと原寸で開きます）</figcaption>
+        </figure>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>場所</th><th>中身</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>上のヘッダー</td><td>プロジェクト名、新規・開く・題材を開く・保存・名前を付けて保存、コードを書き出す、元に戻す／やり直す、▶ プレビュー、検証の件数</td></tr>
+              <tr><td>ヘッダーの下</td><td>お知らせ（操作の結果やエラー）。右の × で閉じる</td></tr>
+              <tr><td>左の縦の切り替え</td><td><span class="ui">ER</span>・<span class="ui">データ</span>・<span class="ui">フロー</span>・<span class="ui">画面</span> の 4 つのビュー</td></tr>
+              <tr><td>右（開いたとき）</td><td>プレビュー。作っているアプリを動かす。どのビューとも並べて使える</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="label">自動保存と元に戻す</span>
+          作業はブラウザに自動で保存され、次に開くと続きから始まります。間違えたら <span class="ui">元に戻す</span>（<kbd>Cmd/Ctrl</kbd> + <kbd>Z</kbd>）、<span class="ui">やり直す</span> は <kbd>Shift</kbd> + <kbd>Cmd/Ctrl</kbd> + <kbd>Z</kbd>。
+        </div>
+
+        <!-- 1 -->
+        <h2 id="new"><span class="num">1</span>新しいプロジェクトを作る</h2>
+        <ol class="steps">
+          <li>ヘッダーの <span class="ui">「新規」</span> を押す（保存していない変更があれば、消してよいか確かめられます）。</li>
+          <li>ヘッダー左の名前欄に <code>機器の管理</code> と入れて <kbd>Enter</kbd>。</li>
+        </ol>
+
+        <!-- 2 -->
+        <h2 id="er"><span class="num">2</span>ER: データの形を決める</h2>
+        <p>左の <span class="ui">ER</span> を押します。</p>
+
+        <h3>2-1. エンティティ「機器」を作る</h3>
+        <ol class="steps">
+          <li><span class="ui">「＋ エンティティ」</span> を押す。右のパネルに新しいエンティティが出ます。</li>
+          <li>パネルの <span class="ui">名前</span> に <code>機器</code>、<span class="ui">id</span> に <code>Device</code> と入れる（id はコードの名前になるので英字）。</li>
+          <li>
+            <span class="ui">「＋ 属性」</span> で属性を足し、各行に id・名前・型を入れる:
+            <ul>
+              <li><code>name</code>・名前・<span class="ui">文字列</span>・<span class="ui">必須</span> にチェック</li>
+              <li><code>status</code>・状態・<span class="ui">列挙</span>。下の欄に値を <code>online, offline</code> のようにカンマ区切りで入れる</li>
+            </ul>
+          </li>
+          <li><span class="ui">表示用</span> で「名前（name）」を選ぶ（一覧や選択肢でレコードを表す項目）。</li>
+        </ol>
+        <figure class="shot">
+          <a href="images/guide/02-er-entity.png"><img src="images/guide/02-er-entity.png" alt="機器のエンティティと、右の属性のパネル" loading="lazy" /></a>
+          <figcaption>機器のエンティティ。<code>id</code> 属性（主キー）は自動で付く。属性の行の ↑↓ で並べ替え、× で消す</figcaption>
+        </figure>
+
+        <h3>2-2. エンティティ「アラーム」を作り、機器の中に入れる</h3>
+        <ol class="steps">
+          <li>
+            同じように <span class="ui">「＋ エンティティ」</span> で <code>アラーム</code>（<code>Alarm</code>）を作る:
+            <ul>
+              <li><code>level</code>・レベル・列挙（<code>info, warn, error</code>）・必須</li>
+              <li><code>message</code>・内容・文字列・必須</li>
+              <li>表示用は「内容（message）」</li>
+            </ul>
+          </li>
+          <li>ER 図で <span class="ui">機器</span> のノードを押して選ぶ。</li>
+          <li>パネルの <span class="ui">関係</span> で「1 対多（入れ子）」と「アラーム（Alarm）」を選び、<span class="ui">「追加」</span>。</li>
+        </ol>
+        <p>機器に <code>alarms</code> 属性ができ、図に線が引かれます（機器 1 件の中にアラームが 0 件以上ある）。</p>
+        <figure class="shot">
+          <a href="images/guide/03-er-relation.png"><img src="images/guide/03-er-relation.png" alt="機器とアラームが入れ子の線でつながった ER 図" loading="lazy" /></a>
+          <figcaption>入れ子の関係。ノードの右の点から別のノードへドラッグしても作れる（種類を選ぶダイアログが出る）</figcaption>
+        </figure>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>関係の種類</th><th>意味</th><th>図の線</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1 対多（入れ子）</td><td>親の中に子を複数持つ（親を消すと子も消える）</td><td>実線</td></tr>
+              <tr><td>1 対 1（入れ子）</td><td>親の中に子を 1 つ持つ</td><td>実線</td></tr>
+              <tr><td>多対 1（参照）</td><td>別のエンティティを id で指す（外部キー）</td><td>破線</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">ノードが重なったら、ツールバーの「整列」で並べ直します。</p>
+
+        <!-- 3 -->
+        <h2 id="data"><span class="num">3</span>データ: サンプルデータを作る</h2>
+        <p>左の <span class="ui">データ</span> を押します。</p>
+        <ol class="steps">
+          <li><span class="ui">「サンプルデータを生成…」</span> を押す。</li>
+          <li>件数を入れる（例: 機器 5、アラーム 12。入れ子のアラームは全部の機器の合計）。シードを変えると別の値になる。</li>
+          <li><span class="ui">「生成して置き換える」</span>。</li>
+        </ol>
+        <figure class="shot">
+          <a href="images/guide/04-data-seed.png"><img src="images/guide/04-data-seed.png" alt="サンプルデータの生成ダイアログ" loading="lazy" /></a>
+          <figcaption>サンプルデータの生成</figcaption>
+        </figure>
+        <p>左のエンティティを選ぶと表が出ます。セルは直接書き換えられます。行の追加は「＋ 機器を追加」、削除は行の「削除」（入れ子のアラームも一緒に消える）。</p>
+        <figure class="shot">
+          <a href="images/guide/05-data-table.png"><img src="images/guide/05-data-table.png" alt="機器 5 件の表" loading="lazy" /></a>
+          <figcaption>データの表。「入れ子の木」で機器からアラームをたどる、「JSON」で保存される形を見る</figcaption>
+        </figure>
+
+        <!-- 4 -->
+        <h2 id="generate"><span class="num">4</span>画面を生成する</h2>
+        <ol class="steps">
+          <li>左の <span class="ui">ER</span> に戻り、<span class="ui">機器</span> を選ぶ。</li>
+          <li>パネルの <span class="ui">「画面を生成（一覧・詳細・編集・削除）」</span> を押す。機器一覧・機器詳細・機器の編集（ダイアログ）・機器の削除（確認ダイアログ）と、その間の遷移ができる。</li>
+          <li><span class="ui">アラーム</span> を選んで、同じく <span class="ui">「画面を生成」</span>。アラームの画面ができ、機器詳細に「アラームを追加」ボタンが付く。</li>
+        </ol>
+        <figure class="shot">
+          <a href="images/guide/06-er-generate.png"><img src="images/guide/06-er-generate.png" alt="画面を生成したあとのお知らせと、パネルの画面の一覧" loading="lazy" /></a>
+          <figcaption>パネルの「画面」に、そのエンティティを扱う画面が並ぶ。押すと画面ビューで開く</figcaption>
+        </figure>
+
+        <!-- 5 -->
+        <h2 id="flow"><span class="num">5</span>フロー: 画面のつながりを見る・足す</h2>
+        <p>左の <span class="ui">フロー</span> を押し、<span class="ui">「整列」</span> で全体を並べます。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>図の要素</th><th>意味</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>四角</td><td>画面（▶ が付いているのが最初の画面）</td></tr>
+              <tr><td>角の丸い破線の枠</td><td>ダイアログ</td></tr>
+              <tr><td>実線</td><td>画面の遷移</td></tr>
+              <tr><td>破線</td><td>ダイアログを開く</td></tr>
+              <tr><td>点線</td><td>ダイアログを閉じたあとの遷移</td></tr>
+              <tr><td>線のラベル</td><td>何を押すと移るか（ボタンの文言・行クリック）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>遷移を足す</h3>
+        <p>例: 機器詳細からアラーム一覧へ移るボタンを作ります。</p>
+        <ol class="steps">
+          <li><span class="ui">機器詳細</span> のノードの右の点から、<span class="ui">アラーム一覧</span> のノードへドラッグする。</li>
+          <li>遷移ができ、機器詳細に <span class="ui">仮のボタン</span>「アラーム一覧へ」が置かれる。右のパネルにその遷移が出る。</li>
+        </ol>
+        <figure class="shot">
+          <a href="images/guide/07-flow.png"><img src="images/guide/07-flow.png" alt="フロー図と、右の遷移のパネル" loading="lazy" /></a>
+          <figcaption>遷移を引いたところ</figcaption>
+        </figure>
+        <p>遷移のパネルでは次を変えられます。</p>
+        <ul>
+          <li><span class="ui">遷移先</span></li>
+          <li><span class="ui">トリガー</span>: ボタン（T1）・行クリック（T2）・選択＋ボタン（T3）・画面を開いたとき（T5）</li>
+          <li><span class="ui">文言</span>: ボタンの文字</li>
+          <li><span class="ui">渡す値</span>: 遷移先のパラメータ（例: 機器の id）</li>
+          <li><span class="ui">付随アクション</span>: 同じボタンで、遷移の前後にする処理（例: 削除してから一覧へ）</li>
+          <li><span class="ui">遷移を削除</span></li>
+        </ul>
+        <p class="muted">画面やダイアログを手で作るときは「＋ 画面」「＋ ダイアログ」。</p>
+
+        <h3>検証の警告を見る</h3>
+        <p>仮のボタンのままの遷移は <span class="ui">警告</span> になり、ヘッダー右の件数が「警告 1」になります。件数を押すと下に検証の結果が出ます。行を押すと、問題の場所を開きます。</p>
+        <figure class="shot">
+          <a href="images/guide/08-issues.png"><img src="images/guide/08-issues.png" alt="画面下の検証の結果に警告が 1 件" loading="lazy" /></a>
+          <figcaption>検証の結果</figcaption>
+        </figure>
+        <div class="callout warn">
+          <span class="label">警告とエラー</span>
+          警告があっても動かしたり書き出したりできます。<strong>エラー</strong> があるとコードを書き出せません。
+        </div>
+
+        <!-- 6 -->
+        <h2 id="screen"><span class="num">6</span>画面: 中身を直す</h2>
+        <p>左の <span class="ui">画面</span> を押し、一覧から <span class="ui">機器詳細</span> を選びます。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>列</th><th>中身</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>中身（ノードの木）</td><td>画面の部品の入れ子。橙の「仮」は仮の部品</td></tr>
+              <tr><td>部品のパネル（真ん中）</td><td>選んだ部品の文言・見た目・表示条件・遷移・イベントのアクション</td></tr>
+              <tr><td>この画面のプレビュー</td><td>この画面だけを動かす。上の選択で見本のレコードを変える</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">上の「役割」と「エンティティ」を選んで「テンプレートを適用」すると、中身を作り直せます（仮の部品は残る）。</p>
+
+        <h3>6-1. 部品を足す</h3>
+        <ol class="steps">
+          <li>中身の木で <code>toolbar</code>（ボタンの並び）を押して選ぶ。</li>
+          <li><span class="ui">「＋ 部品を追加…」</span> から <span class="ui">Button</span> を選ぶ。選んだ Box の中に足される。</li>
+          <li>パネルの <span class="ui">文言</span> に <code>全アラームを見る</code> と入れて <kbd>Enter</kbd>。</li>
+        </ol>
+        <p class="muted">パネル右上の ↑↓ で並べ替え、× で消します。</p>
+
+        <h3>6-2. データを表示する（バインディング）</h3>
+        <ol class="steps">
+          <li>中身の木で <code>page</code> を選び、<span class="ui">「＋ 部品を追加…」</span> から <span class="ui">Text</span> を足す。</li>
+          <li>文言に <code>アラーム件数: {{ (record?.alarms ?? []).length }}</code> と入れて <kbd>Enter</kbd>。</li>
+        </ol>
+        <p><code>{{ }}</code> の中は式です。欄に入力すると、その画面で使える名前の候補（<code>record?.name</code>、<code>params.deviceId</code> など）が出ます。右の「この画面のプレビュー」にすぐ反映されます。</p>
+        <figure class="shot">
+          <a href="images/guide/09-screen-binding.png"><img src="images/guide/09-screen-binding.png" alt="中身の木・部品のパネル・この画面のプレビュー" loading="lazy" /></a>
+          <figcaption>部品とバインディング。右のプレビューに「アラーム件数: 3」</figcaption>
+        </figure>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>式で使える名前の例</th><th>中身</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>record</code></td><td>この画面で開いているレコード（詳細・フォーム）</td></tr>
+              <tr><td><code>params</code></td><td>画面に渡された値（<code>params.deviceId</code>）</td></tr>
+              <tr><td><code>data.Device</code></td><td>機器の全レコード</td></tr>
+              <tr><td><code>draft</code></td><td>フォームで入力中の値</td></tr>
+              <tr><td><code>row</code></td><td>表の列の中の、その行のレコード</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="label">null かもしれない値</span>
+          <code>record?.name</code> のように <code>?.</code> を付けます。付けないと、書き出したコードの型の検査で引っかかります。
+        </div>
+
+        <h3>6-3. 仮のボタンの遷移を、足したボタンに移す</h3>
+        <ol class="steps">
+          <li>中身の木で、足したボタン（<code>button1</code>）を選ぶ。</li>
+          <li>パネルの <span class="ui">遷移</span> に「仮の部品の遷移」が出る。<span class="ui">「この部品に移す」</span> を押す。</li>
+        </ol>
+        <p>仮のボタン「アラーム一覧へ」が消え、足したボタンで移るようになります。警告も 0 になります。</p>
+        <figure class="shot">
+          <a href="images/guide/10-screen-transition.png"><img src="images/guide/10-screen-transition.png" alt="足したボタンの遷移がパネルに出ている" loading="lazy" /></a>
+          <figcaption>遷移を移したところ。新しい遷移を部品から直接作るときは、パネルの「遷移」で遷移先を選んで「遷移を追加」</figcaption>
+        </figure>
+
+        <!-- 7 -->
+        <h2 id="preview"><span class="num">7</span>プレビュー: 動かして確かめる</h2>
+        <p>ヘッダーの <span class="ui">「▶ プレビュー」</span> を押すと、最初の画面（機器一覧）から動きます。フロー図と並べると、今いる画面が緑の枠で、たどった遷移が緑の線で光ります。</p>
+        <figure class="shot">
+          <a href="images/guide/11-preview.png"><img src="images/guide/11-preview.png" alt="フロー図と並べたプレビューの機器一覧" loading="lazy" /></a>
+          <figcaption>プレビュー</figcaption>
+        </figure>
+        <p>試すこと:</p>
+        <ol class="steps">
+          <li>行のラジオで機器を選び <span class="ui">「編集」</span> → 名前を変えて <span class="ui">「保存」</span> → 一覧に反映される</li>
+          <li>行を押す → 機器詳細。<span class="ui">「全アラームを見る」</span> → アラーム一覧。<span class="ui">「← 戻る」</span> で戻る</li>
+          <li>詳細で <span class="ui">「アラームを追加」</span> → 入れて保存 → 件数が増える</li>
+          <li>詳細で <span class="ui">「削除」</span> → 確認で <span class="ui">「削除する」</span> → 一覧に戻る（アラームも消える）</li>
+        </ol>
+        <figure class="shot">
+          <a href="images/guide/12-preview-dialog.png"><img src="images/guide/12-preview-dialog.png" alt="プレビューで機器の編集ダイアログが重なって開いている" loading="lazy" /></a>
+          <figcaption>ダイアログは画面の上に重なって開く</figcaption>
+        </figure>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>ボタン</th><th>はたらき</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>← 戻る</td><td>前の画面へ（ダイアログが開いていれば閉じる）</td></tr>
+              <tr><td>最初から</td><td>最初の画面からやり直す</td></tr>
+              <tr><td>データをリセット</td><td>プレビューで変えたデータを、元のサンプルデータに戻す</td></tr>
+              <tr><td>このデータをサンプルデータにする</td><td>プレビューで変えたデータを、プロジェクトのサンプルデータにする</td></tr>
+              <tr><td>ログ</td><td>実行したアクションとデータの変化</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">プレビューで変えたデータは、サンプルデータを書き換えません（「このデータをサンプルデータにする」を押したときだけ）。</p>
+
+        <!-- 8 -->
+        <h2 id="save"><span class="num">8</span>保存する・開く</h2>
+        <ul>
+          <li><span class="ui">保存</span>（<kbd>Cmd/Ctrl</kbd> + <kbd>S</kbd>）: 保存先を選んで <code>*.poc.json</code> に保存する。最初の名前は <code>project.poc.json</code>。書き出すアプリの名前はこのファイル名から作るので、<code>device-admin.poc.json</code> のような英字の名前にするとよい。2 回目からは同じファイルに上書きする。</li>
+          <li><span class="ui">名前を付けて保存</span>（<kbd>Shift</kbd> + <kbd>Cmd/Ctrl</kbd> + <kbd>S</kbd>）: 別のファイルに保存する。</li>
+          <li><span class="ui">開く</span>: <code>*.poc.json</code> を開く。</li>
+          <li><span class="ui">題材を開く</span>: 見本のプロジェクト（機器の設定＆モニタリング）を開く。</li>
+        </ul>
+        <p class="muted">ヘッダーの「（未保存）●」は、ファイルに保存していない変更があるしるしです。</p>
+
+        <!-- 9 -->
+        <h2 id="export"><span class="num">9</span>コードを書き出す</h2>
+        <ol class="steps">
+          <li>
+            ヘッダーの <span class="ui">「コードを書き出す」</span> を押す。
+            <ul>
+              <li>Chrome / Edge: 書き出すフォルダを選ぶ。リポジトリの外に空のフォルダを作って選ぶとよい。</li>
+              <li>それ以外のブラウザ: zip がダウンロードされるので展開する。</li>
+              <li>検証のエラーや式の誤りがあると、場所付きの理由がお知らせに出て、書き出さない。</li>
+            </ul>
+          </li>
+          <li>書き出したフォルダで:</li>
+        </ol>
+        <pre><code>pnpm install
+pnpm dev      # http://localhost:5181/</code></pre>
+        <p>プレビューと同じように動くアプリ（Vite + React + TypeScript）が開きます。<code>pnpm build</code> で型の検査とビルドをします。中身の説明は、書き出したフォルダの <code>README.md</code> にあります。</p>
+
+        <!-- 10 -->
+        <h2 id="trouble"><span class="num">10</span>困ったとき</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>症状</th><th>対処</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>操作を間違えた</td><td>元に戻す（<kbd>Cmd/Ctrl</kbd> + <kbd>Z</kbd>）</td></tr>
+              <tr><td>図のノードが重なって見にくい</td><td>「整列」。図の左下の ⛶ で全体が入るように合わせる</td></tr>
+              <tr><td>「部品を追加」した場所が思ったのと違う</td><td>先に入れたい Box を選ぶ。Box 以外を選んでいると、その後ろに足される</td></tr>
+              <tr><td>プレビューが思った画面から始まらない</td><td>フローで画面を選び、パネルの「最初の画面にする」を押す</td></tr>
+              <tr><td>プレビューで「〜は削除されました」と出る</td><td>「最初から」を押す</td></tr>
+              <tr><td>プレビューの文言に ⚠ が出る</td><td>式の誤り。⚠ にポインタを当てると理由が出る。画面ビューでその部品の式を直す</td></tr>
+              <tr><td>「コードを書き出す」でエラー</td><td>お知らせの場所（例: <code>画面 deviceDetail / page / title / props: …</code>）の式や部品を直す</td></tr>
+              <tr><td>ポート 5180 が使われている</td><td><code>lsof -nP -iTCP:5180 -sTCP:LISTEN</code> で PID を調べて <code>kill &lt;PID&gt;</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">
+          起動の問題は <a href="getting-started.md">はじめかた</a>、ビューごとの細かい操作は <a href="../app/README.md">エディタの README</a>。
+          スクリーンショットは <code>pnpm --filter @ui-editor/poc-app guide:shots</code> で撮り直せます（この手順と同じ操作をします）。
+        </p>
+      </main>
+    </div>
+  </body>
+</html>
