@@ -1165,7 +1165,7 @@ path.flow-edge.last {
 .body.with-preview .flow-body {
   grid-template-columns: 1fr 300px;
 }
-.body.with-preview .container-list {
+.body.with-preview .flow-body .container-list {
   display: none;
 }
 .body.with-preview .er-body {
