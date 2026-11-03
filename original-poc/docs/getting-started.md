@@ -83,6 +83,18 @@ pnpm --filter @ui-editor/poc-codegen build
 node original-poc/packages/codegen/dist/cli.js my-app.poc.json --out ../my-app
 ```
 
+## 6. AI から操作する（MCP）
+
+MCP サーバー `@ui-editor/poc-mcp` を使うと、AI クライアントが `*.poc.json` を直接編集して、コードの書き出しまで行える。1 章のビルドで使えるようになる。
+
+Claude Code に登録する例（`/path/to/...` は自分の環境に合わせる）:
+
+```sh
+claude mcp add ui-editor-poc -- node /path/to/ui-editor/original-poc/packages/mcp/dist/cli.js --root /path/to/workspace
+```
+
+読み書きできるのは `--root` のフォルダの中だけ。AI が編集したファイルは、エディタの「開く」で開き直すと画面で確かめられる。ツールの一覧と決まりは [MCP サーバーの README](../packages/mcp/README.md)。
+
 ## うまくいかないとき
 
 | 症状                                                    | 対処                                                                                                                           |
