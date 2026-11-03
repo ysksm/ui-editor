@@ -16,6 +16,7 @@
 | `packages/seed`      | `@ui-editor/poc-seed`      | ER からのサンプルデータ生成                            |
 | `packages/runtime`   | `@ui-editor/poc-runtime`   | プレビューの実行エンジン                               |
 | `packages/codegen`   | `@ui-editor/poc-codegen`   | poc-0 → React アプリのコード生成                       |
+| `packages/mcp`       | `@ui-editor/poc-mcp`       | プロジェクトファイルを AI から操作する MCP サーバー    |
 | `app`                | `@ui-editor/poc-app`       | エディタ（ER 図・データ・フロー図・画面・プレビュー）  |
 | `examples`           | —                          | 題材「機器の設定＆モニタリング」の poc-0 版            |
 
