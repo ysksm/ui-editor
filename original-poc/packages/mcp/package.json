@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.32.2",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@ui-editor/poc-codegen": "workspace:*",
     "@ui-editor/poc-model": "workspace:*",
     "@ui-editor/poc-seed": "workspace:*",
