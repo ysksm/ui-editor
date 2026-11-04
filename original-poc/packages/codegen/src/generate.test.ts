@@ -26,6 +26,12 @@ describe("generate（題材: 機器の設定＆モニタリング）", async () 
     for (const f of files) await expect(f.content).toMatchFileSnapshot(join(snapshots, f.path));
   });
 
+  it("Entity.loading は vite-zustand の出力を変えない", async () => {
+    const paged = structuredClone(example);
+    for (const e of paged.entities) e.loading = "paged";
+    expect(await generate(paged, { appName: "device-monitor" })).toEqual(files);
+  });
+
   it("スナップショットのフォルダに、生成しなくなったファイルが残っていない", () => {
     const written = walk(snapshots).map((f) => relative(snapshots, f).split(sep).join("/"));
     expect(written.sort()).toEqual(files.map((f) => f.path).sort());

@@ -404,6 +404,22 @@ describe("遷移の警告（FR-FLOW-06）", () => {
   });
 });
 
+describe("loading", () => {
+  it("ルートのエンティティには指定できる", () => {
+    const issues = check((p) => {
+      p.entities.find((e) => e.id === "Device")!.loading = "paged";
+    });
+    expect(issues).toEqual([]);
+  });
+
+  it("入れ子の子の loading は警告する", () => {
+    const issues = check((p) => {
+      p.entities.find((e) => e.id === "Alarm")!.loading = "paged";
+    });
+    expect(issues).toEqual([issue("warning", ["entities", 1, "loading"], /親と一緒に読む/)]);
+  });
+});
+
 describe("unique", () => {
   const device = (p: Project) => p.entities.find((e) => e.id === "Device")!;
 

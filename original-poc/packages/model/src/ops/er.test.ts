@@ -110,6 +110,13 @@ describe("エンティティ", () => {
     expect(p.entities[1]).toMatchObject({ name: "警報" });
     expect(p.entities[1]!.displayField).toBeUndefined();
   });
+
+  it("loading は paged のときだけ書く", () => {
+    const paged = apply(smallProject(), (d) => updateEntity(d, "Device", { loading: "paged" }));
+    expect(paged.entities[0]!.loading).toBe("paged");
+    const all = apply(paged, (d) => updateEntity(d, "Device", { loading: "all" }));
+    expect(all.entities[0]).not.toHaveProperty("loading");
+  });
 });
 
 describe("フィールド", () => {

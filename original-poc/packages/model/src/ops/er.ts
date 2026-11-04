@@ -74,13 +74,18 @@ export function entityIdProblem(
 export function updateEntity(
   draft: Project,
   id: string,
-  patch: { name?: string; displayField?: string | undefined },
+  patch: { name?: string; displayField?: string | undefined; loading?: Entity["loading"] },
 ): void {
   const e = entityOf(draft, id);
   if (patch.name !== undefined) e.name = patch.name;
   if ("displayField" in patch) {
     if (patch.displayField === undefined) delete e.displayField;
     else e.displayField = patch.displayField;
+  }
+  if ("loading" in patch) {
+    // all は既定なので、書かない
+    if (patch.loading === "paged") e.loading = "paged";
+    else delete e.loading;
   }
 }
 

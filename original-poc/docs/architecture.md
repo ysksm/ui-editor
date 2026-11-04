@@ -93,6 +93,7 @@ interface Entity {
   name: string; // 表示名（例: 機器）
   primaryKey: Identifier; // type: "id" のフィールド
   displayField?: Identifier; // 参照の選択肢・表示に使う
+  loading?: "all" | "paged"; // 読み方。all（既定）は起動時に全件、paged は画面ごと。vite-zustand は無視する
   fields: Field[];
 }
 
@@ -422,3 +423,4 @@ v0 形式への書き出し（FR-PRJ-06、Should）は、コード生成を poc-
 - 2026-10-23 4.12 にコード生成の決めごと（固定のファイルの埋め込み、ブラウザと共通の整形、ER から型への規則、プレビューとの対応と許容する差分）を追加。データ操作はエンティティごとの型付きの関数を、固定の汎用のデータ操作（poc-datastore と同じ規則）の上に生成する
 - 2026-10-23 ステップ 6 まで完了。評価メモを original-poc/README.md に書いた
 - 2026-11-04 フィールドに `unique` を追加（1 項目だけ。組み合わせの一意は対象外。空の値は数えず、入れ子は親をまたいで調べる）
+- 2026-11-05 エンティティに `loading` を追加（architecture-template の書き出しで使う。入れ子の子には効かない）
