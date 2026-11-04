@@ -6,6 +6,7 @@
 - **使い方の手順: [docs/user-guide.html](docs/user-guide.html)**（空からアプリを作って書き出すまでを、スクリーンショット付きで 1 手ずつ）
 - 要求仕様: [docs/requirements.html](docs/requirements.html)（ブラウザで開く）。13 章「確認したいこと」の結果は [アーキテクチャ](docs/architecture.md) の 1 章にある。
 - アーキテクチャ: [docs/architecture.md](docs/architecture.md)（パッケージ構成・スキーマ poc-0・設計判断・作業計画）
+- 提案: [../proposals/architecture-template-export.md](../proposals/architecture-template-export.md)（書き出しを architecture-template の形にする。実装する Claude Code 向け）
 
 ## 構成
 
