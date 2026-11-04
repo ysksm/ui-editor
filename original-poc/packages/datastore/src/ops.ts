@@ -5,6 +5,7 @@ import {
   isRecord,
   type DataRecord,
   type Entity,
+  type Field,
   type JsonValue,
 } from "@ui-editor/poc-model";
 import {
@@ -104,9 +105,20 @@ export function emptyRecord(entity: Entity): DataRecord {
   return out;
 }
 
+/** 同じエンティティのほかのレコードに、同じ値があるか。 */
+function hasSameValue(
+  records: readonly DataRecord[],
+  entity: Entity,
+  field: Field,
+  value: unknown,
+  selfId: string | undefined,
+): boolean {
+  return records.some((r) => r[field.id] === value && r[entity.primaryKey] !== selfId);
+}
+
 /**
  * レコードを検証し、フィールド id → メッセージを返す（問題が無ければ空）。
- * 必須・型・列挙値・範囲・参照先の存在・主キーの重複（`selfId` は自分自身として除く）を調べる。
+ * 必須・型・列挙値・範囲・参照先の存在・主キーと `unique` の重複（`selfId` は自分自身として除く）を調べる。
  */
 export function validateRecord(
   schema: Schema,
@@ -138,6 +150,14 @@ export function validateRecord(
     const problem = checkFieldValue(f, v);
     if (problem) {
       errors[f.id] = problem;
+      continue;
+    }
+    if (
+      f.unique &&
+      !isBlank(v) &&
+      hasSameValue(listRecords(schema, data, entityId), entity, f, v, options.selfId)
+    ) {
+      errors[f.id] = `値 "${String(v)}" は既にあります`;
       continue;
     }
     if (f.type === "ref" && f.entity && typeof v === "string" && v !== "") {
@@ -299,6 +319,8 @@ export function updateRecords(
     if (f.type === "children") return fail(`children の項目 "${key}" は更新できません`);
   }
   const targets = matchRecords(schema, data, entityId, match);
+  const duplicated = sharedUniqueField(entity, set, targets.length);
+  if (duplicated) return fail("入力に誤りがあります", duplicated);
   const updated = new Map<DataRecord, DataRecord>();
   const changes: DataChange[] = [];
   for (const r of targets) {
@@ -319,6 +341,17 @@ export function updateRecords(
   }
   if (updated.size === 0) return { ok: true, data, changes: [] };
   return { ok: true, data: rebuild(er, data, (_, r) => updated.get(r) ?? r), changes };
+}
+
+/** 複数のレコードへ同じ値を入れると、`unique` の項目が重複する。 */
+function sharedUniqueField(
+  entity: Entity,
+  set: DataRecord,
+  count: number,
+): Record<string, string> | undefined {
+  if (count < 2) return undefined;
+  const f = entity.fields.find((x) => x.unique && !isBlank(set[x.id]));
+  return f && { [f.id]: `値 "${String(set[f.id])}" は 1 件にしか入れられません` };
 }
 
 // ---- 削除 ----

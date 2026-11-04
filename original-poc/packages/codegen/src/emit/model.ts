@@ -39,6 +39,7 @@ type RuntimeField = Pick<
   | "cardinality"
   | "min"
   | "max"
+  | "unique"
 >;
 
 const FIELD_KEYS = [
@@ -53,6 +54,7 @@ const FIELD_KEYS = [
   "cardinality",
   "min",
   "max",
+  "unique",
 ] as const;
 
 /** ER から生成アプリの Schema を作る（書式 format など、データ操作に使わないものは除く）。 */
@@ -103,6 +105,7 @@ function fieldDoc(entity: Entity, f: Field, entities: Map<string, Entity>): stri
   if (f.type === "date") notes.push("ISO 8601");
   if (f.format) notes.push(`書式 ${f.format}`);
   if (f.min !== undefined || f.max !== undefined) notes.push(`${f.min ?? ""}〜${f.max ?? ""}`);
+  if (f.unique) notes.push("一意");
   if (f.default !== undefined) notes.push(`既定値 ${JSON.stringify(f.default)}`);
   const head = f.name ?? f.id;
   return notes.length > 0 ? `${head}（${notes.join("、")}）` : head;

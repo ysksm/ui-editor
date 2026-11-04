@@ -164,6 +164,52 @@ describe("題材（入れ子）", () => {
   });
 });
 
+describe("unique", () => {
+  compare(
+    [
+      {
+        id: "Day",
+        name: "日",
+        primaryKey: "id",
+        fields: [
+          { id: "id", type: "id" },
+          { id: "date", type: "date", unique: true },
+          { id: "note", type: "string" },
+        ],
+      },
+    ],
+    {
+      Day: [
+        { id: "d-1", date: "2026-11-01", note: "" },
+        { id: "d-2", date: "2026-11-02", note: "" },
+      ],
+    },
+    [
+      {
+        name: "同じ値は作れない",
+        run: (ds, s, d) => ds.createRecord(s as never, d, "Day", { date: "2026-11-01" }),
+      },
+      {
+        name: "空の値は作れる",
+        run: (ds, s, d) => ds.createRecord(s as never, d, "Day", { date: null }),
+      },
+      {
+        name: "自分の値のままなら更新できる",
+        run: (ds, s, d) => ds.updateRecords(s as never, d, "Day", { id: "d-1" }, { note: "x" }),
+      },
+      {
+        name: "ほかのレコードの値には変えられない",
+        run: (ds, s, d) =>
+          ds.updateRecords(s as never, d, "Day", { id: "d-1" }, { date: "2026-11-02" }),
+      },
+      {
+        name: "複数のレコードへ同じ値を入れられない",
+        run: (ds, s, d) => ds.updateRecords(s as never, d, "Day", { note: "" }, { date: "x" }),
+      },
+    ],
+  );
+});
+
 describe("参照（ref）の onDelete", () => {
   compare(refEntities, refData, [
     {

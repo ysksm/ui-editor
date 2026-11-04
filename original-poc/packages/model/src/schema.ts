@@ -90,6 +90,8 @@ export const FieldSchema = z
     /** number の範囲（生成と検証）。 */
     min: z.number().optional(),
     max: z.number().optional(),
+    /** 同じエンティティの中で値が重複しない（空の値は数えない。入れ子は親をまたいで調べる）。 */
+    unique: z.boolean().optional(),
   })
   .meta({ id: "Field" });
 export type Field = z.infer<typeof FieldSchema>;

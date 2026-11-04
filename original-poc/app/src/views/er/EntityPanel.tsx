@@ -40,6 +40,15 @@ const TYPE_LABELS: Record<FieldType, string> = {
   ref: "参照",
   children: "入れ子",
 };
+/** `unique` を指定できる型。 */
+const UNIQUE_FIELD_TYPES: ReadonlySet<FieldType> = new Set([
+  "string",
+  "number",
+  "date",
+  "enum",
+  "ref",
+]);
+
 const FORMATS: Partial<Record<FieldType, readonly string[]>> = {
   string: ["email", "url", "ipv4", "phone", "multiline"],
   date: ["date", "datetime"],
@@ -397,6 +406,17 @@ function FieldRow({
               onCommit={(v) => update("最大値を変更", { max: v === "" ? undefined : Number(v) })}
             />
           </>
+        )}
+        {UNIQUE_FIELD_TYPES.has(f.type) && !isPk && (
+          <label className="inline" title="同じ値のレコードを作れないようにする">
+            <input
+              type="checkbox"
+              aria-label={`属性 ${f.id} は一意`}
+              checked={f.unique ?? false}
+              onChange={(e) => update("一意を変更", { unique: e.target.checked || undefined })}
+            />
+            一意
+          </label>
         )}
         <DefaultInput field={f} onChange={(value) => update("既定値を変更", { default: value })} />
       </div>

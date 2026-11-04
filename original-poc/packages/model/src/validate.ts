@@ -97,6 +97,12 @@ function checkEntities(ctx: Ctx): void {
         unused("min", "type が number でない");
         unused("max", "type が number でない");
       }
+      if (f.unique !== undefined && (f.type === "boolean" || f.type === "children")) {
+        ctx.warning([...fp, "unique"], `type ${f.type} では unique は使われません`);
+      }
+      if (f.unique !== undefined && f.type === "id") {
+        ctx.warning([...fp, "unique"], "主キーは常に一意なので unique は要りません");
+      }
       if (f.format !== undefined) {
         const ok =
           (f.type === "string" && STRING_FORMATS.has(f.format)) ||
@@ -176,10 +182,13 @@ function checkEntities(ctx: Ctx): void {
 
 // ---- データ ----
 
+const UNIQUE_TYPES: ReadonlySet<string> = new Set(["string", "number", "date", "enum", "ref"]);
+
 function checkData(ctx: Ctx): void {
   const { project, entities } = ctx;
   const parents = nestParents(project.entities);
   const primaryKeys = new Map<string, Map<string, IssuePath>>();
+  const uniqueValues = new Map<string, Map<JsonValue, IssuePath>>();
   const refs: { entity: string; value: string; path: IssuePath }[] = [];
 
   const checkRecord = (e: Entity, r: unknown, path: IssuePath): void => {
@@ -224,6 +233,14 @@ function checkData(ctx: Ctx): void {
         const prev = ids.get(v);
         if (prev) ctx.error(fp, `主キー "${v}" が重複しています（${formatPath(prev)} と同じ）`);
         else ids.set(v, fp);
+      }
+      if (f.unique && UNIQUE_TYPES.has(f.type) && !isBlank(v)) {
+        const key = `${e.id}.${f.id}`;
+        let seen = uniqueValues.get(key);
+        if (!seen) uniqueValues.set(key, (seen = new Map()));
+        const prev = seen.get(v as JsonValue);
+        if (prev) ctx.error(fp, `値 "${String(v)}" が重複しています（${formatPath(prev)} と同じ）`);
+        else seen.set(v as JsonValue, fp);
       }
       if (f.type === "ref" && f.entity && typeof v === "string") {
         refs.push({ entity: f.entity, value: v, path: fp });

@@ -458,3 +458,48 @@ describe("性能（NFR-04）", () => {
     expect(elapsed).toBeLessThan(500);
   });
 });
+
+describe("unique", () => {
+  const uniqueEntities: Entity[] = [
+    {
+      id: "Day",
+      name: "日",
+      primaryKey: "id",
+      fields: [
+        { id: "id", type: "id" },
+        { id: "date", type: "date", format: "date", unique: true },
+        { id: "note", type: "string" },
+      ],
+    },
+  ];
+  const schema = { entities: uniqueEntities };
+  const data: Dataset = {
+    Day: [
+      { id: "d-1", date: "2026-11-01", note: "" },
+      { id: "d-2", date: "2026-11-02", note: "" },
+      { id: "d-3", date: null, note: "" },
+    ],
+  };
+
+  it("同じ値は作れない。空の値は何件でも作れる", () => {
+    expect(createRecord(schema, data, "Day", { date: "2026-11-01" })).toMatchObject({
+      ok: false,
+      fieldErrors: { date: expect.stringContaining("既にあります") as string },
+    });
+    expect(createRecord(schema, data, "Day", { date: null }).ok).toBe(true);
+  });
+
+  it("自分自身の値は重複にしない。ほかのレコードと同じ値には変えられない", () => {
+    expect(updateRecords(schema, data, "Day", { id: "d-1" }, { note: "x" }).ok).toBe(true);
+    expect(updateRecords(schema, data, "Day", { id: "d-1" }, { date: "2026-11-02" }).ok).toBe(
+      false,
+    );
+  });
+
+  it("複数のレコードへ同じ値を入れられない", () => {
+    expect(updateRecords(schema, data, "Day", { note: "" }, { date: "2026-12-01" })).toMatchObject({
+      ok: false,
+      fieldErrors: { date: expect.stringContaining("1 件") as string },
+    });
+  });
+});
