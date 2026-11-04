@@ -186,20 +186,25 @@ export function createServer(options: { root: string }): McpServer {
   server.registerTool(
     "update_entity",
     {
-      description: "エンティティの表示名・表示用フィールドを変える",
+      description: "エンティティの表示名・表示用フィールド・データの読み方を変える",
       inputSchema: {
         file,
         entity,
         name: z.string().min(1).optional(),
         displayField: z.string().min(1).optional().describe("一覧や参照で見出しに使うフィールド"),
+        loading: z
+          .enum(["all", "paged"])
+          .optional()
+          .describe("all は起動時に全件、paged は画面ごとに読む（既定 all）"),
       },
       annotations: WRITE,
     },
-    ({ file, entity, name, displayField }) =>
+    ({ file, entity, name, displayField, loading }) =>
       edit(file, (d) =>
         updateEntity(d, entity, {
           ...(name !== undefined && { name }),
           ...(displayField !== undefined && { displayField }),
+          ...(loading !== undefined && { loading }),
         }),
       ),
   );

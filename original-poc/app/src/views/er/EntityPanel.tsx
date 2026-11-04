@@ -134,6 +134,22 @@ export function EntityPanel({
             ))}
         </select>
       </label>
+      <label className="row">
+        <span>読み方</span>
+        <select
+          aria-label="データの読み方"
+          value={entity.loading ?? "all"}
+          title="architecture-template の書き出しで使う"
+          onChange={(e) =>
+            edit("データの読み方を変更", (d) =>
+              updateEntity(d, id, { loading: e.target.value === "paged" ? "paged" : "all" }),
+            )
+          }
+        >
+          <option value="all">起動時に全件</option>
+          <option value="paged">画面ごと（件数が多いとき）</option>
+        </select>
+      </label>
 
       <h4>属性</h4>
       <ol className="field-list">

@@ -159,6 +159,9 @@ function checkEntities(ctx: Ctx): void {
       else if (df.type === "children")
         ctx.error([...p, "displayField"], "children のフィールドは表示に使えません");
     }
+    if (e.loading !== undefined && nestedBy.has(e.id)) {
+      ctx.warning([...p, "loading"], "入れ子の子は親と一緒に読むので loading は使われません");
+    }
   });
 
   // 入れ子の循環（A の子が B、B の子が A）

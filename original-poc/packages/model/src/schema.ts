@@ -105,6 +105,11 @@ export const EntitySchema = z
     primaryKey: Identifier,
     /** 参照の選択肢・表示に使うフィールド。 */
     displayField: Identifier.optional(),
+    /**
+     * データの読み方。all（既定）は起動時に全件、paged は画面ごとに読む。
+     * architecture-template のターゲットが使う。vite-zustand は全件をメモリに持つので無視する。
+     */
+    loading: z.enum(["all", "paged"]).optional(),
     fields: z.array(FieldSchema),
   })
   .meta({ id: "Entity" });
