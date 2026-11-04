@@ -186,6 +186,7 @@ const TYPE_KEYS: Record<string, readonly FieldType[]> = {
   min: ["number"],
   max: ["number"],
   required: ["id", "string", "number", "boolean", "date", "enum", "ref"],
+  unique: ["string", "number", "date", "enum", "ref"],
   default: ["string", "number", "boolean", "date", "enum"],
 };
 const FORMATS_BY_TYPE: Record<string, readonly string[]> = {

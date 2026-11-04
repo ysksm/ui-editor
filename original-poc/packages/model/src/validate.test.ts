@@ -403,3 +403,32 @@ describe("遷移の警告（FR-FLOW-06）", () => {
     expect(issues).toEqual([]);
   });
 });
+
+describe("unique", () => {
+  const device = (p: Project) => p.entities.find((e) => e.id === "Device")!;
+
+  it("データの重複をエラーにする。空の値は数えない", () => {
+    const issues = check((p) => {
+      device(p).fields.push({ id: "serial", type: "string", unique: true });
+      p.data.Device = [
+        { id: "a", name: "A", serial: "S-1" },
+        { id: "b", name: "B", serial: "S-1" },
+        { id: "c", name: "C", serial: "" },
+        { id: "d", name: "D", serial: "" },
+      ];
+    });
+    const duplicated = issues.filter((i) => i.message.includes("重複"));
+    expect(duplicated).toEqual([
+      issue("error", ["data", "Device", 1, "serial"], /"S-1" が重複.*data\.Device\[0\]\.serial/),
+    ]);
+  });
+
+  it("使えない型は警告にする", () => {
+    const issues = check((p) => {
+      device(p).fields.push({ id: "on", type: "boolean", unique: true });
+    });
+    expect(issues).toContainEqual(
+      issue("warning", ["entities", 0, "fields", device(smallProject()).fields.length, "unique"]),
+    );
+  });
+});

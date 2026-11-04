@@ -109,6 +109,7 @@ interface Field {
   format?: "email" | "url" | "ipv4" | "phone" | "multiline" | "date" | "datetime";
   min?: number; // number の範囲（生成と検証）
   max?: number;
+  unique?: boolean; // 同じエンティティの中で重複しない。空の値は数えない（string / number / date / enum / ref）
 }
 
 // レコード。children のフィールドには子のレコード（many は配列、one は 1 件か null）が入る
@@ -413,10 +414,11 @@ v0 形式への書き出し（FR-PRJ-06、Should）は、コード生成を poc-
 - `state.selection` は予約語で、ランタイムが id を持つ（4.5）。フォームの下書きはフレームごと。
 - アクションに `select` / `setDraft` / `saveDraft` / `when` / `openDialog.onClose` を追加。`updateRecord` / `deleteRecord` は `match`、`createRecord` は入れ子のとき `parent` で対象を指定する。
 - ノードに `placeholder`、`Button` に `requires`、組み込みに `Select` を追加。
-- フィールドに `name` / `format` / `min` / `max` / `onDelete` / `cardinality` を追加。
+- フィールドに `name` / `format` / `min` / `max` / `onDelete` / `cardinality` / `unique` を追加。
 
 ## 変更履歴
 
 - 2026-10-23 初版（要求仕様 13 章の確認結果を反映）
 - 2026-10-23 4.12 にコード生成の決めごと（固定のファイルの埋め込み、ブラウザと共通の整形、ER から型への規則、プレビューとの対応と許容する差分）を追加。データ操作はエンティティごとの型付きの関数を、固定の汎用のデータ操作（poc-datastore と同じ規則）の上に生成する
 - 2026-10-23 ステップ 6 まで完了。評価メモを original-poc/README.md に書いた
+- 2026-11-04 フィールドに `unique` を追加（1 項目だけ。組み合わせの一意は対象外。空の値は数えず、入れ子は親をまたいで調べる）

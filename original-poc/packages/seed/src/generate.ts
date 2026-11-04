@@ -81,6 +81,20 @@ export function generateSampleData(
   const order = nestOrder(entities, nest, warnings);
   const data: Project["data"] = {};
   const seq = new Map<string, number>();
+  const usedValues = new Map<string, Set<JsonValue>>();
+  const uniqueValue = (e: Entity, f: Field, n: number): JsonValue => {
+    const key = `${e.id}.${f.id}`;
+    let used = usedValues.get(key);
+    if (!used) usedValues.set(key, (used = new Set()));
+    let value = fieldValue(faker, e, f, n);
+    for (let i = 0; i < UNIQUE_RETRIES && used.has(value); i++) {
+      value = fieldValue(faker, e, f, n);
+    }
+    if (used.has(value)) value = distinctValue(f, value, n, used, options.refDate);
+    if (value === null) warnings.push(`${key}: 重複しない値を作れないので null にしました`);
+    else used.add(value);
+    return value;
+  };
   const newRecord = (e: Entity): DataRecord => {
     const n = (seq.get(e.id) ?? 0) + 1;
     seq.set(e.id, n);
@@ -89,7 +103,7 @@ export function generateSampleData(
       if (f.id === e.primaryKey) r[f.id] = `${kebab(e.id)}-${String(n).padStart(3, "0")}`;
       else if (f.type === "children") r[f.id] = (f.cardinality ?? "many") === "many" ? [] : null;
       else if (f.type === "ref") r[f.id] = null;
-      else r[f.id] = fieldValue(faker, e, f, n);
+      else r[f.id] = f.unique ? uniqueValue(e, f, n) : fieldValue(faker, e, f, n);
     }
     let list = all.get(e.id);
     if (!list) all.set(e.id, (list = []));
@@ -132,9 +146,15 @@ export function generateSampleData(
           warnings.push(`${e.id}.${f.id}: 参照先の ${f.entity} が 0 件なので null にしました`);
         continue;
       }
-      for (const r of all.get(e.id) ?? []) {
-        const picked = faker.helpers.arrayElement(candidates);
-        r[f.id] = target ? (picked[target.primaryKey] ?? null) : null;
+      // unique の ref は、候補を 1 回ずつ使う（足りなければ残りは null）
+      const pool = f.unique ? faker.helpers.shuffle([...candidates]) : candidates;
+      const records = all.get(e.id) ?? [];
+      records.forEach((r, i) => {
+        const picked = f.unique ? pool[i] : faker.helpers.arrayElement(candidates);
+        r[f.id] = target && picked ? (picked[target.primaryKey] ?? null) : null;
+      });
+      if (f.unique && records.length > pool.length) {
+        warnings.push(`${e.id}.${f.id}: 参照先が足りないので一部を null にしました`);
       }
     }
   }
@@ -208,6 +228,42 @@ function kebab(id: string): string {
 const INTEGER_HINT =
   /count|num|qty|quantity|sec|interval|port|age|year|days|times|retry|size|order|index|rank|level|priority/i;
 const PERSON_ENTITY = /user|person|member|customer|employee|staff|owner|account|contact/i;
+
+const UNIQUE_RETRIES = 20;
+
+/** 乱数で重複を避けられないとき、連番 `n` から順に値を作る。作れなければ null。 */
+function distinctValue(
+  field: Field,
+  value: JsonValue,
+  n: number,
+  used: ReadonlySet<JsonValue>,
+  refDate: string = DEFAULT_REF_DATE,
+): JsonValue {
+  for (let k = n; k <= n + used.size; k++) {
+    const next = sequentialValue(field, value, k, refDate);
+    if (next === null) return null;
+    if (!used.has(next)) return next;
+  }
+  return null;
+}
+
+function sequentialValue(field: Field, value: JsonValue, k: number, refDate: string): JsonValue {
+  switch (field.type) {
+    case "string":
+      return `${String(value)}-${k}`;
+    case "number": {
+      const next = (field.min ?? 0) + k;
+      return field.max === undefined || next <= field.max ? next : null;
+    }
+    case "date": {
+      const d = new Date(refDate);
+      d.setUTCDate(d.getUTCDate() - k);
+      return field.format === "date" ? d.toISOString().slice(0, 10) : d.toISOString();
+    }
+    default:
+      return null;
+  }
+}
 
 /** フィールドの値を、型・書式・範囲とフィールド名の手がかりから作る。 */
 export function fieldValue(faker: Faker, entity: Entity, field: Field, n: number): JsonValue {

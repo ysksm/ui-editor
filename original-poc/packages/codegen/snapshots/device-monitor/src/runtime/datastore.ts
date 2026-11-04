@@ -2,7 +2,7 @@
  * 入れ子のデータの検索・作成・更新・削除。エディタのプレビューと同じ規則で動く。
  *
  * - 主キーが無ければ採番する（既にある id の「接頭辞 + 連番」に合わせる。例: dev-005 → dev-006）
- * - 必須・型・列挙値・範囲・参照先の存在・主キーの重複を検証する
+ * - 必須・型・列挙値・範囲・参照先の存在・主キーと `unique` の重複を検証する
  * - 入れ子のエンティティ（例: 機器のアラーム）は親のレコードの中に作る
  * - 削除は子ごと。消えたレコードを指す参照は onDelete（cascade / setNull / restrict）に従う
  *
@@ -33,6 +33,8 @@ export interface FieldDef {
   cardinality?: "many" | "one";
   min?: number;
   max?: number;
+  /** 同じエンティティの中で値が重複しない（空の値は数えない）。 */
+  unique?: boolean;
 }
 
 export interface EntityDef {
@@ -223,9 +225,20 @@ export function checkFieldValue(field: FieldDef, value: unknown): string | undef
   }
 }
 
+/** 同じエンティティのほかのレコードに、同じ値があるか。 */
+function hasSameValue(
+  records: readonly DataRecord[],
+  entity: EntityDef,
+  field: FieldDef,
+  value: unknown,
+  selfId: string | undefined,
+): boolean {
+  return records.some((r) => r[field.id] === value && r[entity.primaryKey] !== selfId);
+}
+
 /**
  * レコードを検証し、項目 id → メッセージを返す（問題が無ければ空）。
- * 必須・型・列挙値・範囲・参照先の存在・主キーの重複（`selfId` は自分自身として除く）を調べる。
+ * 必須・型・列挙値・範囲・参照先の存在・主キーと `unique` の重複（`selfId` は自分自身として除く）を調べる。
  */
 export function validateRecord(
   schema: Schema,
@@ -257,6 +270,14 @@ export function validateRecord(
     const problem = checkFieldValue(f, v);
     if (problem) {
       errors[f.id] = problem;
+      continue;
+    }
+    if (
+      f.unique &&
+      !isBlank(v) &&
+      hasSameValue(listRecords(schema, data, entityId), entity, f, v, options.selfId)
+    ) {
+      errors[f.id] = `値 "${String(v)}" は既にあります`;
       continue;
     }
     if (f.type === "ref" && f.entity && typeof v === "string" && v !== "") {
@@ -413,6 +434,17 @@ export function createRecord<D extends Data>(
 // ---- 更新 ----
 
 /** 条件（項目 = 値 の AND）に合うレコードを探す。主キーが条件にあれば索引を使う。 */
+/** 複数のレコードへ同じ値を入れると、`unique` の項目が重複する。 */
+function sharedUniqueField(
+  entity: EntityDef,
+  set: DataRecord,
+  count: number,
+): Record<string, string> | undefined {
+  if (count < 2) return undefined;
+  const f = entity.fields.find((x) => x.unique && !isBlank(set[x.id]));
+  return f && { [f.id]: `値 "${String(set[f.id])}" は 1 件にしか入れられません` };
+}
+
 export function matchRecords(
   schema: Schema,
   data: Data,
@@ -444,9 +476,12 @@ export function updateRecords<D extends Data>(
     if (!f) return fail("入力に誤りがあります", { [key]: "定義に無い項目です" });
     if (f.type === "children") return fail(`children の項目 "${key}" は更新できません`);
   }
+  const targets = matchRecords(schema, data, entityId, match);
+  const duplicated = sharedUniqueField(entity, set, targets.length);
+  if (duplicated) return fail("入力に誤りがあります", duplicated);
   const updated = new Map<DataRecord, DataRecord>();
   const changes: DataChange[] = [];
-  for (const r of matchRecords(schema, data, entityId, match)) {
+  for (const r of targets) {
     const id = r[entity.primaryKey];
     if (entity.primaryKey in set && set[entity.primaryKey] !== id)
       return fail("主キーは変えられません", { [entity.primaryKey]: "主キーは変えられません" });

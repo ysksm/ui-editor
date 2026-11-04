@@ -143,3 +143,36 @@ describe("generateSampleData", () => {
     });
   });
 });
+
+describe("unique", () => {
+  const es = (field: Entity["fields"][number]): Entity[] => [
+    {
+      id: "Day",
+      name: "日",
+      primaryKey: "id",
+      fields: [{ id: "id", type: "id" }, field],
+    },
+  ];
+  const values = (data: Project["data"], key: string) =>
+    (data.Day as DataRecord[]).map((r) => r[key]);
+
+  it("件数が日付の範囲より多くても、値が重複しない", () => {
+    const e = es({ id: "date", type: "date", format: "date", unique: true });
+    const { data, warnings } = generateSampleData(e, { counts: { Day: 60 } });
+    expect(new Set(values(data, "date")).size).toBe(60);
+    expect(warnings).toEqual([]);
+    expect(check(e, data)).toEqual([]);
+  });
+
+  it("値が足りなければ null にして警告する", () => {
+    const e = es({ id: "kind", type: "enum", values: ["a", "b"], unique: true });
+    const { data, warnings } = generateSampleData(e, { counts: { Day: 3 } });
+    expect(
+      values(data, "kind")
+        .filter((v) => v !== null)
+        .sort(),
+    ).toEqual(["a", "b"]);
+    expect(warnings).toHaveLength(1);
+    expect(check(e, data)).toEqual([]);
+  });
+});
